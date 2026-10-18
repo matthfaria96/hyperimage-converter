@@ -35,12 +35,12 @@ public struct ImagePipeline: @unchecked Sendable {
         if o.resize.enabled, let plan = ResizeGeometry.plan(source: image.pixelSize, options: o.resize, sourceDPI: source.dpi) {
             image = try Transforms.resize(image, plan: plan, filter: o.resize.filter, fill: o.resize.fillColor)
         }
-        if o.rotate.enabled && (o.rotate.rotate || o.rotate.flipHorizontal || o.rotate.flipVertical) {
+        if o.rotate.isEffective {
             image = try Transforms.flipRotate(image, options: o.rotate)
         }
         if o.crop.enabled {
             // Block alignment only means something while the pixels are still the JPEG's own grid.
-            let untouched = image.pixelSize == source.image.pixelSize && !(o.resize.enabled || o.rotate.enabled || (adjust && o.adjustments.beforeResize))
+            let untouched = image.pixelSize == source.image.pixelSize && !(o.resize.enabled || o.rotate.isEffective || (adjust && o.adjustments.beforeResize))
             let block = source.sourceType == "public.jpeg" && untouched ? 16 : nil
             image = try Transforms.crop(image, to: CropGeometry.rect(source: image.pixelSize, options: o.crop, sourceDPI: source.dpi, jpegBlock: block))
         }

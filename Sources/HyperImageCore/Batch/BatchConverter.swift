@@ -75,11 +75,7 @@ public struct BatchConverter: Sendable {
     func convert(_ record: ConversionRecord, pipeline: ImagePipeline) -> ConversionRecord {
         do {
             let loaded = try ImageLoader.load(record.input)
-            let processed = try pipeline.process(loaded)
-            let data = try ImageEncoder.encode(
-                .init(image: processed.image, sourceProperties: loaded.properties, sourceJPEGQuality: loaded.metadata.jpegQuality,
-                      dpiX: processed.dpiX, dpiY: processed.dpiY),
-                format: settings.format, settings: settings.formatSettings)
+            let data = try pipeline.encode(loaded, format: settings.format, settings: settings.formatSettings).data
             let fm = FileManager.default
             try fm.createDirectory(at: record.output.deletingLastPathComponent(), withIntermediateDirectories: true)
             try data.write(to: record.output, options: .atomic)

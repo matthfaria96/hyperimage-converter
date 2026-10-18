@@ -47,12 +47,38 @@ public enum JPEGPhotometric: String, Codable, CaseIterable, Sendable {
     case noChange, rgb, grayscale, ycbcr, cmyk
 }
 
+/// Chroma subsampling: none is 4:4:4, medium 4:2:2, high 4:2:0 (the original's default).
+public enum JPEGSubsampling: String, Codable, CaseIterable, Sendable {
+    case none, medium, high
+}
+
 public struct JPEGSettings: Codable, Equatable, Sendable {
+    public static let smoothingRange = 0...100
+
     public var quality = 90
     public var useOriginalQuality = false
     public var photometric = JPEGPhotometric.noChange
+    public var subsampling = JPEGSubsampling.high
+    public var smoothing = 0
+    public var optimizeHuffman = true
     public var progressive = false
     public var keepMetadata = true
+
+    public init() {}
+
+    /// Missing keys keep their defaults, so options saved before a field existed still load.
+    public init(from decoder: any Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        let d = JPEGSettings()
+        quality = try c.decodeIfPresent(Int.self, forKey: .quality) ?? d.quality
+        useOriginalQuality = try c.decodeIfPresent(Bool.self, forKey: .useOriginalQuality) ?? d.useOriginalQuality
+        photometric = try c.decodeIfPresent(JPEGPhotometric.self, forKey: .photometric) ?? d.photometric
+        subsampling = try c.decodeIfPresent(JPEGSubsampling.self, forKey: .subsampling) ?? d.subsampling
+        smoothing = try c.decodeIfPresent(Int.self, forKey: .smoothing) ?? d.smoothing
+        optimizeHuffman = try c.decodeIfPresent(Bool.self, forKey: .optimizeHuffman) ?? d.optimizeHuffman
+        progressive = try c.decodeIfPresent(Bool.self, forKey: .progressive) ?? d.progressive
+        keepMetadata = try c.decodeIfPresent(Bool.self, forKey: .keepMetadata) ?? d.keepMetadata
+    }
 }
 
 /// Palette sizes offered by the indexed formats; `nil` means true colour.

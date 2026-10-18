@@ -21,9 +21,21 @@ let package = Package(
                 .unsafeFlags(["-O3"], .when(configuration: .release)),
             ]
         ),
+        // IJG libjpeg 9f: JPEG options ImageIO does not expose (subsampling, smoothing, Huffman) and lossless crop.
+        .target(
+            name: "CJPEG",
+            path: "Sources/CJPEG",
+            exclude: ["README-libjpeg.txt"],
+            publicHeadersPath: "include",
+            cSettings: [
+                .headerSearchPath("libjpeg"),
+                .unsafeFlags(["-Wno-shorten-64-to-32", "-Wno-unused-parameter", "-Wno-deprecated-non-prototype"]),
+                .unsafeFlags(["-O3"], .when(configuration: .release)),
+            ]
+        ),
         .target(
             name: "HyperImageCore",
-            dependencies: ["CWebP"]
+            dependencies: ["CWebP", "CJPEG"]
         ),
         .executableTarget(
             name: "HyperImage",

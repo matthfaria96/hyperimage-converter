@@ -17,11 +17,16 @@ O Xcode é necessário (as Command Line Tools não trazem os plugins de macro do
   encoders (ImageIO, WebP via libwebp, PDF), lote concorrente e renomeação.
 - `Sources/HyperImage`: app SwiftUI (navegador lateral, lista de entrada, inspetor, folhas).
 - `Sources/CWebP`: libwebp 1.6.0 (BSD), só o encoder. O ImageIO lê WebP, mas não grava.
+- `Sources/CJPEG`: IJG libjpeg 9f (licença IJG, ver `README-libjpeg.txt`) com uma ponte em C (`shim/hij.c`) para gravar
+  JPEG e fazer o recorte sem perdas (`transupp`).
 
 ## Diferenças em relação ao original
 - Saída: além dos 8 formatos originais, também HEIC e AVIF.
 - Entrada: tudo o que o ImageIO lê (incluindo RAW). PCX, WMF/EMF e FAX não são suportados pelo macOS.
-- JPEG: subamostragem, suavização e Huffman não são expostos pelo ImageIO, então foram omitidos. "Usar a qualidade
-  do original" estima a qualidade a partir da tabela DQT. O recorte JPEG sem perdas não foi implementado
-  (a opção fica guardada, mas o recorte é sempre recodificado).
+- JPEG: gravado com o libjpeg 9f embutido, então subamostragem de cor, suavização e Huffman otimizado funcionam
+  como no original, e a escala de qualidade é a do IJG. Só o fotométrico CMYK continua no ImageIO (e ignora essas
+  três opções). "Usar a qualidade do original" estima a qualidade a partir da tabela DQT. O fotométrico YCbCrK não existe.
+- Recorte JPEG sem perdas: quando o recorte é o único passo que mexe nos pixels (DPI pode estar ligado), a origem é
+  JPEG sem rotação EXIF e a saída é JPEG em YCbCr, os blocos DCT são cortados direto, sem recodificar. O resultado
+  bate pixel a pixel com o FastStone. Se a origem X/Y não cair na grade de blocos, o recorte é recodificado.
 - As opções são salvas como JSON (`.hyperoptions`); `.ccf` não é importado.

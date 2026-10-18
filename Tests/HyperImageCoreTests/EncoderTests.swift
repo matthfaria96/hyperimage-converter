@@ -39,7 +39,6 @@ struct EncoderTests {
         let (low, _) = try encode(.jpeg) { $0.jpeg.quality = 20 }
         let (high, _) = try encode(.jpeg) { $0.jpeg.quality = 95 }
         #expect(low.count < high.count)
-        // ImageIO's quality scale is not IJG's, so only the ordering is stable.
         let lowQ = try #require(JPEGQualityEstimator.estimate(data: low))
         let highQ = try #require(JPEGQualityEstimator.estimate(data: high))
         #expect(lowQ < highQ)

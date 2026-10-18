@@ -12,6 +12,9 @@ public struct RotateOptions: Codable, Equatable, Sendable {
     public var angle = RotationAngle.clockwise90
 
     public init() {}
+
+    /// Enabled with at least one flip or rotation chosen, i.e. the step really moves pixels.
+    public var isEffective: Bool { enabled && (rotate || flipHorizontal || flipVertical) }
 }
 
 public enum CropMode: String, Codable, CaseIterable, Sendable {

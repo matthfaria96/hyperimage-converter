@@ -48,6 +48,18 @@ struct FormatSettingsSheet: View {
                 Text("YCbCr").tag(JPEGPhotometric.ycbcr)
                 Text("CMYK").tag(JPEGPhotometric.cmyk)
             }
+            Picker("Subamostragem de cor", selection: $draft.jpeg.subsampling) {
+                Text("Desativada (melhor qualidade)").tag(JPEGSubsampling.none)
+                Text("Média").tag(JPEGSubsampling.medium)
+                Text("Alta (arquivo menor)").tag(JPEGSubsampling.high)
+            }
+            .disabled(draft.jpeg.photometric == .cmyk || draft.jpeg.photometric == .grayscale || draft.jpeg.photometric == .rgb)
+            Stepper(value: $draft.jpeg.smoothing, in: JPEGSettings.smoothingRange) {
+                LabeledContent("Suavização", value: "\(draft.jpeg.smoothing)")
+            }
+            .disabled(draft.jpeg.photometric == .cmyk)
+            Toggle("Otimizar tabela de Huffman", isOn: $draft.jpeg.optimizeHuffman)
+                .disabled(draft.jpeg.photometric == .cmyk)
             Toggle("Progressivo", isOn: $draft.jpeg.progressive)
             Toggle("Manter dados EXIF / IPTC", isOn: $draft.jpeg.keepMetadata)
         case .bmp:

@@ -1,5 +1,6 @@
 import CoreGraphics
 import Foundation
+import CJPEG
 import ImageIO
 
 /// Turns a processed image into file bytes for the chosen output format.
@@ -25,6 +26,7 @@ public enum ImageEncoder {
         switch format {
         case .webp: return try WebPEncoder.encode(input.image, settings: settings.webp)
         case .pdf: return try PDFEncoder.encode(input.image, settings: settings.pdf, dpi: input.dpiX)
+        case .jpeg where settings.jpeg.photometric != .cmyk: return try encodeJPEG(input, settings: settings.jpeg)
         default: break
         }
         let (image, options) = try prepare(input, format: format, settings: settings)
@@ -86,6 +88,33 @@ public enum ImageEncoder {
             break
         }
         return (image, options)
+    }
+
+    /// JPEG through libjpeg, which honours subsampling, smoothing and Huffman optimisation (ImageIO does not).
+    /// CMYK still goes through ImageIO, which writes the Adobe-inverted CMYK other apps expect.
+    private static func encodeJPEG(_ input: Input, settings s: JPEGSettings) throws -> Data {
+        let grayscaleSource = input.sourceProperties.raw[kCGImagePropertyColorModel] as? String == "Gray"
+        let colorSpace: HIJColorSpace = switch s.photometric {
+        case .grayscale: HIJ_GRAY
+        case .rgb: HIJ_RGB
+        case .noChange: grayscaleSource && input.image.colorSpace?.model == .monochrome ? HIJ_GRAY : HIJ_YCBCR
+        case .ycbcr, .cmyk: HIJ_YCBCR
+        }
+        let options = LibJPEG.Options(
+            quality: s.useOriginalQuality ? (input.sourceJPEGQuality ?? s.quality) : s.quality,
+            colorSpace: colorSpace, subsampling: s.subsampling, smoothing: s.smoothing,
+            optimizeHuffman: s.optimizeHuffman, progressive: s.progressive, dpiX: input.dpiX, dpiY: input.dpiY)
+        let data = try LibJPEG.encode(try ColorConversion.flattened(input.image, on: .white), options: options)
+        guard s.keepMetadata else { return data }
+        // The TIFF resolution must agree with the DPI just written to JFIF (the DPI step may have changed it).
+        var metadata = carriedMetadata(input.sourceProperties)
+        if var tiff = metadata[kCGImagePropertyTIFFDictionary] as? [CFString: Any] {
+            tiff[kCGImagePropertyTIFFXResolution] = input.dpiX
+            tiff[kCGImagePropertyTIFFYResolution] = input.dpiY
+            tiff[kCGImagePropertyTIFFResolutionUnit] = 2
+            metadata[kCGImagePropertyTIFFDictionary] = tiff
+        }
+        return JPEGMetadataWriter.attach(metadata, to: data) ?? data
     }
 
     private static func paletted(_ image: CGImage, colors: Int?, flatten: Bool) throws -> CGImage {
