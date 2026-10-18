@@ -32,7 +32,7 @@ struct TextStepView: View {
             Picker("Família", selection: $o.fontFamily) {
                 ForEach(Self.families, id: \.self) { Text($0).tag($0) }
             }
-            DecimalField(title: "Tamanho", value: $o.fontSize, step: 1, range: 4...1000, suffix: "px")
+            DecimalField(title: "Tamanho", value: $o.fontSize, step: 1, range: 4...1000, suffix: "pt")
             Toggle("Negrito", isOn: $o.bold)
             Toggle("Itálico", isOn: $o.italic)
             ColorRow(title: "Cor do texto", color: $o.color)

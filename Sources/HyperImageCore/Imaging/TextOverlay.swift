@@ -2,8 +2,12 @@ import CoreGraphics
 import CoreText
 import Foundation
 
-/// Draws the "Add Text" overlay. Font size is in pixels and does not scale with the image.
+/// Draws the "Add Text" overlay. The size does not scale with the image.
 public enum TextOverlay {
+    /// The font size is in Windows points, which the original renders at 96 dpi (28 pt → 37.3 px),
+    /// matching its reference output.
+    static func pixelSize(_ options: TextOptions) -> CGFloat { options.fontSize * 96 / 72 }
+
     public static func apply(_ text: String, options: TextOptions, to image: CGImage) throws -> CGImage {
         guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return image }
         let width = image.width, height = image.height
@@ -21,27 +25,31 @@ public enum TextOverlay {
             framesetter, CFRange(location: 0, length: 0), nil,
             CGSize(width: CGFloat.greatestFiniteMagnitude, height: .greatestFiniteMagnitude), nil)
         let textSize = CGSize(width: ceil(fit.width), height: ceil(fit.height))
-        let padding = options.background ? (options.fontSize * 0.25).rounded() : 0
-        let box = CGSize(width: textSize.width + padding * 2, height: textSize.height + padding * 2)
+        let px = pixelSize(options)
+        // The text cell sits at the offset; the background hugs it (a hair wider), as in the reference output.
+        let padding = options.background ? max(1, (px * 0.04).rounded()) : 0
+        let box = CGSize(width: textSize.width + padding * 2, height: textSize.height)
         let topLeft = overlayOrigin(size: box, in: canvas, position: options.position,
                                     offsetX: Double(options.offsetX), offsetY: Double(options.offsetY))
-        let boxRect = CGRect(x: topLeft.x, y: canvas.height - topLeft.y - box.height, width: box.width, height: box.height)
+        // GDI lays the glyphs about 0.11 em further right and down than Core Text; measured on the reference.
+        let nudge = (px * 0.11).rounded()
+        let boxRect = CGRect(x: topLeft.x + nudge, y: canvas.height - topLeft.y - box.height - nudge, width: box.width, height: box.height)
 
         ctx.saveGState()
         ctx.setAlpha(options.opacity / 100)
         ctx.beginTransparencyLayer(auxiliaryInfo: nil)
         if options.background {
-            let radius = options.roundedBackground ? min(box.height / 2, options.fontSize * 0.4) : 0
+            let radius = options.roundedBackground ? min(box.height / 2, px * 0.4) : 0
             ctx.addPath(CGPath(roundedRect: boxRect, cornerWidth: radius, cornerHeight: radius, transform: nil))
             ctx.setFillColor(options.backgroundColor.cgColor)
             ctx.fillPath()
         }
         if options.shadow {
-            let offset = max(1, options.fontSize / 14)
+            let offset = max(1, px / 14)
             ctx.setShadow(offset: CGSize(width: offset, height: -offset), blur: offset * 1.5,
                           color: CGColor(gray: 0, alpha: 0.75))
         }
-        let textRect = boxRect.insetBy(dx: padding, dy: padding)
+        let textRect = boxRect.insetBy(dx: padding, dy: 0)
         let frame = CTFramesetterCreateFrame(framesetter, CFRange(location: 0, length: 0), CGPath(rect: textRect, transform: nil), nil)
         CTFrameDraw(frame, ctx)
         ctx.endTransparencyLayer()
@@ -57,11 +65,11 @@ public enum TextOverlay {
             kCTFontFamilyNameAttribute: options.fontFamily,
             kCTFontTraitsAttribute: [kCTFontSymbolicTrait: traits.rawValue],
         ] as CFDictionary)
-        let base = CTFontCreateWithFontDescriptor(descriptor, options.fontSize, nil)
+        let base = CTFontCreateWithFontDescriptor(descriptor, pixelSize(options), nil)
         let family = CTFontCopyFamilyName(base) as String
         if family.caseInsensitiveCompare(options.fontFamily) == .orderedSame { return base }
-        let system = CTFontCreateUIFontForLanguage(.system, options.fontSize, nil) ?? base
-        return CTFontCreateCopyWithSymbolicTraits(system, options.fontSize, nil, traits, traits) ?? system
+        let system = CTFontCreateUIFontForLanguage(.system, pixelSize(options), nil) ?? base
+        return CTFontCreateCopyWithSymbolicTraits(system, pixelSize(options), nil, traits, traits) ?? system
     }
 
     static func attributedString(_ text: String, options: TextOptions) -> CFAttributedString {

@@ -38,8 +38,9 @@ struct ReferenceComparison {
         ("adj-sepia", { $0.adjustments.enabled = true; $0.adjustments.sepia = true }),
         ("border-default", { $0.border.enabled = true }),
         ("border-all-frames", { $0.border.enabled = true; $0.border.frame2.enabled = true; $0.border.frame3.enabled = true; $0.border.innerFrame.enabled = true }),
+        ("text-default", { $0.text.enabled = true }),
         ("text-background-round", { o in
-            o.text.enabled = true; o.text.text = "TESTE"; o.text.background = true; o.text.roundedBackground = true
+            o.text.enabled = true; o.text.background = true; o.text.roundedBackground = true
         }),
     ]
 
@@ -54,7 +55,10 @@ struct ReferenceComparison {
             for input in ["paisagem", "retrato"] {
                 let ref = URL(fileURLWithPath: refDir).appendingPathComponent(name).appendingPathComponent("\(input).jpg")
                 guard let refImage = try? ImageLoader.load(ref).image else { continue }
-                let ours = try pipeline.process(try ImageLoader.load(Fixtures.url(input))).image
+                // The reference inputs carry the file dates the original stamped with $H1.
+                let refInput = URL(fileURLWithPath: refDir).deletingLastPathComponent().appendingPathComponent("ref-input/\(input).jpg")
+                let source = FileManager.default.fileExists(atPath: refInput.path) ? refInput : Fixtures.url(input)
+                let ours = try pipeline.process(try ImageLoader.load(source)).image
                 let diff = Self.meanDifference(ours, refImage)
                 lines.append(String(format: "%-30@ %-9@ ours %4dx%-4d ref %4dx%-4d  diff %@", name as NSString, input as NSString,
                                     ours.width, ours.height, refImage.width, refImage.height,

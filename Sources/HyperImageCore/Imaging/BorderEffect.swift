@@ -31,8 +31,8 @@ public enum BorderEffect {
                 ctx.fill(all)
                 ctx.saveGState()
                 let depth = CGFloat(options.shadow.depth)
-                // Flipped context: positive y offset moves the shadow down.
-                ctx.setShadow(offset: CGSize(width: depth, height: depth), blur: CGFloat(options.shadow.radius) * 2.5,
+                // Shadow offsets ignore the CTM, so even in this flipped context a negative y moves it down.
+                ctx.setShadow(offset: CGSize(width: depth, height: -depth), blur: CGFloat(options.shadow.radius) * 2.5,
                               color: options.shadow.color.cgColor)
                 ctx.setFillColor(options.shadow.background.cgColor)
                 ctx.fill(l.framedRect)
@@ -65,8 +65,9 @@ public enum BorderEffect {
         ctx.fillPath(using: .evenOdd)
         ctx.setStrokeColor(inner.color.cgColor)
         ctx.setLineWidth(CGFloat(inner.width))
+        // The line starts exactly `distance` pixels inside the photo and grows inwards.
         let w = CGFloat(inner.width) / 2
-        ctx.stroke(line.insetBy(dx: -w, dy: -w))
+        ctx.stroke(line.insetBy(dx: w, dy: w))
         ctx.restoreGState()
     }
 }
