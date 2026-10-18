@@ -49,6 +49,7 @@ struct ConvertInspector: View {
                 Toggle("Manter data e hora originais", isOn: settings.keepDates)
                 Toggle("Perguntar antes de sobrescrever", isOn: settings.askBeforeOverwrite)
                 Toggle("Mostrar mensagens de erro", isOn: settings.showErrors)
+                Toggle("Processar várias imagens ao mesmo tempo (mais rápido)", isOn: settings.parallel)
             }
 
             PreviewSection()

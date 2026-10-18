@@ -10,7 +10,8 @@ struct ConversionPreviewSheet: View {
     @State private var current: URL?
     @State private var result: PreviewResult?
     @State private var error: String?
-    @State private var actualSize = false
+    /// nil fits the image to the pane; otherwise image pixels per screen point (1 = 1:1).
+    @State private var zoom: Double?
     @State private var stacked = false
 
     var body: some View {
@@ -24,7 +25,16 @@ struct ConversionPreviewSheet: View {
                     Image(systemName: "rectangle.split.1x2").tag(true)
                 }
                 .pickerStyle(.segmented).fixedSize()
-                Toggle(isOn: $actualSize) { Text("1:1") }.toggleStyle(.button)
+                ControlGroup {
+                    Button("Ajustar à janela", systemImage: "arrow.down.right.and.arrow.up.left") { zoom = nil }
+                        .disabled(zoom == nil)
+                    Button("1:1") { zoom = 1 }
+                    Button("Reduzir", systemImage: "minus.magnifyingglass") { zoom = ZoomLevels.step(zoom ?? 1, by: -1) }
+                    Button("Ampliar", systemImage: "plus.magnifyingglass") { zoom = ZoomLevels.step(zoom ?? 1, by: 1) }
+                }
+                .fixedSize()
+                Text(zoom.map { "\(Int(($0 * 100).rounded())) %" } ?? String(localized: "Ajustado"))
+                    .monospacedDigit().foregroundStyle(.secondary).frame(minWidth: 64)
                 ControlGroup {
                     Button("Anterior", systemImage: "chevron.left") { step(-1) }
                     Button("Próxima", systemImage: "chevron.right") { step(1) }
@@ -57,7 +67,7 @@ struct ConversionPreviewSheet: View {
             }
             .padding(.horizontal, 12).padding(.vertical, 6)
             .background(.bar)
-            ZoomableImage(image: image, actualSize: actualSize)
+            ZoomableImage(image: image, zoom: zoom)
         }
     }
 
@@ -124,17 +134,29 @@ extension PreviewResult {
 }
 
 /// Fit-to-window or 1:1 pixels with scrolling.
+/// Zoom steps offered by the preview's − / + buttons.
+enum ZoomLevels {
+    static let all: [Double] = [0.1, 0.25, 0.33, 0.5, 0.67, 1, 1.5, 2, 3, 4, 6, 8]
+
+    static func step(_ current: Double, by direction: Int) -> Double {
+        if direction > 0 { return all.first { $0 > current + 0.001 } ?? all.last! }
+        return all.last { $0 < current - 0.001 } ?? all.first!
+    }
+}
+
 struct ZoomableImage: View {
     let image: CGImage?
-    let actualSize: Bool
+    let zoom: Double?
     @Environment(\.displayScale) private var scale
 
     var body: some View {
         GeometryReader { proxy in
             if let image {
-                if actualSize {
+                if let zoom {
                     ScrollView([.horizontal, .vertical]) {
-                        Image(decorative: image, scale: scale).interpolation(.none)
+                        Image(decorative: image, scale: scale).resizable()
+                            .interpolation(zoom >= 1 ? .none : .high)
+                            .frame(width: Double(image.width) * zoom / scale, height: Double(image.height) * zoom / scale)
                     }
                 } else {
                     Image(decorative: image, scale: 1).resizable().interpolation(.high).scaledToFit()

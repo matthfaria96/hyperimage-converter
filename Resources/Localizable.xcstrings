@@ -371,6 +371,26 @@
         }
       }
     },
+    "Ajustado": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fit"
+          }
+        }
+      }
+    },
+    "Ajustar à janela": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fit to Window"
+          }
+        }
+      }
+    },
     "Ajustes": {
       "localizations": {
         "en": {
@@ -477,6 +497,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Both"
+          }
+        }
+      }
+    },
+    "Ampliar": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zoom In"
           }
         }
       }
@@ -3051,6 +3081,16 @@
         }
       }
     },
+    "Processar várias imagens ao mesmo tempo (mais rápido)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Process multiple images simultaneously (faster)"
+          }
+        }
+      }
+    },
     "Profundidade": {
       "localizations": {
         "en": {
@@ -3277,6 +3317,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Resize"
+          }
+        }
+      }
+    },
+    "Reduzir": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zoom Out"
           }
         }
       }
