@@ -99,11 +99,37 @@ public struct GIFSettings: Codable, Equatable, Sendable {
     public var transparent = false
 }
 
+/// PNG row filter. The original offers None/Sub/Paeth; adaptive lets ImageIO pick per row (its default).
+public enum PNGFilter: String, Codable, CaseIterable, Sendable {
+    case adaptive, none, sub, paeth
+
+    /// IMAGEIO_PNG_FILTER_* bits for kCGImagePropertyPNGCompressionFilter.
+    var imageIOValue: Int {
+        switch self {
+        case .adaptive: 0x08 | 0x10 | 0x20 | 0x40 | 0x80
+        case .none: 0x08
+        case .sub: 0x10
+        case .paeth: 0x80
+        }
+    }
+}
+
 public struct PNGSettings: Codable, Equatable, Sendable {
     /// Only true colour, 256 colours and black & white are offered for PNG.
     public static let allowedColors: [PaletteSize] = [.trueColor, .c256, .blackWhite]
     public var colors = PaletteSize.trueColor
     public var interlaced = false
+    public var filter = PNGFilter.adaptive
+
+    public init() {}
+
+    /// Missing keys keep their defaults, so settings saved before a field existed still load.
+    public init(from decoder: any Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        colors = try c.decodeIfPresent(PaletteSize.self, forKey: .colors) ?? .trueColor
+        interlaced = try c.decodeIfPresent(Bool.self, forKey: .interlaced) ?? false
+        filter = try c.decodeIfPresent(PNGFilter.self, forKey: .filter) ?? .adaptive
+    }
 }
 
 public enum JPEG2000Photometric: String, Codable, CaseIterable, Sendable {
@@ -117,15 +143,22 @@ public struct JPEG2000Settings: Codable, Equatable, Sendable {
 }
 
 public enum TIFFCompression: String, Codable, CaseIterable, Sendable {
-    case none, lzw, packBits
+    case none, lzw, zip, jpeg, packBits, g3Fax1D, g3Fax2D, g4Fax
 
     var tagValue: Int {
         switch self {
         case .none: 1
+        case .g3Fax1D, .g3Fax2D: 3 // ImageIO writes one-dimensional G3 for both
+        case .g4Fax: 4
         case .lzw: 5
+        case .jpeg: 7
+        case .zip: 8
         case .packBits: 32773
         }
     }
+
+    /// CCITT fax schemes only store black & white, so the image is reduced to 1 bit first.
+    public var isFax: Bool { self == .g3Fax1D || self == .g3Fax2D || self == .g4Fax }
 }
 
 public enum TIFFPhotometric: String, Codable, CaseIterable, Sendable {

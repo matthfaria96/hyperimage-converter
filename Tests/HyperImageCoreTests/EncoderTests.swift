@@ -92,6 +92,22 @@ struct EncoderTests {
         let tiff = props[kCGImagePropertyTIFFDictionary] as? [CFString: Any]
         #expect(tiff?[kCGImagePropertyTIFFCompression] as? Int == compression.tagValue)
     }
+
+    @Test func faxCompressionStoresBlackAndWhite() throws {
+        let (data, _) = try encode(.tiff) { $0.tiff.compression = .g4Fax }
+        let (image, _, _) = try decoded(data)
+        let bitmap = try Bitmap(image: image, colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!)
+        let levels = Set(stride(from: 0, to: bitmap.pixels.count, by: 4).map { bitmap.pixels[$0] })
+        #expect(levels.isSubset(of: [0, 255]))
+    }
+
+    @Test func pngFilterChangesEncoding() throws {
+        let (none, _) = try encode(.png) { $0.png.filter = .none }
+        let (paeth, _) = try encode(.png) { $0.png.filter = .paeth }
+        #expect(paeth.count != none.count)
+        let legacy = try JSONDecoder().decode(PNGSettings.self, from: Data(#"{"colors":256,"interlaced":true}"#.utf8))
+        #expect(legacy.colors == .c256 && legacy.interlaced && legacy.filter == .adaptive)
+    }
 }
 
 struct BatchConverterTests {

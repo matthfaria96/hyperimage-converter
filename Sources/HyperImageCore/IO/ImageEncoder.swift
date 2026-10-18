@@ -65,7 +65,9 @@ public enum ImageEncoder {
             image = try gifReady(image, settings: settings.gif)
         case .png:
             image = try paletted(image, colors: settings.png.colors.colorCount, flatten: false)
-            if settings.png.interlaced { options[kCGImagePropertyPNGDictionary] = [kCGImagePropertyPNGInterlaceType: 1] }
+            var png: [CFString: Any] = [kCGImagePropertyPNGCompressionFilter: settings.png.filter.imageIOValue]
+            if settings.png.interlaced { png[kCGImagePropertyPNGInterlaceType] = 1 }
+            options[kCGImagePropertyPNGDictionary] = png
         case .jpeg2000:
             let s = settings.jpeg2000
             options[kCGImageDestinationLossyCompressionQuality] = Double(s.quality) / 100
@@ -73,6 +75,7 @@ public enum ImageEncoder {
         case .tiff:
             let s = settings.tiff
             options[kCGImagePropertyTIFFDictionary] = [kCGImagePropertyTIFFCompression: s.compression.tagValue]
+            if s.compression.isFax { return (try ColorConversion.indexed(image, colors: 2), options) }
             switch s.photometric {
             case .grayscale: image = try ColorConversion.grayscale(image)
             case .cmyk: image = try ColorConversion.cmyk(image)

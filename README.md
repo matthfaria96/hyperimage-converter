@@ -41,5 +41,9 @@ atualizar o catálogo e traduza as entradas novas (no Xcode ou editando o JSON).
 - Recorte JPEG sem perdas: quando o recorte é o único passo que mexe nos pixels (DPI pode estar ligado), a origem é
   JPEG sem rotação EXIF e a saída é JPEG em YCbCr, os blocos DCT são cortados direto, sem recodificar. O resultado
   bate pixel a pixel com o FastStone. Se a origem X/Y não cair na grade de blocos, o recorte é recodificado.
+- TIFF: sem compressão, LZW, ZIP, JPEG, PackBits e fax G3/G4 (estes convertem para preto e branco). O ImageIO grava
+  G3 só em 1D, então "G3 Fax 2D" sai igual ao 1D. Os fotométricos YCbCr e CIELAB do original não existem.
+- PNG: filtro Nenhum/Sub/Paeth como no original, mais "Automático" (padrão do ImageIO). O nível de compressão não é
+  exposto pelo ImageIO. BMP sem RLE e sem 65536 cores, e GIF sem entrelaçamento, pelo mesmo motivo.
 - As opções são salvas como JSON (`.hyperoptions`). Arquivos `.ccf` do original podem ser carregados (só leitura);
   o `.ccf` não guarda o caminho da marca d'água, então ele precisa ser escolhido de novo.

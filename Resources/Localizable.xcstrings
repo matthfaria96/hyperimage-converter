@@ -581,6 +581,16 @@
         }
       }
     },
+    "Automático": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Automatic"
+          }
+        }
+      }
+    },
     "Azul": {
       "localizations": {
         "en": {
@@ -1651,6 +1661,36 @@
         }
       }
     },
+    "G3 Fax 1D (preto e branco)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "G3 Fax 1D (black and white)"
+          }
+        }
+      }
+    },
+    "G3 Fax 2D (preto e branco)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "G3 Fax 2D (black and white)"
+          }
+        }
+      }
+    },
+    "G4 Fax (preto e branco)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "G4 Fax (black and white)"
+          }
+        }
+      }
+    },
     "GPS (altitude)": {
       "localizations": {
         "en": {
@@ -1817,6 +1857,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Italic"
+          }
+        }
+      }
+    },
+    "JPEG": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "JPEG"
           }
         }
       }
@@ -2871,6 +2921,16 @@
         }
       }
     },
+    "Paeth": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paeth"
+          }
+        }
+      }
+    },
     "Paleta (256 cores)": {
       "localizations": {
         "en": {
@@ -3551,6 +3611,16 @@
         }
       }
     },
+    "Sub": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sub"
+          }
+        }
+      }
+    },
     "Subamostragem de cor": {
       "localizations": {
         "en": {
@@ -3927,6 +3997,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "YCbCr"
+          }
+        }
+      }
+    },
+    "ZIP": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ZIP"
           }
         }
       }

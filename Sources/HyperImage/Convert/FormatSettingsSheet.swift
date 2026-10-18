@@ -72,6 +72,12 @@ struct FormatSettingsSheet: View {
             Toggle("Manter transparência", isOn: $draft.gif.transparent)
         case .png:
             PalettePicker(selection: $draft.png.colors, options: PNGSettings.allowedColors)
+            Picker("Filtro", selection: $draft.png.filter) {
+                Text("Automático").tag(PNGFilter.adaptive)
+                Text("Nenhum").tag(PNGFilter.none)
+                Text("Sub").tag(PNGFilter.sub)
+                Text("Paeth").tag(PNGFilter.paeth)
+            }
             Toggle("Entrelaçado", isOn: $draft.png.interlaced)
         case .jpeg2000:
             QualitySlider(title: "Qualidade (100 = sem perdas)", value: $draft.jpeg2000.quality)
@@ -83,7 +89,12 @@ struct FormatSettingsSheet: View {
             Picker("Compressão", selection: $draft.tiff.compression) {
                 Text("Sem compressão").tag(TIFFCompression.none)
                 Text("LZW").tag(TIFFCompression.lzw)
+                Text("ZIP").tag(TIFFCompression.zip)
+                Text("JPEG").tag(TIFFCompression.jpeg)
                 Text("PackBits").tag(TIFFCompression.packBits)
+                Text("G3 Fax 1D (preto e branco)").tag(TIFFCompression.g3Fax1D)
+                Text("G3 Fax 2D (preto e branco)").tag(TIFFCompression.g3Fax2D)
+                Text("G4 Fax (preto e branco)").tag(TIFFCompression.g4Fax)
             }
             Picker("Fotométrico", selection: $draft.tiff.photometric) {
                 Text("(Sem alteração)").tag(TIFFPhotometric.noChange)
@@ -92,6 +103,7 @@ struct FormatSettingsSheet: View {
                 Text("CMYK").tag(TIFFPhotometric.cmyk)
                 Text("Tons de cinza").tag(TIFFPhotometric.grayscale)
             }
+            .disabled(draft.tiff.compression.isFax)
         case .pdf:
             Picker("Qualidade", selection: $draft.pdf.quality) {
                 ForEach(PDFQuality.allCases, id: \.self) { q in
