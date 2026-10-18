@@ -61,6 +61,11 @@ final class AppModel {
         selection = []
     }
 
+    /// Puts the files into a virtual output folder (nil takes them out again).
+    func move(_ urls: Set<URL>, toFolder name: String?) {
+        inputs = inputs.map { urls.contains($0.url) ? $0.inFolder(name) : $0 }
+    }
+
     func setSort(_ sort: InputSort) {
         state.sort = sort
         inputs = sort.sorted(inputs)
@@ -70,7 +75,7 @@ final class AppModel {
     func replace(_ mapping: [URL: URL]) {
         inputs = inputs.map { item in
             guard let moved = mapping[item.url] else { return item }
-            return InputItem(url: moved, relativeDirectory: item.relativeDirectory)
+            return InputItem(url: moved, relativeDirectory: item.relativeDirectory, virtualFolder: item.virtualFolder)
         }
         selection = Set(selection.map { mapping[$0] ?? $0 })
     }

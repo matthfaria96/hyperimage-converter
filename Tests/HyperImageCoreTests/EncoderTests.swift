@@ -176,4 +176,22 @@ struct OutputSafetyTests {
         let out = OutputPlanner.destinations(for: items, settings: settings, dates: { _ in Date() })
         #expect(out.map(\.path) == ["/f/x-2.jpg", "/f/x.jpg"])
     }
+
+    @Test func virtualFoldersBecomeSubfolders() {
+        var settings = ConvertSettings()
+        settings.outputFolder = "/out"
+        let items = [InputItem(url: URL(fileURLWithPath: "/src/Album/a.png"), relativeDirectory: "Album", virtualFolder: "Praia"),
+                     InputItem(url: URL(fileURLWithPath: "/src/b.png")).inFolder("Praia"),
+                     InputItem(url: URL(fileURLWithPath: "/src/c.png"))]
+        let out = OutputPlanner.destinations(for: items, settings: settings, dates: { _ in Date() })
+        #expect(out.map(\.path) == ["/out/Praia/a.jpg", "/out/Praia/b.jpg", "/out/c.jpg"])
+        settings.useOutputFolder = false
+        let beside = OutputPlanner.destinations(for: items, settings: settings, dates: { _ in Date() })
+        #expect(beside.map(\.path) == ["/src/Album/Praia/a.jpg", "/src/Praia/b.jpg", "/src/c.jpg"])
+    }
+
+    @Test(arguments: [("  Férias 2026 ", "Férias 2026"), ("", nil), ("..", nil), ("a/b", nil), ("a:b", nil), (".", nil)])
+    func folderNamesAreValidated(raw: String, expected: String?) {
+        #expect(InputItem.folderName(raw) == expected)
+    }
 }

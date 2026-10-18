@@ -32,10 +32,24 @@ public struct InputItem: Hashable, Identifiable, Sendable {
     public var id: URL { url }
     public let url: URL
     public let relativeDirectory: String?
+    /// "Create Folder" in the input list: the output goes into a subfolder with this name.
+    public let virtualFolder: String?
 
-    public init(url: URL, relativeDirectory: String? = nil) {
+    public init(url: URL, relativeDirectory: String? = nil, virtualFolder: String? = nil) {
         self.url = url
         self.relativeDirectory = relativeDirectory
+        self.virtualFolder = virtualFolder
+    }
+
+    public func inFolder(_ name: String?) -> InputItem {
+        InputItem(url: url, relativeDirectory: relativeDirectory, virtualFolder: name)
+    }
+
+    /// A usable single-level folder name, or nil (empty, ".", "..", or containing "/" or ":").
+    public static func folderName(_ raw: String) -> String? {
+        let name = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !name.isEmpty, name != ".", name != "..", !name.contains("/"), !name.contains(":") else { return nil }
+        return name
     }
 }
 
@@ -48,7 +62,9 @@ public enum OutputPlanner {
         let ext = settings.uppercaseExtension ? settings.format.fileExtension.uppercased() : settings.format.fileExtension
         return items.enumerated().map { offset, item in
             var folder = settings.outputFolderURL ?? item.url.deletingLastPathComponent()
-            if settings.outputFolderURL != nil, settings.keepFolderStructure, let relative = item.relativeDirectory, !relative.isEmpty {
+            if let virtual = item.virtualFolder {
+                folder = folder.appendingPathComponent(virtual, isDirectory: true)
+            } else if settings.outputFolderURL != nil, settings.keepFolderStructure, let relative = item.relativeDirectory, !relative.isEmpty {
                 folder = folder.appendingPathComponent(relative, isDirectory: true)
             }
             let base = settings.rename

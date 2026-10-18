@@ -7,6 +7,9 @@ struct InputListView: View {
     @Environment(AppModel.self) private var app
     let preview: (URL) -> Void
     @State private var dropTargeted = false
+    @State private var folderTargets: Set<URL> = []
+    @State private var folderName = ""
+    @State private var askingFolderName = false
 
     var body: some View {
         @Bindable var app = app
@@ -29,8 +32,14 @@ struct InputListView: View {
                     }
                     .width(min: 180, ideal: 260)
                     TableColumn("Pasta") { item in
-                        Text(item.relativeDirectory ?? item.url.deletingLastPathComponent().lastPathComponent)
-                            .foregroundStyle(.secondary).lineLimit(1)
+                        if let virtual = item.virtualFolder {
+                            Label(virtual, systemImage: "folder.badge.plus")
+                                .foregroundStyle(.tint).lineLimit(1)
+                                .help("Será salvo na subpasta \"\(virtual)\" da pasta de saída")
+                        } else {
+                            Text(item.relativeDirectory ?? item.url.deletingLastPathComponent().lastPathComponent)
+                                .foregroundStyle(.secondary).lineLimit(1)
+                        }
                     }
                     .width(min: 80, ideal: 140)
                     TableColumn("Dimensões") { item in DimensionsCell(url: item.url) }
@@ -48,12 +57,39 @@ struct InputListView: View {
                         .disabled(urls.count != 1)
                     Button("Mostrar no Finder") { FilePanels.reveal(Array(urls)) }
                     Divider()
+                    Button("Criar Pasta…") {
+                        folderTargets = urls
+                        folderName = ""
+                        askingFolderName = true
+                    }
+                    .disabled(urls.isEmpty)
+                    let folders = Set(app.inputs.compactMap(\.virtualFolder)).sorted()
+                    if !folders.isEmpty {
+                        Menu("Mover para Pasta") {
+                            ForEach(folders, id: \.self) { name in
+                                Button(name) { app.move(urls, toFolder: name) }
+                            }
+                        }
+                        .disabled(urls.isEmpty)
+                    }
+                    if app.inputs.contains(where: { urls.contains($0.url) && $0.virtualFolder != nil }) {
+                        Button("Tirar da Pasta") { app.move(urls, toFolder: nil) }
+                    }
+                    Divider()
                     Button("Remover") { app.remove(urls) }
                     Button("Limpar Lista") { app.clear() }
                 } primaryAction: { urls in
                     if let url = urls.first { preview(url) }
                 }
                 .onDeleteCommand { app.removeSelected() }
+                .alert("Nova pasta", isPresented: $askingFolderName) {
+                    TextField("Nome da pasta", text: $folderName)
+                    Button("Cancelar", role: .cancel) {}
+                    Button("Criar") { app.move(folderTargets, toFolder: InputItem.folderName(folderName)) }
+                        .disabled(InputItem.folderName(folderName) == nil)
+                } message: {
+                    Text("Os arquivos selecionados serão salvos numa subpasta com este nome dentro da pasta de saída.")
+                }
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
