@@ -42,6 +42,13 @@ let package = Package(
             dependencies: ["HyperImageCore"],
             swiftSettings: [.defaultIsolation(MainActor.self)]
         ),
+        // App-level flows (input list, conversion runner) driven through the app's own models.
+        .testTarget(
+            name: "HyperImageAppTests",
+            dependencies: ["HyperImage", "HyperImageCore"],
+            resources: [.copy("Fixtures")],
+            swiftSettings: [.defaultIsolation(MainActor.self)]
+        ),
         .testTarget(
             name: "HyperImageCoreTests",
             dependencies: ["HyperImageCore"],

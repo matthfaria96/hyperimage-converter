@@ -41,10 +41,11 @@ public enum ImageFileTypes {
     public static func images(in folder: URL) -> [(url: URL, relativeDirectory: String)] {
         guard let enumerator = FileManager.default.enumerator(
             at: folder, includingPropertiesForKeys: [.isRegularFileKey], options: [.skipsHiddenFiles, .skipsPackageDescendants]) else { return [] }
-        let root = folder.standardizedFileURL.path
+        // Resolve symlinks on both sides: the enumerator may report /private/var/… for a folder given as /var/….
+        let root = folder.resolvingSymlinksInPath().standardizedFileURL.path
         var found: [(URL, String)] = []
         for case let url as URL in enumerator where isImage(url) {
-            let dir = url.deletingLastPathComponent().standardizedFileURL.path
+            let dir = url.deletingLastPathComponent().resolvingSymlinksInPath().standardizedFileURL.path
             let relative = dir.hasPrefix(root) ? String(dir.dropFirst(root.count)).trimmingCharacters(in: CharacterSet(charactersIn: "/")) : ""
             let base = folder.lastPathComponent
             found.append((url, relative.isEmpty ? base : "\(base)/\(relative)"))

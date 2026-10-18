@@ -29,7 +29,7 @@ final class AppModel {
 
     /// Adds files and folders (folders contribute their images recursively). Duplicates are ignored.
     func add(_ urls: [URL]) {
-        var known = Set(inputs.map(\.url))
+        var known = Set(inputs.map { Self.identity($0.url) })
         var added: [InputItem] = []
         for url in urls {
             var isDirectory: ObjCBool = false
@@ -37,13 +37,18 @@ final class AppModel {
             let items = isDirectory.boolValue
                 ? ImageFileTypes.images(in: url).map { InputItem(url: $0.url, relativeDirectory: $0.relativeDirectory) }
                 : (ImageFileTypes.isImage(url) ? [InputItem(url: url)] : [])
-            for item in items where !known.contains(item.url) {
-                known.insert(item.url)
+            for item in items where !known.contains(Self.identity(item.url)) {
+                known.insert(Self.identity(item.url))
                 added.append(item)
             }
         }
         guard !added.isEmpty else { return }
         inputs = state.sort.sorted(inputs + added)
+    }
+
+    /// Same file reached through a symlink (/var vs /private/var) or "..": one entry only.
+    private static func identity(_ url: URL) -> String {
+        url.resolvingSymlinksInPath().standardizedFileURL.path
     }
 
     func removeSelected() {

@@ -8,7 +8,10 @@ FastStone Photo Resizer (spec em `../Clones/FSResizer-spec/SPEC.md`) com a inter
 ./build-app.sh              # gera build/HyperImage Converter.app (universal, assinado ad hoc)
 ./build-app.sh --install    # e copia para /Applications
 DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer swift test
+scripts/ui-smoke.sh         # abre cada folha/janela do app e salva uma imagem de cada uma
 ```
+Os testes cobrem o motor (`HyperImageCoreTests`) e os fluxos do app (`HyperImageAppTests`: lista de entrada,
+conversão com pergunta de sobrescrever, cancelamento, pastas virtuais e recorte sem perdas de ponta a ponta).
 Depois de instalado, o Finder ganha "Converter com HyperImage" no menu de contexto (Ações Rápidas/Serviços), que
 manda as imagens e pastas selecionadas para a lista de entrada. Se não aparecer, ative em Ajustes do Sistema →
 Teclado → Atalhos de Teclado → Serviços.
