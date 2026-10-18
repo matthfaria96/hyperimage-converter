@@ -38,10 +38,15 @@ enum FilePanels {
         try options.save(to: url)
     }
 
+    /// FastStone Photo Resizer option files, imported read-only.
+    static let fastStoneOptionsType = UTType(importedAs: "com.faststone.photoresizer.options", conformingTo: .data)
+
     static func loadOptions() throws -> AdvancedOptions? {
         let panel = NSOpenPanel()
-        panel.allowedContentTypes = [optionsType, .json]
+        panel.allowedContentTypes = [optionsType, .json, fastStoneOptionsType]
+        panel.message = "Escolha um arquivo .hyperoptions ou um .ccf do FastStone Photo Resizer."
         guard panel.runModal() == .OK, let url = panel.url else { return nil }
+        if url.pathExtension.lowercased() == "ccf" { return try CCFImporter.load(from: url) }
         return try AdvancedOptions.load(from: url)
     }
 

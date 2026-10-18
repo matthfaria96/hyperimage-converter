@@ -29,4 +29,5 @@ O Xcode é necessário (as Command Line Tools não trazem os plugins de macro do
 - Recorte JPEG sem perdas: quando o recorte é o único passo que mexe nos pixels (DPI pode estar ligado), a origem é
   JPEG sem rotação EXIF e a saída é JPEG em YCbCr, os blocos DCT são cortados direto, sem recodificar. O resultado
   bate pixel a pixel com o FastStone. Se a origem X/Y não cair na grade de blocos, o recorte é recodificado.
-- As opções são salvas como JSON (`.hyperoptions`); `.ccf` não é importado.
+- As opções são salvas como JSON (`.hyperoptions`). Arquivos `.ccf` do original podem ser carregados (só leitura);
+  o `.ccf` não guarda o caminho da marca d'água, então ele precisa ser escolhido de novo.
