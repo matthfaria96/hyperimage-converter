@@ -19,6 +19,12 @@ struct HyperImageApp: App {
         }
         .defaultSize(width: 1360, height: 820)
         .commands { AppCommands(model: model) }
+
+        Window("Sobre o HyperImage Converter", id: "about") {
+            AboutView()
+        }
+        .windowResizability(.contentSize)
+        .restorationBehavior(.disabled)
     }
 
     private func applyAppearance(_ choice: AppearanceChoice) {
@@ -54,8 +60,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
 struct AppCommands: Commands {
     let model: AppModel
+    @Environment(\.openWindow) private var openWindow
 
     var body: some Commands {
+        CommandGroup(replacing: .appInfo) {
+            Button("Sobre o HyperImage Converter") { openWindow(id: "about") }
+        }
         CommandGroup(after: .newItem) {
             Button("Adicionar Arquivos…") { FilePanels.addFiles(to: model) }
                 .keyboardShortcut("o")

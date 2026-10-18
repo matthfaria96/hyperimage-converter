@@ -7,6 +7,6 @@ pkill -x HyperImage 2>/dev/null || true
 sleep 0.5
 .build/debug/HyperImage >/dev/null 2>&1 &
 sleep "${WAIT:-4}"
-ID=$(swift scripts/window-id.swift)
+ID=$(swift scripts/window-id.swift ${PICK:-})
 screencapture -o -l "$ID" "$1"
 pkill -x HyperImage || true

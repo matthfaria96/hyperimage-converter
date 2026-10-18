@@ -54,8 +54,11 @@ struct FormatSettingsSheet: View {
                 Text("Alta (arquivo menor)").tag(JPEGSubsampling.high)
             }
             .disabled(draft.jpeg.photometric == .cmyk || draft.jpeg.photometric == .grayscale || draft.jpeg.photometric == .rgb)
-            Stepper(value: $draft.jpeg.smoothing, in: JPEGSettings.smoothingRange) {
-                LabeledContent("Suavização", value: "\(draft.jpeg.smoothing)")
+            LabeledContent("Suavização") {
+                HStack(spacing: 6) {
+                    Text("\(draft.jpeg.smoothing)").monospacedDigit()
+                    Stepper("Suavização", value: $draft.jpeg.smoothing, in: JPEGSettings.smoothingRange).labelsHidden()
+                }
             }
             .disabled(draft.jpeg.photometric == .cmyk)
             Toggle("Otimizar tabela de Huffman", isOn: $draft.jpeg.optimizeHuffman)

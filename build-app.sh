@@ -35,6 +35,7 @@ iconutil -c icns "$ICONSET" -o "$CONTENTS/Resources/AppIcon.icns"
 
 cp Sources/CWebP/COPYING "$CONTENTS/Resources/Licenses/libwebp-COPYING.txt"
 cp Sources/CWebP/PATENTS "$CONTENTS/Resources/Licenses/libwebp-PATENTS.txt"
+cp Sources/CJPEG/README-libjpeg.txt "$CONTENTS/Resources/Licenses/libjpeg-README.txt"
 
 strip -x "$CONTENTS/MacOS/HyperImage" 2>/dev/null || true
 codesign --force --options runtime --sign - "$APP"

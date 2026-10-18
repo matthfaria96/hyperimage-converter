@@ -17,6 +17,7 @@ enum SheetRoute: Identifiable {
 
 struct MainView: View {
     @Environment(AppModel.self) private var app
+    @Environment(\.openWindow) private var openWindow
     @State private var browser: BrowserModel?
     @State private var sheet: SheetRoute?
     @State private var showInspector = true
@@ -51,6 +52,7 @@ struct MainView: View {
             #if DEBUG
             if let route = DebugLaunch.apply(to: app) { sheet = route }
             if DebugLaunch.env["HYPERIMAGE_SHEET"] == "progress", !app.inputs.isEmpty { startConversion() }
+            if DebugLaunch.env["HYPERIMAGE_WINDOW"] == "about" { openWindow(id: "about") }
             #endif
         }
     }
