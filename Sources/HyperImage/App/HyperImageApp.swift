@@ -51,6 +51,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if let model { model.add(urls) } else { pending += urls }
     }
 
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        NSApp.servicesProvider = self
+        NSUpdateDynamicServices()
+    }
+
+    /// Finder's "Converter com HyperImage" service (Info.plist NSServices): queues the chosen images and folders.
+    @objc func addFilesService(_ pasteboard: NSPasteboard, userData: String?, error: AutoreleasingUnsafeMutablePointer<NSString?>) {
+        let urls = pasteboard.readObjects(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) as? [URL] ?? []
+        guard !urls.isEmpty else {
+            error.pointee = "Nenhum arquivo recebido." as NSString
+            return
+        }
+        application(NSApp, open: urls)
+        NSApp.activate()
+    }
+
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { true }
 
     func applicationWillTerminate(_ notification: Notification) {

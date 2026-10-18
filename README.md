@@ -9,6 +9,10 @@ FastStone Photo Resizer (spec em `../Clones/FSResizer-spec/SPEC.md`) com a inter
 ./build-app.sh --install    # e copia para /Applications
 DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer swift test
 ```
+Depois de instalado, o Finder ganha "Converter com HyperImage" no menu de contexto (Ações Rápidas/Serviços), que
+manda as imagens e pastas selecionadas para a lista de entrada. Se não aparecer, ative em Ajustes do Sistema →
+Teclado → Atalhos de Teclado → Serviços.
+
 O Xcode é necessário (as Command Line Tools não trazem os plugins de macro do SwiftUI).
 
 ## Estrutura
