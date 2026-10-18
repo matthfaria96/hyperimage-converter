@@ -82,7 +82,7 @@ struct BorderStepView: View {
     @Binding var o: BorderOptions
 
     var body: some View {
-        Section("Molduras (de dentro para fora)") {
+        Section("Molduras (de fora para dentro)") {
             frame("Moldura 1", $o.frame1)
             frame("Moldura 2", $o.frame2)
             frame("Moldura 3", $o.frame3)

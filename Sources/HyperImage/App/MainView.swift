@@ -48,6 +48,10 @@ struct MainView: View {
                 model.reload()
                 browser = model
             }
+            #if DEBUG
+            if let route = DebugLaunch.apply(to: app) { sheet = route }
+            if DebugLaunch.env["HYPERIMAGE_SHEET"] == "progress", !app.inputs.isEmpty { startConversion() }
+            #endif
         }
     }
 

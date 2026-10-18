@@ -1,6 +1,6 @@
 import CoreGraphics
 
-/// Frames (innermost first), an optional inner frame painted over the photo, and a drop shadow.
+/// Frames (frame 1 outermost), an optional inner frame painted over the photo, and a drop shadow.
 /// Frames and the shadow grow the image, as in the reference output (1200×800 → 1241×841 by default).
 public enum BorderEffect {
     public struct Layout: Equatable, Sendable {
@@ -45,9 +45,9 @@ public enum BorderEffect {
     }
 
     private static func drawFrames(_ options: BorderOptions, in ctx: CGContext, outer: CGRect) {
-        // Paint from the outermost frame inwards, each one a filled rect over the previous.
+        // Frame 1 is the outermost (verified against the reference); paint inwards, each over the previous.
         var rect = outer
-        for frame in [options.frame3, options.frame2, options.frame1] where frame.enabled {
+        for frame in [options.frame1, options.frame2, options.frame3] where frame.enabled {
             ctx.setFillColor(frame.color.cgColor)
             ctx.fill(rect)
             rect = rect.insetBy(dx: CGFloat(frame.width), dy: CGFloat(frame.width))

@@ -18,7 +18,7 @@ struct RenameInspector: View {
                 .pickerStyle(.segmented)
             }
             if app.state.rename.method == .template {
-                Section("Modelo") {
+                Section {
                     TemplateField(template: r.template)
                     if RenameTemplate.usesSequence(app.state.rename.template) {
                         Stepper("Começar em \(app.state.rename.startNumber)", value: r.startNumber, in: 0...9_999_999)

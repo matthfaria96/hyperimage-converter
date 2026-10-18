@@ -39,7 +39,10 @@ public struct ImagePipeline: @unchecked Sendable {
             image = try Transforms.flipRotate(image, options: o.rotate)
         }
         if o.crop.enabled {
-            image = try Transforms.crop(image, to: CropGeometry.rect(source: image.pixelSize, options: o.crop, sourceDPI: source.dpi))
+            // Block alignment only means something while the pixels are still the JPEG's own grid.
+            let untouched = image.pixelSize == source.image.pixelSize && !(o.resize.enabled || o.rotate.enabled || (adjust && o.adjustments.beforeResize))
+            let block = source.sourceType == "public.jpeg" && untouched ? 16 : nil
+            image = try Transforms.crop(image, to: CropGeometry.rect(source: image.pixelSize, options: o.crop, sourceDPI: source.dpi, jpegBlock: block))
         }
         if o.canvas.enabled {
             image = try Transforms.canvas(image, plan: CanvasGeometry.plan(source: image.pixelSize, options: o.canvas), background: o.canvas.background)

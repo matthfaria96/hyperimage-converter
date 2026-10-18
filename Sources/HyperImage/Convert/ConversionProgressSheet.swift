@@ -21,14 +21,8 @@ struct ConversionProgressSheet: View {
         }
         .padding(20)
         .frame(minWidth: 860, minHeight: 520)
-        .alert("Arquivo já existe", isPresented: Binding(get: { runner.prompt != nil }, set: { _ in })) {
-            Button("Sobrescrever") { runner.answer(.yes) }
-            Button("Sobrescrever Todos") { runner.answer(.yesToAll) }
-            Button("Pular") { runner.answer(.no) }
-            Button("Pular Todos") { runner.answer(.noToAll) }
-            Button("Cancelar Conversão", role: .cancel) { runner.answer(.cancel) }
-        } message: {
-            Text("\(runner.prompt?.url.path ?? "") já existe. Deseja sobrescrever?")
+        .overlay {
+            if let prompt = runner.prompt { OverwritePanel(url: prompt.url, answer: runner.answer) }
         }
         .onChange(of: runner.isRunning) { _, running in
             if !running, runner.settings.showErrors, !runner.failures.isEmpty, !runner.wasCancelled {
@@ -69,13 +63,13 @@ struct ConversionProgressSheet: View {
     private var footer: some View {
         HStack(alignment: .center, spacing: 24) {
             VStack(alignment: .leading, spacing: 2) {
-                Text("Original: \(ByteCountFormatter.string(fromByteCount: runner.oldTotal, countStyle: .file))")
-                Text("Novo: \(ByteCountFormatter.string(fromByteCount: runner.newTotal, countStyle: .file))")
+                Text("Original: \(formatBytes(runner.oldTotal))")
+                Text("Novo: \(formatBytes(runner.newTotal))")
             }
             VStack(alignment: .leading, spacing: 2) {
                 let ratio = runner.oldTotal > 0 ? Double(runner.newTotal) / Double(runner.oldTotal) : 0
                 Text("Proporção: \(Int((ratio * 100).rounded())) %")
-                Text("Economia: \(ByteCountFormatter.string(fromByteCount: max(0, runner.oldTotal - runner.newTotal), countStyle: .file))")
+                Text("Economia: \(formatBytes(max(0, runner.oldTotal - runner.newTotal)))")
             }
             TimelineView(.periodic(from: .now, by: 1)) { context in
                 VStack(alignment: .leading, spacing: 2) {
@@ -99,7 +93,7 @@ struct ConversionProgressSheet: View {
     }
 
     private func sizeText(_ bytes: Int64?) -> some View {
-        Text(bytes.map { ByteCountFormatter.string(fromByteCount: $0, countStyle: .file) } ?? "")
+        Text(bytes.map { formatBytes($0) } ?? "")
             .monospacedDigit().foregroundStyle(.secondary)
     }
 
@@ -125,4 +119,49 @@ struct StatusBadge: View {
         case let .failed(message): Label("Erro", systemImage: "xmark.octagon.fill").foregroundStyle(.red).help(message)
         }
     }
+}
+
+/// Five-way overwrite question (a system alert only shows three buttons comfortably).
+private struct OverwritePanel: View {
+    let url: URL
+    let answer: (OverwriteDecision) -> Void
+
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.25).ignoresSafeArea()
+            VStack(alignment: .leading, spacing: 14) {
+                Label("“\(url.lastPathComponent)” já existe", systemImage: "exclamationmark.triangle.fill")
+                    .font(.headline)
+                    .symbolRenderingMode(.multicolor)
+                Text("Na pasta \((url.deletingLastPathComponent().path as NSString).abbreviatingWithTildeInPath). Deseja substituir?")
+                    .font(.callout).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                HStack {
+                    Button("Cancelar Conversão", role: .cancel) { answer(.cancel) }
+                        .keyboardShortcut(.cancelAction)
+                    Spacer()
+                    Button("Pular Todos") { answer(.noToAll) }
+                    Button("Pular") { answer(.no) }
+                }
+                HStack {
+                    Spacer()
+                    Button("Sobrescrever Todos") { answer(.yesToAll) }
+                    Button("Sobrescrever") { answer(.yes) }
+                        .keyboardShortcut(.defaultAction)
+                        .buttonStyle(.borderedProminent)
+                }
+            }
+            .padding(20)
+            .frame(width: 440)
+            .background(.regularMaterial, in: .rect(cornerRadius: 16))
+            .shadow(radius: 20)
+        }
+    }
+}
+
+func formatBytes(_ bytes: Int64) -> String {
+    let formatter = ByteCountFormatter()
+    formatter.countStyle = .file
+    formatter.allowsNonnumericFormatting = false
+    return formatter.string(fromByteCount: bytes)
 }

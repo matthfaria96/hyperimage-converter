@@ -31,26 +31,15 @@ public enum ColorAdjuster {
             matrix.biasVector = CIVector(x: base + o.red / 255, y: base + o.green / 255, z: base + o.blue / 255, w: 0)
             image = matrix.outputImage ?? image
         }
-        if o.contrast != 0 || o.saturation != 0 {
-            let controls = CIFilter.colorControls()
-            controls.inputImage = image
-            controls.contrast = Float(1 + o.contrast / 100)
-            controls.saturation = Float(1 + o.saturation / 100)
-            controls.brightness = 0
-            image = controls.outputImage ?? image
-        }
+        if o.contrast != 0 { image = contrast(image, amount: o.contrast / 100, extent: input.extent) }
+        if o.saturation != 0 { image = saturate(image, factor: 1 + o.saturation / 100) }
         if o.gamma != 1 {
             let gamma = CIFilter.gammaAdjust()
             gamma.inputImage = image
             gamma.power = Float(1 / max(0.01, o.gamma))
             image = gamma.outputImage ?? image
         }
-        if o.hue != 0 {
-            let hue = CIFilter.hueAdjust()
-            hue.inputImage = image
-            hue.angle = Float(o.hue * .pi / 180)
-            image = hue.outputImage ?? image
-        }
+        if o.hue != 0 { image = HueRotation.apply(image, degrees: o.hue) }
         if o.lightness != 0 {
             image = lightness(image, amount: o.lightness / 100)
         }
@@ -65,11 +54,12 @@ public enum ColorAdjuster {
             image = curve.outputImage ?? image
         }
         if o.sharpen > 0 {
-            let sharpen = CIFilter.sharpenLuminance()
-            sharpen.inputImage = image
-            sharpen.sharpness = Float(o.sharpen / 100 * 2)
-            sharpen.radius = 1.5
-            image = sharpen.outputImage ?? image
+            // Unsharp mask fitted to the original's halo (radius 2.5, intensity 2.0 at 100).
+            let usm = CIFilter.unsharpMask()
+            usm.inputImage = image
+            usm.radius = 2.5
+            usm.intensity = Float(o.sharpen / 100 * 2.0)
+            image = usm.outputImage ?? image
         } else if o.sharpen < 0 {
             let blur = CIFilter.gaussianBlur()
             blur.inputImage = image
@@ -83,17 +73,16 @@ public enum ColorAdjuster {
             usm.intensity = 0.8
             image = usm.outputImage ?? image
         }
-        if o.grayscale {
-            let mono = CIFilter.colorControls()
-            mono.inputImage = image
-            mono.saturation = 0
-            image = mono.outputImage ?? image
-        }
+        if o.grayscale || o.sepia { image = saturate(image, factor: 0) }
         if o.sepia {
-            let sepia = CIFilter.sepiaTone()
-            sepia.inputImage = image
-            sepia.intensity = 1
-            image = sepia.outputImage ?? image
+            // Least-squares fit of the original app's sepia against Rec.601 grey.
+            let tint = CIFilter.colorMatrix()
+            tint.inputImage = image
+            tint.rVector = CIVector(x: 0.996, y: 0, z: 0, w: 0)
+            tint.gVector = CIVector(x: 0, y: 0.879, z: 0, w: 0)
+            tint.bVector = CIVector(x: 0, y: 0, z: 0.611, w: 0)
+            tint.biasVector = CIVector(x: 8.2 / 255, y: 7.2 / 255, z: 6.7 / 255, w: 0)
+            image = tint.outputImage ?? image
         }
         if o.negative {
             let invert = CIFilter.colorInvert()
@@ -103,17 +92,56 @@ public enum ColorAdjuster {
         return image
     }
 
-    /// Positive values blend towards white, negative towards black.
+    /// Adds (or subtracts) light: as in the original, +50 already turns everything white.
     private static func lightness(_ image: CIImage, amount: Double) -> CIImage {
         let matrix = CIFilter.colorMatrix()
         matrix.inputImage = image
-        let k = CGFloat(min(1, max(-1, amount)))
-        let scale = k > 0 ? 1 - k : 1 + k
-        let bias = k > 0 ? k : 0
+        let k = CGFloat(min(1, max(-1, amount))) * 2
+        let scale: CGFloat = k < 0 ? max(0, 1 + k) : 1
+        let bias: CGFloat = k > 0 ? k : 0
         matrix.rVector = CIVector(x: scale, y: 0, z: 0, w: 0)
         matrix.gVector = CIVector(x: 0, y: scale, z: 0, w: 0)
         matrix.bVector = CIVector(x: 0, y: 0, z: scale, w: 0)
         matrix.biasVector = CIVector(x: bias, y: bias, z: bias, w: 0)
         return matrix.outputImage ?? image
+    }
+
+    /// Lerp between Rec.601 grey and the colour (the weights fitted from the reference output).
+    private static func saturate(_ image: CIImage, factor: Double) -> CIImage {
+        let s = CGFloat(factor), w: [CGFloat] = [0.299, 0.587, 0.114]
+        func row(_ i: Int) -> CIVector {
+            let v = (0..<3).map { j in w[j] * (1 - s) + (i == j ? s : 0) }
+            return CIVector(x: v[0], y: v[1], z: v[2], w: 0)
+        }
+        let matrix = CIFilter.colorMatrix()
+        matrix.inputImage = image
+        matrix.rVector = row(0)
+        matrix.gVector = row(1)
+        matrix.bVector = row(2)
+        return matrix.outputImage ?? image
+    }
+
+    /// Stretches each channel around that channel's image mean (the original's pivot), ×1.78 at +50.
+    private static func contrast(_ image: CIImage, amount: Double, extent: CGRect) -> CIImage {
+        let k = CGFloat(amount >= 0 ? 1 + 1.56 * amount : 1 + amount)
+        let mean = channelMeans(image.cropped(to: extent))
+        let matrix = CIFilter.colorMatrix()
+        matrix.inputImage = image
+        matrix.rVector = CIVector(x: k, y: 0, z: 0, w: 0)
+        matrix.gVector = CIVector(x: 0, y: k, z: 0, w: 0)
+        matrix.bVector = CIVector(x: 0, y: 0, z: k, w: 0)
+        matrix.biasVector = CIVector(x: mean[0] * (1 - k), y: mean[1] * (1 - k), z: mean[2] * (1 - k), w: 0)
+        return matrix.outputImage ?? image
+    }
+
+    static func channelMeans(_ image: CIImage) -> [CGFloat] {
+        let average = CIFilter.areaAverage()
+        average.inputImage = image
+        average.extent = image.extent
+        var pixel = [Float](repeating: 0, count: 4)
+        guard let output = average.outputImage else { return [0.5, 0.5, 0.5] }
+        context.render(output, toBitmap: &pixel, rowBytes: 16, bounds: CGRect(x: 0, y: 0, width: 1, height: 1),
+                       format: .RGBAf, colorSpace: CGColorSpace(name: CGColorSpace.sRGB))
+        return pixel.prefix(3).map { CGFloat($0) }
     }
 }

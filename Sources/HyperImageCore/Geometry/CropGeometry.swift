@@ -1,6 +1,8 @@
 public enum CropGeometry {
     /// The rectangle to keep, clamped to the image. Centred unless an origin is given.
-    public static func rect(source: PixelSize, options: CropOptions, sourceDPI: Double) -> PixelRect {
+    /// - Parameter jpegBlock: MCU size of a JPEG source when lossless cropping applies; a centred crop's origin
+    ///   then snaps to it (the original moves a 640×480 centre crop of a 1200×800 photo to x = 288).
+    public static func rect(source: PixelSize, options: CropOptions, sourceDPI: Double, jpegBlock: Int? = nil) -> PixelRect {
         let requested: (w: Double, h: Double) = switch options.mode {
         case .pixels: (Double(options.width), Double(options.height))
         case .printSize: (options.printUnit.pixels(options.printWidth, dpi: sourceDPI), options.printUnit.pixels(options.printHeight, dpi: sourceDPI))
@@ -22,8 +24,12 @@ public enum CropGeometry {
         let height = min(source.height, roundedPixels(h))
 
         let usesOrigin = options.useOrigin && options.mode == .pixels
-        let x = usesOrigin ? options.originX : (source.width - width) / 2
-        let y = usesOrigin ? options.originY : (source.height - height) / 2
+        var x = usesOrigin ? options.originX : (source.width - width) / 2
+        var y = usesOrigin ? options.originY : (source.height - height) / 2
+        if let block = jpegBlock, options.losslessJPEG, !usesOrigin {
+            x = Int((Double(x) / Double(block)).rounded(.toNearestOrAwayFromZero)) * block
+            y = Int((Double(y) / Double(block)).rounded(.toNearestOrAwayFromZero)) * block
+        }
         return PixelRect(
             x: min(max(0, x), source.width - width),
             y: min(max(0, y), source.height - height),
