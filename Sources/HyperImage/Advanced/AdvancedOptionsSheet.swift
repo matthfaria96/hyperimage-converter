@@ -1,0 +1,118 @@
+import HyperImageCore
+import SwiftUI
+
+/// The 10-step editor. Works on a draft; OK commits it. Reopens on the last used step.
+struct AdvancedOptionsSheet: View {
+    @Environment(AppModel.self) private var app
+    @Environment(\.dismiss) private var dismiss
+    @State private var draft = AdvancedOptions()
+    @State private var step: AdvancedStep = .resize
+    @State private var presets: [PixelSize] = []
+
+    var body: some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 0) {
+                sidebar
+                Divider()
+                Form {
+                    Section {
+                        Toggle(isOn: enabledBinding) {
+                            Label(step.title, systemImage: step.symbol).font(.headline)
+                        }
+                        .toggleStyle(.switch)
+                    }
+                    stepForm.disabled(!step.isEnabled(in: draft))
+                }
+                .formStyle(.grouped)
+                .frame(width: 430)
+                Divider()
+                StepPreview(options: draft, sourceURL: app.selectedItem?.url ?? app.inputs.first?.url)
+                    .padding(14)
+                    .frame(minWidth: 360)
+            }
+            Divider()
+            footer
+        }
+        .frame(minWidth: 1080, minHeight: 680)
+        .onAppear {
+            draft = app.state.convert.advanced
+            step = app.state.lastAdvancedStep
+            presets = app.state.resizePresets
+        }
+        .onChange(of: step) { _, s in app.state.lastAdvancedStep = s }
+        .onChange(of: presets) { _, p in app.state.resizePresets = p }
+    }
+
+    private var sidebar: some View {
+        List(AdvancedStep.allCases, selection: Binding(get: { step }, set: { if let s = $0 { step = s } })) { item in
+            HStack {
+                Label(item.title, systemImage: item.symbol)
+                Spacer()
+                if item.isEnabled(in: draft) {
+                    Circle().fill(.green).frame(width: 8, height: 8).help("Ativada")
+                }
+            }
+            .tag(item)
+        }
+        .listStyle(.sidebar)
+        .frame(width: 220)
+    }
+
+    private var enabledBinding: Binding<Bool> {
+        Binding(get: { step.isEnabled(in: draft) }, set: { draft = step.setting($0, in: draft) })
+    }
+
+    @ViewBuilder
+    private var stepForm: some View {
+        switch step {
+        case .resize: ResizeStepView(o: $draft.resize, presets: $presets)
+        case .rotate: RotateStepView(o: $draft.rotate)
+        case .crop: CropStepView(o: $draft.crop)
+        case .canvas: CanvasStepView(o: $draft.canvas)
+        case .colorDepth: ColorDepthStepView(o: $draft.colorDepth)
+        case .adjustments: AdjustmentsStepView(o: $draft.adjustments)
+        case .dpi: DPIStepView(o: $draft.dpi)
+        case .text: TextStepView(o: $draft.text)
+        case .watermark: WatermarkStepView(o: $draft.watermark)
+        case .border: BorderStepView(o: $draft.border)
+        }
+    }
+
+    private var footer: some View {
+        HStack {
+            Button("Desativar Tudo") {
+                draft = AdvancedStep.allCases.reduce(draft) { $1.setting(false, in: $0) }
+            }
+            Button("Carregar…") {
+                do {
+                    if let loaded = try FilePanels.loadOptions() { draft = loaded }
+                } catch {
+                    app.alert = AppAlert(title: "Não foi possível carregar", message: error.localizedDescription)
+                }
+            }
+            Button("Salvar…") {
+                do { try FilePanels.saveOptions(draft) } catch {
+                    app.alert = AppAlert(title: "Não foi possível salvar", message: error.localizedDescription)
+                }
+            }
+            Spacer()
+            Text("A ordem de aplicação segue a lista ao lado.").font(.caption).foregroundStyle(.secondary)
+            Spacer()
+            Button("Cancelar", role: .cancel) { dismiss() }.keyboardShortcut(.cancelAction)
+            Button("OK") { commit() }
+                .keyboardShortcut(.defaultAction)
+                .buttonStyle(.borderedProminent)
+        }
+        .padding(14)
+    }
+
+    private func commit() {
+        if let message = draft.validationError() {
+            app.alert = AppAlert(title: "Opções avançadas", message: message)
+            return
+        }
+        app.state.convert.advanced = draft
+        if draft.hasEnabledStep { app.state.convert.useAdvancedOptions = true }
+        dismiss()
+    }
+}
