@@ -49,7 +49,7 @@ struct RenameInspector: View {
 }
 
 private struct PairRow: View {
-    let title: String
+    let title: LocalizedStringKey
     @Binding var pair: SearchReplaceRule.Pair
 
     var body: some View {

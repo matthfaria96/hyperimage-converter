@@ -2,7 +2,7 @@ import HyperImageCore
 import SwiftUI
 
 struct IntField: View {
-    let title: String
+    let title: LocalizedStringKey
     @Binding var value: Int
     var range: ClosedRange<Int> = 0...100_000
     var suffix = ""
@@ -22,7 +22,7 @@ struct IntField: View {
 }
 
 struct DecimalField: View {
-    let title: String
+    let title: LocalizedStringKey
     @Binding var value: Double
     var step = 0.1
     var range: ClosedRange<Double> = 0...100_000
@@ -43,7 +43,7 @@ struct DecimalField: View {
 
 /// Slider + numeric field + reset button, as in the original's "Design and Preview".
 struct AdjustmentSlider: View {
-    let title: String
+    let title: LocalizedStringKey
     @Binding var value: Double
     let range: ClosedRange<Double>
     var neutral = 0.0
@@ -73,7 +73,7 @@ struct AdjustmentSlider: View {
 }
 
 struct ColorRow: View {
-    let title: String
+    let title: LocalizedStringKey
     @Binding var color: RGBAColor
     var supportsOpacity = false
 

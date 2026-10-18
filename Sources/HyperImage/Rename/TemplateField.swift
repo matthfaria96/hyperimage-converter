@@ -36,11 +36,11 @@ struct TemplateField: View {
 
 struct TemplateHelp: View {
     private let rows: [(String, String)] = [
-        ("#", "um dígito do número sequencial (zeros à esquerda)"),
-        ("*", "nome original do arquivo"),
-        ("$P", "nome da pasta"),
-        ("$Y $M $D", "ano, mês, dia"),
-        ("$H $N $S", "hora, minuto, segundo"),
+        ("#", String(localized: "um dígito do número sequencial (zeros à esquerda)")),
+        ("*", String(localized: "nome original do arquivo")),
+        ("$P", String(localized: "nome da pasta")),
+        ("$Y $M $D", String(localized: "ano, mês, dia")),
+        ("$H $N $S", String(localized: "hora, minuto, segundo")),
     ]
 
     var body: some View {

@@ -87,12 +87,12 @@ struct AdvancedOptionsSheet: View {
                 do {
                     if let loaded = try FilePanels.loadOptions() { draft = loaded }
                 } catch {
-                    app.alert = AppAlert(title: "Não foi possível carregar", message: error.localizedDescription)
+                    app.alert = AppAlert(title: String(localized: "Não foi possível carregar"), message: error.localizedDescription)
                 }
             }
             Button("Salvar…") {
                 do { try FilePanels.saveOptions(draft) } catch {
-                    app.alert = AppAlert(title: "Não foi possível salvar", message: error.localizedDescription)
+                    app.alert = AppAlert(title: String(localized: "Não foi possível salvar"), message: error.localizedDescription)
                 }
             }
             Spacer()
@@ -108,7 +108,7 @@ struct AdvancedOptionsSheet: View {
 
     private func commit() {
         if let message = draft.validationError() {
-            app.alert = AppAlert(title: "Opções avançadas", message: message)
+            app.alert = AppAlert(title: String(localized: "Opções avançadas"), message: message)
             return
         }
         app.state.convert.advanced = draft

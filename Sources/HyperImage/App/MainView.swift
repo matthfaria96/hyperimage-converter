@@ -121,11 +121,11 @@ struct MainView: View {
     private func startConversion() {
         let settings = app.state.convert
         if settings.useAdvancedOptions, let message = settings.advanced.validationError() {
-            app.alert = AppAlert(title: "Opções avançadas", message: message)
+            app.alert = AppAlert(title: String(localized: "Opções avançadas"), message: message)
             return
         }
         if settings.useOutputFolder && settings.outputFolder.isEmpty {
-            guard let folder = FilePanels.chooseFolder(prompt: "Usar como Saída") else { return }
+            guard let folder = FilePanels.chooseFolder(prompt: String(localized: "Usar como Saída")) else { return }
             app.state.convert.outputFolder = folder.path
         }
         runner.start(items: app.inputs, settings: app.state.convert)

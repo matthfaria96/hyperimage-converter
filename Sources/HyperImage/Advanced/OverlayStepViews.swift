@@ -58,7 +58,7 @@ struct WatermarkStepView: View {
     var body: some View {
         Section("Imagem") {
             HStack {
-                Text(o.imagePath.isEmpty ? "Nenhuma imagem" : (o.imagePath as NSString).lastPathComponent)
+                Text(o.imagePath.isEmpty ? String(localized: "Nenhuma imagem") : (o.imagePath as NSString).lastPathComponent)
                     .foregroundStyle(o.imagePath.isEmpty ? .secondary : .primary)
                     .lineLimit(1).truncationMode(.middle).help(o.imagePath)
                 Spacer()
@@ -109,7 +109,7 @@ struct BorderStepView: View {
         }
     }
 
-    private func frame(_ title: String, _ binding: Binding<FrameLine>) -> some View {
+    private func frame(_ title: LocalizedStringKey, _ binding: Binding<FrameLine>) -> some View {
         HStack {
             Toggle(title, isOn: binding.enabled)
             Spacer()

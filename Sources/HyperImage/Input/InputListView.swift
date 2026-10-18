@@ -160,11 +160,11 @@ struct SortMenu: View {
 
     private var sortTitle: String {
         let name = switch app.state.sort.key {
-        case .none: "Sem ordenação"
-        case .name: "Nome"
-        case .size: "Tamanho"
-        case .dateTaken: "Data da foto"
-        case .type: "Tipo"
+        case .none: String(localized: "Sem ordenação")
+        case .name: String(localized: "Nome")
+        case .size: String(localized: "Tamanho")
+        case .dateTaken: String(localized: "Data da foto")
+        case .type: String(localized: "Tipo")
         }
         return app.state.sort.descending && app.state.sort.key != .none ? "\(name) ↓" : name
     }

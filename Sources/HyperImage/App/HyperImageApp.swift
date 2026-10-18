@@ -60,7 +60,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc func addFilesService(_ pasteboard: NSPasteboard, userData: String?, error: AutoreleasingUnsafeMutablePointer<NSString?>) {
         let urls = pasteboard.readObjects(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) as? [URL] ?? []
         guard !urls.isEmpty else {
-            error.pointee = "Nenhum arquivo recebido." as NSString
+            error.pointee = String(localized: "Nenhum arquivo recebido.") as NSString
             return
         }
         application(NSApp, open: urls)

@@ -52,7 +52,7 @@ struct AboutView: View {
             guard let url = Bundle.main.resourceURL?.appendingPathComponent("Licenses/\(name)") else { return nil }
             return (try? String(contentsOf: url, encoding: .utf8)) ?? (try? String(contentsOf: url, encoding: .isoLatin1))
         }
-        return texts.isEmpty ? "Texto da licença indisponível nesta compilação (gere o app com build-app.sh)." : texts.joined(separator: "\n\n")
+        return texts.isEmpty ? String(localized: "Texto da licença indisponível nesta compilação (gere o app com build-app.sh).") : texts.joined(separator: "\n\n")
     }
 
     private static var version: String {

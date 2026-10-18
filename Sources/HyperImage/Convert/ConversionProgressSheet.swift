@@ -26,7 +26,7 @@ struct ConversionProgressSheet: View {
         }
         .onChange(of: runner.isRunning) { _, running in
             if !running, runner.settings.showErrors, !runner.failures.isEmpty, !runner.wasCancelled {
-                app.alert = AppAlert(title: "\(runner.failures.count) arquivo(s) com erro",
+                app.alert = AppAlert(title: String(localized: "\(runner.failures.count) arquivo(s) com erro"),
                                      message: runner.failures.prefix(8).map { r in
                                          "\(r.input.lastPathComponent): \(errorText(r.status))"
                                      }.joined(separator: "\n"))

@@ -24,7 +24,7 @@ struct RenamePreviewSheet: View {
             HStack {
                 let conflicts = entries.filter(\.conflict).count
                 let changes = entries.filter { !$0.unchanged && !$0.conflict }.count
-                Text("\(changes) a renomear" + (conflicts > 0 ? " · \(conflicts) em conflito" : "")).foregroundStyle(.secondary)
+                (conflicts > 0 ? Text("\(changes) a renomear · \(conflicts) em conflito") : Text("\(changes) a renomear")).foregroundStyle(.secondary)
                 Spacer()
                 Button("Fechar", role: .cancel) { dismiss() }.keyboardShortcut(.cancelAction)
                 Button("Renomear") { rename() }
@@ -49,7 +49,7 @@ struct RenamePreviewSheet: View {
         let moved = entries.filter { !$0.unchanged && !$0.conflict && !failed.contains($0.source) }
         app.replace(Dictionary(uniqueKeysWithValues: moved.map { ($0.source, $0.destination) }))
         if !outcome.failures.isEmpty {
-            app.alert = AppAlert(title: "\(outcome.failures.count) arquivo(s) não renomeado(s)",
+            app.alert = AppAlert(title: String(localized: "\(outcome.failures.count) arquivo(s) não renomeado(s)"),
                                  message: outcome.failures.prefix(8).map { "\($0.0.lastPathComponent): \($0.1)" }.joined(separator: "\n"))
         }
         dismiss()

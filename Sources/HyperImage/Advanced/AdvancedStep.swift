@@ -7,16 +7,16 @@ enum AdvancedStep: String, CaseIterable, Codable, Identifiable {
 
     var title: String {
         switch self {
-        case .resize: "Redimensionar"
-        case .rotate: "Girar / Espelhar"
-        case .crop: "Recortar"
-        case .canvas: "Tamanho da Tela"
-        case .colorDepth: "Profundidade de Cor"
-        case .adjustments: "Ajustes"
-        case .dpi: "DPI"
-        case .text: "Texto"
-        case .watermark: "Marca d'Água"
-        case .border: "Bordas"
+        case .resize: String(localized: "Redimensionar")
+        case .rotate: String(localized: "Girar / Espelhar")
+        case .crop: String(localized: "Recortar")
+        case .canvas: String(localized: "Tamanho da Tela")
+        case .colorDepth: String(localized: "Profundidade de Cor")
+        case .adjustments: String(localized: "Ajustes")
+        case .dpi: String(localized: "DPI")
+        case .text: String(localized: "Texto")
+        case .watermark: String(localized: "Marca d'Água")
+        case .border: String(localized: "Bordas")
         }
     }
 

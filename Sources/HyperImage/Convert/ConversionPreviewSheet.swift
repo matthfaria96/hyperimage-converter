@@ -48,7 +48,7 @@ struct ConversionPreviewSheet: View {
         .task(id: url) { await render(url) }
     }
 
-    private func pane(title: String, image: CGImage?, info: String?) -> some View {
+    private func pane(title: LocalizedStringKey, image: CGImage?, info: String?) -> some View {
         VStack(spacing: 0) {
             HStack {
                 Text(title).font(.subheadline.weight(.semibold))

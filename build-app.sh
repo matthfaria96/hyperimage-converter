@@ -33,6 +33,10 @@ for SIZE in 16 32 128 256 512; do
 done
 iconutil -c icns "$ICONSET" -o "$CONTENTS/Resources/AppIcon.icns"
 
+# Interface strings: Portuguese is the source language; the catalog compiles to en.lproj.
+xcrun xcstringstool compile Resources/Localizable.xcstrings --output-directory "$CONTENTS/Resources"
+mkdir -p "$CONTENTS/Resources/pt-BR.lproj"
+
 cp Sources/CWebP/COPYING "$CONTENTS/Resources/Licenses/libwebp-COPYING.txt"
 cp Sources/CWebP/PATENTS "$CONTENTS/Resources/Licenses/libwebp-PATENTS.txt"
 cp Sources/CJPEG/README-libjpeg.txt "$CONTENTS/Resources/Licenses/libjpeg-README.txt"

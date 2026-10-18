@@ -77,7 +77,7 @@ private struct OutputFolderRow: View {
     var body: some View {
         HStack {
             Image(systemName: "folder").foregroundStyle(.secondary)
-            Text(path.isEmpty ? "Nenhuma pasta escolhida" : (path as NSString).abbreviatingWithTildeInPath)
+            Text(path.isEmpty ? String(localized: "Nenhuma pasta escolhida") : (path as NSString).abbreviatingWithTildeInPath)
                 .lineLimit(1).truncationMode(path.isEmpty ? .tail : .head)
                 .foregroundStyle(path.isEmpty ? .secondary : .primary)
                 .help(path)

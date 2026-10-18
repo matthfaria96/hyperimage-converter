@@ -15,6 +15,11 @@ Teclado → Atalhos de Teclado → Serviços.
 
 O Xcode é necessário (as Command Line Tools não trazem os plugins de macro do SwiftUI).
 
+## Idiomas
+A interface está em português (idioma de origem) e inglês. As traduções ficam em `Resources/Localizable.xcstrings`,
+que o `build-app.sh` compila para dentro do app. Depois de mudar textos no código, rode `scripts/sync-strings.sh` para
+atualizar o catálogo e traduza as entradas novas (no Xcode ou editando o JSON).
+
 ## Estrutura
 - `Sources/HyperImageCore`: motor sem UI. Modelos de opções, geometria (resize/crop/canvas), reamostrador
   separável com os 12 filtros, ajustes via Core Image, texto/marca d'água/bordas, quantizador median-cut,

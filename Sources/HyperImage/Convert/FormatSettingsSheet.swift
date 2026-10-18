@@ -126,7 +126,7 @@ struct FormatSettingsSheet: View {
 }
 
 struct QualitySlider: View {
-    let title: String
+    let title: LocalizedStringKey
     @Binding var value: Int
 
     var body: some View {

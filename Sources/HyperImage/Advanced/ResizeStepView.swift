@@ -86,18 +86,18 @@ struct ResizeStepView: View {
 
     static func filterName(_ filter: ResizeFilter) -> String {
         switch filter {
-        case .none: "Nenhum"
-        case .bell: "Bell"
-        case .bicubic: "Bicúbico"
-        case .bilinear: "Bilinear"
-        case .bspline: "B-Spline"
-        case .fastLinear: "Linear rápido"
-        case .lanczos2: "Lanczos2 (mais nítido)"
-        case .lanczos3: "Lanczos3 (padrão)"
-        case .linear: "Linear"
-        case .mitchell: "Mitchell"
-        case .nearest: "Vizinho mais próximo"
-        case .triangle: "Triângulo"
+        case .none: String(localized: "Nenhum")
+        case .bell: String(localized: "Bell")
+        case .bicubic: String(localized: "Bicúbico")
+        case .bilinear: String(localized: "Bilinear")
+        case .bspline: String(localized: "B-Spline")
+        case .fastLinear: String(localized: "Linear rápido")
+        case .lanczos2: String(localized: "Lanczos2 (mais nítido)")
+        case .lanczos3: String(localized: "Lanczos3 (padrão)")
+        case .linear: String(localized: "Linear")
+        case .mitchell: String(localized: "Mitchell")
+        case .nearest: String(localized: "Vizinho mais próximo")
+        case .triangle: String(localized: "Triângulo")
         }
     }
 }

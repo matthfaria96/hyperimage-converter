@@ -7,11 +7,11 @@ enum FilePanels {
         let panel = NSOpenPanel()
         panel.allowsMultipleSelection = true
         panel.canChooseDirectories = true
-        panel.prompt = "Adicionar"
+        panel.prompt = String(localized: "Adicionar")
         if panel.runModal() == .OK { model.add(panel.urls) }
     }
 
-    static func chooseFolder(startingAt path: String = "", prompt: String = "Escolher") -> URL? {
+    static func chooseFolder(startingAt path: String = "", prompt: String = String(localized: "Escolher")) -> URL? {
         let panel = NSOpenPanel()
         panel.canChooseFiles = false
         panel.canChooseDirectories = true
@@ -24,7 +24,7 @@ enum FilePanels {
     static func chooseImage() -> URL? {
         let panel = NSOpenPanel()
         panel.allowedContentTypes = [.image]
-        panel.prompt = "Escolher"
+        panel.prompt = String(localized: "Escolher")
         return panel.runModal() == .OK ? panel.url : nil
     }
 
@@ -33,7 +33,7 @@ enum FilePanels {
     static func saveOptions(_ options: AdvancedOptions) throws {
         let panel = NSSavePanel()
         panel.allowedContentTypes = [optionsType]
-        panel.nameFieldStringValue = "Opções.hyperoptions"
+        panel.nameFieldStringValue = String(localized: "Opções.hyperoptions")
         guard panel.runModal() == .OK, let url = panel.url else { return }
         try options.save(to: url)
     }
@@ -44,7 +44,7 @@ enum FilePanels {
     static func loadOptions() throws -> AdvancedOptions? {
         let panel = NSOpenPanel()
         panel.allowedContentTypes = [optionsType, .json, fastStoneOptionsType]
-        panel.message = "Escolha um arquivo .hyperoptions ou um .ccf do FastStone Photo Resizer."
+        panel.message = String(localized: "Escolha um arquivo .hyperoptions ou um .ccf do FastStone Photo Resizer.")
         guard panel.runModal() == .OK, let url = panel.url else { return nil }
         if url.pathExtension.lowercased() == "ccf" { return try CCFImporter.load(from: url) }
         return try AdvancedOptions.load(from: url)
