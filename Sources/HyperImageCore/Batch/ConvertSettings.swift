@@ -9,9 +9,6 @@ public struct ConvertSettings: Codable, Equatable, Sendable {
     public var keepFolderStructure = true
     public var useAdvancedOptions = false
     public var advanced = AdvancedOptions()
-    public var rename = false
-    public var renameTemplate = "Image#####"
-    public var renameStartNumber = 1
     public var uppercaseExtension = false
     public var keepDates = true
     public var askBeforeOverwrite = true
@@ -55,7 +52,7 @@ public struct InputItem: Hashable, Identifiable, Sendable {
 
 public enum OutputPlanner {
     /// Destination for each item, in order. Names produced twice within the batch get a numeric suffix.
-    public static func destinations(for items: [InputItem], settings: ConvertSettings, dates: (URL) -> Date) -> [URL] {
+    public static func destinations(for items: [InputItem], settings: ConvertSettings) -> [URL] {
         // Other inputs are reserved so an output can never replace a file that has not been read yet.
         let inputPaths = items.map { $0.url.standardizedFileURL.path.lowercased() }
         var used = Set(inputPaths)
@@ -67,9 +64,7 @@ public enum OutputPlanner {
             } else if settings.outputFolderURL != nil, settings.keepFolderStructure, let relative = item.relativeDirectory, !relative.isEmpty {
                 folder = folder.appendingPathComponent(relative, isDirectory: true)
             }
-            let base = settings.rename
-                ? RenameTemplate.render(settings.renameTemplate, originalURL: item.url, number: settings.renameStartNumber + offset, date: dates(item.url))
-                : item.url.deletingPathExtension().lastPathComponent
+            let base = item.url.deletingPathExtension().lastPathComponent
             let own = inputPaths[offset]
             var candidate = folder.appendingPathComponent(base).appendingPathExtension(ext)
             var counter = 2

@@ -44,18 +44,16 @@ struct InputListFlowTests {
         #expect(app.inputs.isEmpty && app.selection.isEmpty)
     }
 
-    @Test func virtualFoldersFollowRenames() throws {
+    @Test func virtualFolders() throws {
         let ws = try Workspace()
         let app = AppModel()
         app.add(ws.images)
-        app.move([ws.images[0]], toFolder: "Melhores")
-        #expect(app.inputs.first { $0.url == ws.images[0] }?.virtualFolder == "Melhores")
+        let first = app.inputs[0].url
+        app.move([first], toFolder: "Melhores")
+        #expect(app.inputs.first { $0.url == first }?.virtualFolder == "Melhores")
+        #expect(app.inputs.filter { $0.virtualFolder != nil }.count == 1)
 
-        let renamed = ws.images[0].deletingLastPathComponent().appendingPathComponent("novo.jpg")
-        app.replace([ws.images[0]: renamed])
-        #expect(app.inputs.first { $0.url == renamed }?.virtualFolder == "Melhores")
-
-        app.move([renamed], toFolder: nil)
+        app.move([first], toFolder: nil)
         #expect(app.inputs.allSatisfy { $0.virtualFolder == nil })
     }
 }

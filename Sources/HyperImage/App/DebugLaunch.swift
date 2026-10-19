@@ -4,8 +4,8 @@ import Foundation
 import HyperImageCore
 
 /// Debug-only hooks used to screenshot sheets without UI scripting:
-/// HYPERIMAGE_FILES=path:path  HYPERIMAGE_SHEET=advanced|format|rename|preview|progress  HYPERIMAGE_STEP=<AdvancedStep>
-/// HYPERIMAGE_OPTIONS=<.hyperoptions file>  HYPERIMAGE_MODE=rename  HYPERIMAGE_WINDOW=about  HYPERIMAGE_VFOLDER=<name> (first file)
+/// HYPERIMAGE_FILES=path:path  HYPERIMAGE_SHEET=advanced|format|preview|progress  HYPERIMAGE_STEP=<AdvancedStep>
+/// HYPERIMAGE_OPTIONS=<.hyperoptions file>  HYPERIMAGE_WINDOW=about  HYPERIMAGE_VFOLDER=<name> (first file)
 /// HYPERIMAGE_SNAPSHOT=<dir>: after a few seconds, writes every visible window (sheets included) as PNG and quits.
 /// It draws the views itself, so it needs neither Screen Recording nor Accessibility permission.
 enum DebugLaunch {
@@ -46,11 +46,9 @@ enum DebugLaunch {
             app.state.convert.useOutputFolder = true
             app.state.convert.outputFolder = out
         }
-        if env["HYPERIMAGE_MODE"] == "rename" { app.state.mode = .rename }
         switch env["HYPERIMAGE_SHEET"] {
         case "advanced": return .advanced
         case "format": return .formatSettings
-        case "rename": return .renamePreview
         case "preview": return app.inputs.first.map { .conversionPreview($0.url) }
         default: return nil
         }

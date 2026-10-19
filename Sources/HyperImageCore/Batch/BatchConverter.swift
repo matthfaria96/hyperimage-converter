@@ -31,7 +31,7 @@ public struct BatchConverter: Sendable {
     }
 
     public func records(for items: [InputItem]) -> [ConversionRecord] {
-        let outputs = OutputPlanner.destinations(for: items, settings: settings, dates: Self.fileDate)
+        let outputs = OutputPlanner.destinations(for: items, settings: settings)
         return zip(items, outputs).enumerated().map { index, pair in
             ConversionRecord(id: index, input: pair.0.url, output: pair.1, status: .pending, oldSize: Self.fileSize(pair.0.url), newSize: 0)
         }
@@ -96,7 +96,7 @@ public struct BatchConverter: Sendable {
         Int64((try? url.resourceValues(forKeys: [.fileSizeKey]))?.fileSize ?? 0)
     }
 
-    /// Date used by rename templates: EXIF capture date when present, otherwise modification date.
+    /// Date used for sorting by date taken: EXIF capture date when present, otherwise modification date.
     public static func fileDate(_ url: URL) -> Date {
         if let source = CGImageSourceCreateWithURL(url as CFURL, nil),
            let p = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],

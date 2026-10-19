@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Editable list with add / remove / move / restore defaults (used for size presets and rename templates).
+/// Editable list with add / remove / move / restore defaults (used for size presets).
 struct ListEditorSheet<Item: Hashable, Row: View>: View {
     let title: LocalizedStringKey
     @Binding var items: [Item]

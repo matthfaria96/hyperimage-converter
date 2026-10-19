@@ -34,16 +34,6 @@ struct ConvertInspector: View {
                 }
             }
 
-            Section("Renomear") {
-                Toggle("Renomear arquivos de saída", isOn: settings.rename)
-                if app.state.convert.rename {
-                    TemplateField(template: settings.renameTemplate)
-                    if RenameTemplate.usesSequence(app.state.convert.renameTemplate) {
-                        Stepper("Começar em \(app.state.convert.renameStartNumber)", value: settings.renameStartNumber, in: 0...9_999_999)
-                    }
-                }
-            }
-
             Section("Opções") {
                 Toggle("Extensão em MAIÚSCULAS", isOn: settings.uppercaseExtension)
                 Toggle("Manter data e hora originais", isOn: settings.keepDates)

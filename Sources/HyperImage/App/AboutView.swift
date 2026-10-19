@@ -24,7 +24,7 @@ struct AboutView: View {
                 Text("HyperImage Converter").font(.title2.bold())
                 Text("Versão \(Self.version)").foregroundStyle(.secondary)
             }
-            Text("Conversor e renomeador de imagens em lote para macOS.\nThis software is based in part on the work of the Independent JPEG Group.")
+            Text("Conversor de imagens em lote para macOS.\nThis software is based in part on the work of the Independent JPEG Group.")
                 .multilineTextAlignment(.center)
                 .font(.callout)
                 .foregroundStyle(.secondary)

@@ -51,42 +51,12 @@
         }
       }
     },
-    "%lld a renomear": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld to rename"
-          }
-        }
-      }
-    },
-    "%lld a renomear · %lld em conflito": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld to rename · %lld in conflict"
-          }
-        }
-      }
-    },
     "%lld arquivo(s) com erro": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "%lld file(s) with errors"
-          }
-        }
-      }
-    },
-    "%lld arquivo(s) não renomeado(s)": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld file(s) not renamed"
           }
         }
       }
@@ -241,16 +211,6 @@
         }
       }
     },
-    "A data usada é a da foto (EXIF) ou, sem EXIF, a de modificação.": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Uses the photo's date (EXIF) or, without EXIF, the modification date."
-          }
-        }
-      }
-    },
     "A ordem de aplicação segue a lista ao lado.": {
       "localizations": {
         "en": {
@@ -357,16 +317,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Add to List"
-          }
-        }
-      }
-    },
-    "Ajuda": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Help"
           }
         }
       }
@@ -701,36 +651,6 @@
         }
       }
     },
-    "Buscar": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Find"
-          }
-        }
-      }
-    },
-    "Buscar e substituir": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Find and replace"
-          }
-        }
-      }
-    },
-    "Buscar → Substituir": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Find → Replace"
-          }
-        }
-      }
-    },
     "CMYK": {
       "localizations": {
         "en": {
@@ -841,16 +761,6 @@
         }
       }
     },
-    "Começar em %lld": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Start at %lld"
-          }
-        }
-      }
-    },
     "Comparar antes e depois": {
       "localizations": {
         "en": {
@@ -911,12 +821,12 @@
         }
       }
     },
-    "Conversor e renomeador de imagens em lote para macOS.\nThis software is based in part on the work of the Independent JPEG Group.": {
+    "Conversor de imagens em lote para macOS.\nThis software is based in part on the work of the Independent JPEG Group.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Batch image converter and renamer for macOS.\nThis software is based in part on the work of the Independent JPEG Group."
+            "value": "Batch image converter for macOS.\nThis software is based in part on the work of the Independent JPEG Group."
           }
         }
       }
@@ -1241,16 +1151,6 @@
         }
       }
     },
-    "Diferenciar maiúsculas": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Match case"
-          }
-        }
-      }
-    },
     "Dimensões": {
       "localizations": {
         "en": {
@@ -1317,16 +1217,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Saved: %@"
-          }
-        }
-      }
-    },
-    "Editar Lista de Modelos…": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Edit Template List…"
           }
         }
       }
@@ -1541,32 +1431,12 @@
         }
       }
     },
-    "Exemplos": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Examples"
-          }
-        }
-      }
-    },
     "Expandir (adicionar espaço)": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Expand (add space)"
-          }
-        }
-      }
-    },
-    "Extensão": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Extension"
           }
         }
       }
@@ -1807,16 +1677,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "HyperImage Converter"
-          }
-        }
-      }
-    },
-    "Image##### → Image00032.jpg\n$P_##### → Ferias_00032.jpg\n$Y-$M-$D_##### → 2026-10-18_00032.jpg\n*_tn → Praia_tn.jpg": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Image##### → Image00032.jpg\n$P_##### → Holiday_00032.jpg\n$Y-$M-$D_##### → 2026-10-18_00032.jpg\n*_tn → Beach_tn.jpg"
           }
         }
       }
@@ -2071,16 +1931,6 @@
         }
       }
     },
-    "MAIÚSCULAS": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "UPPERCASE"
-          }
-        }
-      }
-    },
     "Manter dados EXIF / IPTC": {
       "localizations": {
         "en": {
@@ -2201,16 +2051,6 @@
         }
       }
     },
-    "Modelo": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Template"
-          }
-        }
-      }
-    },
     "Modelo (EXIF)": {
       "localizations": {
         "en": {
@@ -2227,26 +2067,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Lens model"
-          }
-        }
-      }
-    },
-    "Modelo de nome": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Name template"
-          }
-        }
-      }
-    },
-    "Modelos de nome": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Name templates"
           }
         }
       }
@@ -2387,16 +2207,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Medium"
-          }
-        }
-      }
-    },
-    "Método": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Method"
           }
         }
       }
@@ -2551,16 +2361,6 @@
         }
       }
     },
-    "Nome atual": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Current name"
-          }
-        }
-      }
-    },
     "Nome da pasta": {
       "localizations": {
         "en": {
@@ -2591,16 +2391,6 @@
         }
       }
     },
-    "Nome em conflito — será ignorado": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Name conflict — will be skipped"
-          }
-        }
-      }
-    },
     "Nova pasta": {
       "localizations": {
         "en": {
@@ -2617,16 +2407,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "New"
-          }
-        }
-      }
-    },
-    "Novo nome": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "New name"
           }
         }
       }
@@ -3181,26 +2961,6 @@
         }
       }
     },
-    "Pré-visualizar e Renomear…": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Preview and Rename…"
-          }
-        }
-      }
-    },
-    "Pré-visualização da renomeação": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Rename preview"
-          }
-        }
-      }
-    },
     "Próxima": {
       "localizations": {
         "en": {
@@ -3371,36 +3131,6 @@
         }
       }
     },
-    "Renomear": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Rename"
-          }
-        }
-      }
-    },
-    "Renomear arquivos de saída": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Rename output files"
-          }
-        }
-      }
-    },
-    "Renomeia os arquivos originais, no lugar.": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Renames the original files in place."
-          }
-        }
-      }
-    },
     "Resolução": {
       "localizations": {
         "en": {
@@ -3507,16 +3237,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Without EXIF, the photo date variables use the file date."
-          }
-        }
-      }
-    },
-    "Sem alteração": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No change"
           }
         }
       }
@@ -3691,32 +3411,12 @@
         }
       }
     },
-    "Substituir": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Replace"
-          }
-        }
-      }
-    },
     "Sépia": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Sepia"
-          }
-        }
-      }
-    },
-    "Símbolos do modelo": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Template symbols"
           }
         }
       }
@@ -3807,16 +3507,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Text"
-          }
-        }
-      }
-    },
-    "Texto %lld": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Text %lld"
           }
         }
       }
@@ -4081,62 +3771,12 @@
         }
       }
     },
-    "ano, mês, dia": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "year, month, day"
-          }
-        }
-      }
-    },
     "cm": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "cm"
-          }
-        }
-      }
-    },
-    "hora, minuto, segundo": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "hour, minute, second"
-          }
-        }
-      }
-    },
-    "minúsculas": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "lowercase"
-          }
-        }
-      }
-    },
-    "nome da pasta": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "folder name"
-          }
-        }
-      }
-    },
-    "nome original do arquivo": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "original file name"
           }
         }
       }
@@ -4157,16 +3797,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "px"
-          }
-        }
-      }
-    },
-    "um dígito do número sequencial (zeros à esquerda)": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "one digit of the sequence number (zero-padded)"
           }
         }
       }

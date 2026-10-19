@@ -76,15 +76,6 @@ final class AppModel {
         inputs = sort.sorted(inputs)
     }
 
-    /// After a batch rename the files moved; keep the list pointing at them.
-    func replace(_ mapping: [URL: URL]) {
-        inputs = inputs.map { item in
-            guard let moved = mapping[item.url] else { return item }
-            return InputItem(url: moved, relativeDirectory: item.relativeDirectory, virtualFolder: item.virtualFolder)
-        }
-        selection = Set(selection.map { mapping[$0] ?? $0 })
-    }
-
     // MARK: Persistence
 
     private func scheduleSave() {

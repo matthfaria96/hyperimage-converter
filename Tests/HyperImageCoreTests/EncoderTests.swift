@@ -111,7 +111,7 @@ struct EncoderTests {
 }
 
 struct BatchConverterTests {
-    @Test func convertsRenamesAndKeepsDates() async throws {
+    @Test func convertsAndKeepsDates() async throws {
         let dir = try TemporaryDirectory()
         let input = dir.url.appendingPathComponent("in", isDirectory: true)
         try FileManager.default.createDirectory(at: input, withIntermediateDirectories: true)
@@ -126,15 +126,13 @@ struct BatchConverterTests {
         var settings = ConvertSettings()
         settings.format = .webp
         settings.outputFolder = dir.url.appendingPathComponent("out").path
-        settings.rename = true
-        settings.renameTemplate = "Image#####"
         settings.useAdvancedOptions = true
         settings.advanced.resize.enabled = true
         settings.advanced.resize.mode = .percentage
 
         let converter = BatchConverter(settings: settings)
         let records = converter.records(for: files.map { InputItem(url: $0) })
-        #expect(records.map(\.output.lastPathComponent) == ["Image00001.webp", "Image00002.webp"])
+        #expect(records.map(\.output.lastPathComponent) == ["paisagem.webp", "retrato.webp"])
 
         let results = ResultBox()
         try await converter.run(records, askOverwrite: { _ in .yes }, update: { await results.add($0) })
@@ -155,11 +153,11 @@ struct BatchConverterTests {
         settings.outputFolder = "/out"
         let items = [InputItem(url: URL(fileURLWithPath: "/src/Album/sub/a.png"), relativeDirectory: "Album/sub"),
                      InputItem(url: URL(fileURLWithPath: "/elsewhere/a.png"))]
-        let out = OutputPlanner.destinations(for: items, settings: settings, dates: { _ in Date() })
+        let out = OutputPlanner.destinations(for: items, settings: settings)
         #expect(out.map(\.path) == ["/out/Album/sub/a.jpg", "/out/a.jpg"])
         settings.keepFolderStructure = false
         settings.uppercaseExtension = true
-        let flat = OutputPlanner.destinations(for: items, settings: settings, dates: { _ in Date() })
+        let flat = OutputPlanner.destinations(for: items, settings: settings)
         #expect(flat.map(\.path) == ["/out/a.JPG", "/out/a-2.JPG"])
     }
 
@@ -189,7 +187,7 @@ struct OutputSafetyTests {
         var settings = ConvertSettings()
         settings.useOutputFolder = false
         let items = [InputItem(url: URL(fileURLWithPath: "/f/x.png")), InputItem(url: URL(fileURLWithPath: "/f/x.jpg"))]
-        let out = OutputPlanner.destinations(for: items, settings: settings, dates: { _ in Date() })
+        let out = OutputPlanner.destinations(for: items, settings: settings)
         #expect(out.map(\.path) == ["/f/x-2.jpg", "/f/x.jpg"])
     }
 
@@ -199,10 +197,10 @@ struct OutputSafetyTests {
         let items = [InputItem(url: URL(fileURLWithPath: "/src/Album/a.png"), relativeDirectory: "Album", virtualFolder: "Praia"),
                      InputItem(url: URL(fileURLWithPath: "/src/b.png")).inFolder("Praia"),
                      InputItem(url: URL(fileURLWithPath: "/src/c.png"))]
-        let out = OutputPlanner.destinations(for: items, settings: settings, dates: { _ in Date() })
+        let out = OutputPlanner.destinations(for: items, settings: settings)
         #expect(out.map(\.path) == ["/out/Praia/a.jpg", "/out/Praia/b.jpg", "/out/c.jpg"])
         settings.useOutputFolder = false
-        let beside = OutputPlanner.destinations(for: items, settings: settings, dates: { _ in Date() })
+        let beside = OutputPlanner.destinations(for: items, settings: settings)
         #expect(beside.map(\.path) == ["/src/Album/Praia/a.jpg", "/src/Praia/b.jpg", "/src/c.jpg"])
     }
 

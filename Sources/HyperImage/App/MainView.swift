@@ -2,14 +2,13 @@ import HyperImageCore
 import SwiftUI
 
 enum SheetRoute: Identifiable {
-    case formatSettings, advanced, progress, renamePreview, conversionPreview(URL)
+    case formatSettings, advanced, progress, conversionPreview(URL)
 
     var id: String {
         switch self {
         case .formatSettings: "format"
         case .advanced: "advanced"
         case .progress: "progress"
-        case .renamePreview: "renamePreview"
         case let .conversionPreview(url): "preview-\(url.path)"
         }
     }
@@ -59,22 +58,11 @@ struct MainView: View {
 
     @ViewBuilder
     private var inspector: some View {
-        switch app.state.mode {
-        case .convert: ConvertInspector(open: { sheet = $0 })
-        case .rename: RenameInspector(open: { sheet = $0 })
-        }
+        ConvertInspector(open: { sheet = $0 })
     }
 
     @ToolbarContentBuilder
     private var toolbar: some ToolbarContent {
-        ToolbarItem(placement: .principal) {
-            Picker("Modo", selection: Binding(get: { app.state.mode }, set: { app.state.mode = $0 })) {
-                Label("Converter", systemImage: "arrow.triangle.2.circlepath").tag(AppMode.convert)
-                Label("Renomear", systemImage: "character.cursor.ibeam").tag(AppMode.rename)
-            }
-            .pickerStyle(.segmented)
-            .labelStyle(.titleAndIcon)
-        }
         ToolbarItemGroup {
             Button("Adicionar", systemImage: "plus") { FilePanels.addFiles(to: app) }
                 .help("Adicionar arquivos ou pastas (⌘O)")
@@ -86,23 +74,15 @@ struct MainView: View {
                 .help("Remover todos da lista")
         }
         ToolbarItemGroup {
-            if app.state.mode == .convert {
-                Button("Pré-visualizar", systemImage: "eye") {
-                    if let url = app.selectedItem?.url ?? app.inputs.first?.url { sheet = .conversionPreview(url) }
-                }
-                .disabled(app.inputs.isEmpty)
-                .help("Comparar antes e depois")
-                Button("Converter", systemImage: "play.fill") { startConversion() }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(app.inputs.isEmpty)
-                    .keyboardShortcut(.return, modifiers: .command)
-            } else {
-                Button("Pré-visualizar", systemImage: "eye") { sheet = .renamePreview }
-                    .disabled(app.inputs.isEmpty)
-                Button("Renomear", systemImage: "play.fill") { sheet = .renamePreview }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(app.inputs.isEmpty)
+            Button("Pré-visualizar", systemImage: "eye") {
+                if let url = app.selectedItem?.url ?? app.inputs.first?.url { sheet = .conversionPreview(url) }
             }
+            .disabled(app.inputs.isEmpty)
+            .help("Comparar antes e depois")
+            Button("Converter", systemImage: "play.fill") { startConversion() }
+                .buttonStyle(.borderedProminent)
+                .disabled(app.inputs.isEmpty)
+                .keyboardShortcut(.return, modifiers: .command)
             Button("Inspetor", systemImage: "sidebar.right") { showInspector.toggle() }
         }
     }
@@ -113,7 +93,6 @@ struct MainView: View {
         case .formatSettings: FormatSettingsSheet()
         case .advanced: AdvancedOptionsSheet()
         case .progress: ConversionProgressSheet(runner: runner)
-        case .renamePreview: RenamePreviewSheet()
         case let .conversionPreview(url): ConversionPreviewSheet(initial: url)
         }
     }

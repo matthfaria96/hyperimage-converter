@@ -29,5 +29,4 @@ public enum StandardSizes {
 
     public static let printDPIs: [Double] = [72, 96, 120, 200, 300, 600]
 
-    public static let renameTemplates = ["Image#####", "$P_#####", "$Y-$M-$D_#####", "$Y-$M-$D_$H$N$S", "*_tn"]
 }
