@@ -82,11 +82,12 @@ public enum ImageLoader {
         if orientation == 1 { return CGImageSourceCreateImageAtIndex(source, 0, nil) }
         let w = properties[kCGImagePropertyPixelWidth] as? Int ?? 0
         let h = properties[kCGImagePropertyPixelHeight] as? Int ?? 0
-        let options: [CFString: Any] = [
+        var options: [CFString: Any] = [
             kCGImageSourceCreateThumbnailFromImageAlways: true,
             kCGImageSourceCreateThumbnailWithTransform: true,
-            kCGImageSourceThumbnailMaxPixelSize: max(w, h),
         ]
+        // Without a known size, omit the cap so ImageIO decodes at full resolution instead of 0 px.
+        if max(w, h) > 0 { options[kCGImageSourceThumbnailMaxPixelSize] = max(w, h) }
         return CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary)
     }
 }

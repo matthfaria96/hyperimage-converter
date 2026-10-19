@@ -27,6 +27,10 @@ public enum ImageEncoder {
         case .webp: return try WebPEncoder.encode(input.image, settings: settings.webp)
         case .pdf: return try PDFEncoder.encode(input.image, settings: settings.pdf, dpi: input.dpiX)
         case .jpeg where settings.jpeg.photometric != .cmyk: return try encodeJPEG(input, settings: settings.jpeg)
+        case .bmp where settings.bmp.colors.colorCount != nil:
+            // ImageIO writes headerless garbage for indexed BMP, so palette BMPs use our own writer.
+            let quantized = try ColorConversion.opaquePalette(input.image, colors: settings.bmp.colors.colorCount ?? 256)
+            return BMPEncoder.encode(quantized, dpiX: input.dpiX, dpiY: input.dpiY)
         default: break
         }
         let (image, options) = try prepare(input, format: format, settings: settings)
@@ -74,7 +78,9 @@ public enum ImageEncoder {
             if s.photometric == .grayscale { image = try ColorConversion.grayscale(image) }
         case .tiff:
             let s = settings.tiff
-            options[kCGImagePropertyTIFFDictionary] = [kCGImagePropertyTIFFCompression: s.compression.tagValue]
+            // JPEG compression can't hold palette pixels; such files fall back to LZW.
+            let compression = s.compression == .jpeg && s.photometric == .palette256 ? TIFFCompression.lzw : s.compression
+            options[kCGImagePropertyTIFFDictionary] = [kCGImagePropertyTIFFCompression: compression.tagValue]
             if s.compression.isFax { return (try ColorConversion.indexed(image, colors: 2), options) }
             switch s.photometric {
             case .grayscale: image = try ColorConversion.grayscale(image)
@@ -84,9 +90,12 @@ public enum ImageEncoder {
             }
         case .heic:
             options[kCGImageDestinationLossyCompressionQuality] = Double(settings.heic.quality) / 100
+            image = try ColorConversion.rgbIfGray(image)
             if settings.heic.keepMetadata { options = carriedMetadata(input.sourceProperties).merging(options) { _, new in new } }
         case .avif:
             options[kCGImageDestinationLossyCompressionQuality] = Double(settings.avif.quality) / 100
+            image = try ColorConversion.rgbIfGray(image)
+            if settings.avif.keepMetadata { options = carriedMetadata(input.sourceProperties).merging(options) { _, new in new } }
         case .webp, .pdf:
             break
         }
@@ -122,6 +131,12 @@ public enum ImageEncoder {
 
     private static func paletted(_ image: CGImage, colors: Int?, flatten: Bool) throws -> CGImage {
         guard let colors else { return flatten ? try ColorConversion.flattened(image, on: .white) : image }
+        if !flatten, colors > 2, ![.none, .noneSkipFirst, .noneSkipLast].contains(image.alphaInfo) {
+            // Keep transparency: an indexed CGImage can't carry alpha, so expand the reduced palette to RGBA.
+            let bitmap = try Bitmap(image: image, colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!)
+            let quantized = Quantizer.quantize(bitmap, colors: colors, keepTransparency: true)
+            return try Quantizer.expand(quantized, like: bitmap).makeImage()
+        }
         return try ColorConversion.indexed(image, colors: colors)
     }
 

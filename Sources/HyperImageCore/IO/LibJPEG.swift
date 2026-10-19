@@ -17,8 +17,10 @@ enum LibJPEG {
 
     static func encode(_ image: CGImage, options: Options) throws -> Data {
         // Keep the image's own RGB space (Display P3, Adobe RGB...) and tag it, so wide-gamut photos are not clipped.
-        let space = image.colorSpace.flatMap { $0.model == .rgb && $0.copyICCData() != nil ? $0 : nil }
-            ?? CGColorSpace(name: CGColorSpace.sRGB)!
+        // Gray output carries no profile, so its luminance must be computed from sRGB values, not P3 ones.
+        let srgb = CGColorSpace(name: CGColorSpace.sRGB)!
+        let space = options.colorSpace == HIJ_GRAY ? srgb
+            : image.colorSpace.flatMap { $0.model == .rgb && $0.copyICCData() != nil ? $0 : nil } ?? srgb
         let bitmap = try Bitmap(image: image, colorSpace: space)
         let icc = options.colorSpace == HIJ_GRAY ? nil : space.copyICCData() as Data?
         var output: UnsafeMutablePointer<UInt8>?

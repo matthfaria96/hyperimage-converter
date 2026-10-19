@@ -53,7 +53,7 @@ public struct AdvancedOptions: Codable, Equatable, Sendable {
     }
 
     public static func load(from url: URL) throws -> AdvancedOptions {
-        try JSONDecoder().decode(AdvancedOptions.self, from: Data(contentsOf: url))
+        try TolerantJSON.decode(AdvancedOptions.self, from: Data(contentsOf: url), defaults: AdvancedOptions())
     }
 
     public func save(to url: URL) throws {

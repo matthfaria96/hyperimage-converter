@@ -80,9 +80,12 @@ public struct BatchConverter: Sendable {
             try fm.createDirectory(at: record.output.deletingLastPathComponent(), withIntermediateDirectories: true)
             try data.write(to: record.output, options: .atomic)
             if settings.keepDates {
-                var attributes: [FileAttributeKey: Any] = [.modificationDate: loaded.modificationDate]
+                var attributes: [FileAttributeKey: Any] = [:]
+                if let modified = (try? record.input.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate {
+                    attributes[.modificationDate] = modified
+                }
                 if let created = loaded.creationDate { attributes[.creationDate] = created }
-                try? fm.setAttributes(attributes, ofItemAtPath: record.output.path)
+                if !attributes.isEmpty { try? fm.setAttributes(attributes, ofItemAtPath: record.output.path) }
             }
             var done = record.with(status: .done)
             done.newSize = Int64(data.count)

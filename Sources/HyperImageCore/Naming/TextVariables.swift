@@ -118,8 +118,8 @@ public enum TextVariables {
     private static func gpsDMS(_ m: ImageMetadata) -> String {
         guard let lat = m.latitude, let lon = m.longitude else { return "" }
         func dms(_ v: Double, _ pos: String, _ neg: String) -> String {
-            let a = abs(v)
-            let d = Int(a), mins = Int((a - Double(d)) * 60), s = (a - Double(d) - Double(mins) / 60) * 3600
+            let tenths = Int((abs(v) * 36000).rounded())
+            let d = tenths / 36000, mins = tenths % 36000 / 600, s = Double(tenths % 600) / 10
             return String(format: "%d°%02d'%04.1f\"%@", d, mins, s, v < 0 ? neg : pos)
         }
         return "\(dms(lat, "N", "S")) \(dms(lon, "E", "W"))"

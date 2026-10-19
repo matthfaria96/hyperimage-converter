@@ -9,7 +9,8 @@ public enum BorderEffect {
         public var photoRect: CGRect
     }
 
-    public static func layout(for size: PixelSize, options: BorderOptions) -> Layout {
+    public static func layout(for size: PixelSize, options raw: BorderOptions) -> Layout {
+        let options = raw.clamped()
         let frames = [options.frame1, options.frame2, options.frame3].filter(\.enabled).map(\.width).reduce(0, +)
         let framed = CGSize(width: size.width + 2 * frames, height: size.height + 2 * frames)
         var lead = 0, trail = 0
@@ -22,7 +23,8 @@ public enum BorderEffect {
         return Layout(canvas: canvas, framedRect: framedRect, photoRect: framedRect.insetBy(dx: CGFloat(frames), dy: CGFloat(frames)))
     }
 
-    public static func apply(_ options: BorderOptions, to image: CGImage) throws -> CGImage {
+    public static func apply(_ raw: BorderOptions, to image: CGImage) throws -> CGImage {
+        let options = raw.clamped()
         let l = layout(for: image.pixelSize, options: options)
         return try renderImage(width: l.canvas.width, height: l.canvas.height, colorSpace: image.workingColorSpace) { ctx in
             let all = CGRect(x: 0, y: 0, width: l.canvas.width, height: l.canvas.height)
@@ -69,5 +71,20 @@ public enum BorderEffect {
         let w = CGFloat(inner.width) / 2
         ctx.stroke(line.insetBy(dx: w, dy: w))
         ctx.restoreGState()
+    }
+}
+
+private extension BorderOptions {
+    /// Negative sizes (typed into the frame fields or loaded from a file) would yield a negative canvas.
+    func clamped() -> BorderOptions {
+        var copy = self
+        copy.frame1.width = max(0, frame1.width)
+        copy.frame2.width = max(0, frame2.width)
+        copy.frame3.width = max(0, frame3.width)
+        copy.innerFrame.width = max(0, innerFrame.width)
+        copy.innerFrame.distance = max(0, innerFrame.distance)
+        copy.shadow.radius = max(0, shadow.radius)
+        copy.shadow.depth = max(0, shadow.depth)
+        return copy
     }
 }
