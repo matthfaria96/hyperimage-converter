@@ -1,49 +1,51 @@
 # HyperImage Converter
 
-Conversor de imagens em lote para macOS 26+, em Swift/SwiftUI. Recria as funções de conversão do
-FastStone Photo Resizer (spec em `../Clones/FSResizer-spec/SPEC.md`) com a interface nativa do Mac.
+**English** · [Português](README.pt-BR.md)
 
-## Build e testes
+A batch image converter for macOS 26+, built in Swift/SwiftUI. It recreates the conversion features of
+FastStone Photo Resizer (spec in `../Clones/FSResizer-spec/SPEC.md`) with a native Mac interface.
+
+## Build and tests
 ```sh
-./build-app.sh              # gera build/HyperImage Converter.app (universal, assinado ad hoc)
-./build-app.sh --install    # e copia para /Applications
+./build-app.sh              # builds build/HyperImage Converter.app (universal, ad hoc signed)
+./build-app.sh --install    # and copies it to /Applications
 DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer swift test
-scripts/ui-smoke.sh         # abre cada folha/janela do app e salva uma imagem de cada uma
+scripts/ui-smoke.sh         # opens every sheet/window of the app and saves an image of each
 ```
-Os testes cobrem o motor (`HyperImageCoreTests`) e os fluxos do app (`HyperImageAppTests`: lista de entrada,
-conversão com pergunta de sobrescrever, cancelamento, pastas virtuais e recorte sem perdas de ponta a ponta).
-Depois de instalado, o Finder ganha "Converter com HyperImage" no menu de contexto (Ações Rápidas/Serviços), que
-manda as imagens e pastas selecionadas para a lista de entrada. Se não aparecer, ative em Ajustes do Sistema →
-Teclado → Atalhos de Teclado → Serviços.
+The tests cover the engine (`HyperImageCoreTests`) and the app's flows (`HyperImageAppTests`: input list,
+conversion with the overwrite question, cancelling, virtual folders and end-to-end lossless crop).
+Once installed, Finder gets "Convert with HyperImage" in its context menu (Quick Actions/Services), which
+sends the selected images and folders to the input list. If it doesn't show up, turn it on in System Settings →
+Keyboard → Keyboard Shortcuts → Services.
 
-O Xcode é necessário (as Command Line Tools não trazem os plugins de macro do SwiftUI).
+Xcode is required (the Command Line Tools don't include SwiftUI's macro plugins).
 
-## Idiomas
-A interface está em português (idioma de origem) e inglês. As traduções ficam em `Resources/Localizable.xcstrings`,
-que o `build-app.sh` compila para dentro do app. Depois de mudar textos no código, rode `scripts/sync-strings.sh` para
-atualizar o catálogo e traduza as entradas novas (no Xcode ou editando o JSON).
+## Languages
+The interface is in Portuguese (source language) and English. Translations live in `Resources/Localizable.xcstrings`,
+which `build-app.sh` compiles into the app. After changing strings in the code, run `scripts/sync-strings.sh` to
+update the catalog and translate the new entries (in Xcode or by editing the JSON).
 
-## Estrutura
-- `Sources/HyperImageCore`: motor sem UI. Modelos de opções, geometria (resize/crop/canvas), reamostrador
-  separável com os 12 filtros, ajustes via Core Image, texto/marca d'água/bordas, quantizador median-cut,
-  encoders (ImageIO, WebP via libwebp, PDF), e lote concorrente.
-- `Sources/HyperImage`: app SwiftUI (navegador lateral, lista de entrada, inspetor, folhas).
-- `Sources/CWebP`: libwebp 1.6.0 (BSD), só o encoder. O ImageIO lê WebP, mas não grava.
-- `Sources/CJPEG`: IJG libjpeg 9f (licença IJG, ver `README-libjpeg.txt`) com uma ponte em C (`shim/hij.c`) para gravar
-  JPEG e fazer o recorte sem perdas (`transupp`).
+## Layout
+- `Sources/HyperImageCore`: UI-free engine. Option models, geometry (resize/crop/canvas), a separable
+  resampler with the 12 filters, adjustments through Core Image, text/watermark/borders, a median-cut quantizer,
+  encoders (ImageIO, WebP through libwebp, PDF), and concurrent batches.
+- `Sources/HyperImage`: SwiftUI app (side browser, input list, inspector, sheets).
+- `Sources/CWebP`: libwebp 1.6.0 (BSD), encoder only. ImageIO reads WebP but can't write it.
+- `Sources/CJPEG`: IJG libjpeg 9f (IJG license, see `README-libjpeg.txt`) with a C bridge (`shim/hij.c`) to write
+  JPEG and do lossless crops (`transupp`).
 
-## Diferenças em relação ao original
-- Saída: além dos 8 formatos originais, também HEIC e AVIF.
-- Entrada: tudo o que o ImageIO lê (incluindo RAW). PCX, WMF/EMF e FAX não são suportados pelo macOS.
-- JPEG: gravado com o libjpeg 9f embutido, então subamostragem de cor, suavização e Huffman otimizado funcionam
-  como no original, e a escala de qualidade é a do IJG. Só o fotométrico CMYK continua no ImageIO (e ignora essas
-  três opções). "Usar a qualidade do original" estima a qualidade a partir da tabela DQT. O fotométrico YCbCrK não existe.
-- Recorte JPEG sem perdas: quando o recorte é o único passo que mexe nos pixels (DPI pode estar ligado), a origem é
-  JPEG sem rotação EXIF e a saída é JPEG em YCbCr, os blocos DCT são cortados direto, sem recodificar. O resultado
-  bate pixel a pixel com o FastStone. Se a origem X/Y não cair na grade de blocos, o recorte é recodificado.
-- TIFF: sem compressão, LZW, ZIP, JPEG, PackBits e fax G3/G4 (estes convertem para preto e branco). O ImageIO grava
-  G3 só em 1D, então "G3 Fax 2D" sai igual ao 1D. Os fotométricos YCbCr e CIELAB do original não existem.
-- PNG: filtro Nenhum/Sub/Paeth como no original, mais "Automático" (padrão do ImageIO). O nível de compressão não é
-  exposto pelo ImageIO. BMP sem RLE e sem 65536 cores, e GIF sem entrelaçamento, pelo mesmo motivo.
-- As opções são salvas como JSON (`.hyperoptions`). Arquivos `.ccf` do original podem ser carregados (só leitura);
-  o `.ccf` não guarda o caminho da marca d'água, então ele precisa ser escolhido de novo.
+## Differences from the original
+- Output: besides the 8 original formats, also HEIC and AVIF.
+- Input: everything ImageIO reads (including RAW). PCX, WMF/EMF and FAX aren't supported by macOS.
+- JPEG: written with the bundled libjpeg 9f, so chroma subsampling, smoothing and optimized Huffman work
+  as in the original, and the quality scale is IJG's. Only the CMYK photometric still goes through ImageIO (and ignores those
+  three options). "Use the original's quality" estimates quality from the DQT table. The YCbCrK photometric doesn't exist.
+- Lossless JPEG crop: when the crop is the only step that touches pixels (DPI may be on), the source is
+  JPEG without EXIF rotation and the output is YCbCr JPEG, the DCT blocks are cut directly, without re-encoding. The result
+  matches FastStone pixel for pixel. If the X/Y origin doesn't fall on the block grid, the crop is re-encoded.
+- TIFF: uncompressed, LZW, ZIP, JPEG, PackBits and G3/G4 fax (these convert to black and white). ImageIO writes
+  G3 only in 1D, so "G3 Fax 2D" comes out the same as 1D. The original's YCbCr and CIELAB photometrics don't exist.
+- PNG: None/Sub/Paeth filter as in the original, plus "Automatic" (ImageIO's default). The compression level isn't
+  exposed by ImageIO. BMP without RLE and without 65536 colors, and GIF without interlacing, for the same reason.
+- Options are saved as JSON (`.hyperoptions`). The original's `.ccf` files can be loaded (read only);
+  `.ccf` doesn't store the watermark path, so it has to be chosen again.
