@@ -6,6 +6,7 @@ import HyperImageCore
 /// Debug-only hooks used to screenshot sheets without UI scripting:
 /// HYPERIMAGE_FILES=path:path  HYPERIMAGE_SHEET=advanced|format|preview|progress  HYPERIMAGE_STEP=<AdvancedStep>
 /// HYPERIMAGE_OPTIONS=<.hyperoptions file>  HYPERIMAGE_WINDOW=about  HYPERIMAGE_VFOLDER=<name> (first file)
+/// HYPERIMAGE_DROP=1: shows the list as if files were being dragged over it.
 /// HYPERIMAGE_SNAPSHOT=<dir>: after a few seconds, writes every visible window (sheets included) as PNG and quits.
 /// It draws the views itself, so it needs neither Screen Recording nor Accessibility permission.
 enum DebugLaunch {

@@ -135,3 +135,21 @@ struct ConversionFlowTests {
         #expect(size == PixelSize(width: 640, height: 480))
     }
 }
+
+struct PersistenceTests {
+    @Test func settingsSurviveMissingKeys() throws {
+        var state = PersistedState()
+        state.convert.formatSettings.jpeg.quality = 42
+        state.showPreview = false
+        var json = try #require(JSONSerialization.jsonObject(with: JSONEncoder().encode(state)) as? [String: Any])
+        // Simulate a file saved before these options existed.
+        json["sort"] = nil
+        var convert = try #require(json["convert"] as? [String: Any])
+        convert["keepDates"] = nil
+        json["convert"] = convert
+        let restored = PersistedState.decode(try JSONSerialization.data(withJSONObject: json))
+        #expect(restored.convert.formatSettings.jpeg.quality == 42)
+        #expect(restored.showPreview == false)
+        #expect(restored.sort == InputSort())
+    }
+}

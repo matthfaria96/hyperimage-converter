@@ -113,7 +113,7 @@ struct BorderStepView: View {
         HStack {
             Toggle(title, isOn: binding.enabled)
             Spacer()
-            TextField("", value: binding.width, format: .number).frame(width: 48).multilineTextAlignment(.trailing)
+            TextField("", value: Binding(get: { binding.wrappedValue.width }, set: { binding.wrappedValue.width = min(max($0, 0), 1000) }), format: .number).frame(width: 48).multilineTextAlignment(.trailing)
                 .disabled(!binding.wrappedValue.enabled)
             Text("px").foregroundStyle(.secondary)
             ColorPicker("", selection: Binding(get: { binding.wrappedValue.color.cgColor }, set: { binding.wrappedValue.color = RGBAColor(cgColor: $0) }))

@@ -8,6 +8,7 @@ struct AdvancedOptionsSheet: View {
     @State private var draft = AdvancedOptions()
     @State private var step: AdvancedStep = .resize
     @State private var presets: [PixelSize] = []
+    @State private var sheetAlert: AppAlert?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -40,7 +41,7 @@ struct AdvancedOptionsSheet: View {
             presets = app.state.resizePresets
         }
         .onChange(of: step) { _, s in app.state.lastAdvancedStep = s }
-        .onChange(of: presets) { _, p in app.state.resizePresets = p }
+        .alert(item: $sheetAlert) { Alert(title: Text($0.title), message: Text($0.message)) }
     }
 
     private var sidebar: some View {
@@ -87,12 +88,12 @@ struct AdvancedOptionsSheet: View {
                 do {
                     if let loaded = try FilePanels.loadOptions() { draft = loaded }
                 } catch {
-                    app.alert = AppAlert(title: String(localized: "Não foi possível carregar"), message: error.localizedDescription)
+                    sheetAlert = AppAlert(title: String(localized: "Não foi possível carregar"), message: error.localizedDescription)
                 }
             }
             Button("Salvar…") {
                 do { try FilePanels.saveOptions(draft) } catch {
-                    app.alert = AppAlert(title: String(localized: "Não foi possível salvar"), message: error.localizedDescription)
+                    sheetAlert = AppAlert(title: String(localized: "Não foi possível salvar"), message: error.localizedDescription)
                 }
             }
             Spacer()
@@ -108,10 +109,11 @@ struct AdvancedOptionsSheet: View {
 
     private func commit() {
         if let message = draft.validationError() {
-            app.alert = AppAlert(title: String(localized: "Opções avançadas"), message: message)
+            sheetAlert = AppAlert(title: String(localized: "Opções avançadas"), message: message)
             return
         }
         app.state.convert.advanced = draft
+        app.state.resizePresets = presets
         if draft.hasEnabledStep { app.state.convert.useAdvancedOptions = true }
         dismiss()
     }

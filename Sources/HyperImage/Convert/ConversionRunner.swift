@@ -13,6 +13,9 @@ final class ConversionRunner {
     private(set) var records: [ConversionRecord] = []
     private(set) var isRunning = false
     private(set) var wasCancelled = false
+    private(set) var failure: String?
+    /// Bumped on every finish so observers that attach late still see the completion.
+    private(set) var completionID = 0
     private(set) var startDate = Date()
     private(set) var endDate: Date?
     private(set) var settings = ConvertSettings()
@@ -31,6 +34,7 @@ final class ConversionRunner {
         records = converter.records(for: items)
         isRunning = true
         wasCancelled = false
+        failure = nil
         startDate = Date()
         endDate = nil
         let queued = records
@@ -39,8 +43,10 @@ final class ConversionRunner {
                 try await converter.run(queued,
                                         askOverwrite: { url in await self.ask(url) },
                                         update: { record in await self.apply(record) })
-            } catch {
+            } catch is CancellationError {
                 wasCancelled = true
+            } catch {
+                failure = error.localizedDescription
             }
             finish()
         }
@@ -73,6 +79,7 @@ final class ConversionRunner {
     private func finish() {
         isRunning = false
         endDate = Date()
+        completionID += 1
         if openFolderWhenDone, let first = records.first(where: { $0.status == .done }) {
             NSWorkspace.shared.activateFileViewerSelecting([first.output])
         }

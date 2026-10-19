@@ -40,9 +40,9 @@ struct ResizeStepView: View {
         .sheet(isPresented: $editingPresets) {
             ListEditorSheet(title: "Tamanhos padrão", items: $presets, defaults: StandardSizes.resize, newItem: PixelSize(width: 800, height: 600)) { $size in
                 HStack {
-                    TextField("Largura", value: $size.width, format: .number.grouping(.never)).frame(width: 70)
+                    TextField("Largura", value: Binding(get: { size.width }, set: { size.width = max(1, $0) }), format: .number.grouping(.never)).frame(width: 70)
                     Text("×")
-                    TextField("Altura", value: $size.height, format: .number.grouping(.never)).frame(width: 70)
+                    TextField("Altura", value: Binding(get: { size.height }, set: { size.height = max(1, $0) }), format: .number.grouping(.never)).frame(width: 70)
                 }
             }
         }

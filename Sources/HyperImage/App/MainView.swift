@@ -30,11 +30,20 @@ struct MainView: View {
                     .navigationSplitViewColumnWidth(min: 260, ideal: 320, max: 480)
             }
         } detail: {
-            InputListView(preview: { sheet = .conversionPreview($0) })
-                .inspector(isPresented: $showInspector) {
+            // A plain trailing column instead of `.inspector`: on windows narrower than ~1360 pt the system
+            // inspector and the toolbar kept re-laying each other out until AppKit aborted the launch
+            // ("more Update Constraints in Window passes than there are views").
+            HStack(spacing: 0) {
+                InputListView(preview: { sheet = .conversionPreview($0) })
+                    .frame(minWidth: 420)
+                if showInspector {
+                    Divider()
                     inspector
-                        .inspectorColumnWidth(min: 300, ideal: 340, max: 440)
+                        .frame(width: 340)
+                        .transition(.move(edge: .trailing))
                 }
+            }
+            .animation(.snappy(duration: 0.25), value: showInspector)
         }
         .navigationTitle("HyperImage Converter")
         .toolbar { toolbar }
@@ -83,8 +92,13 @@ struct MainView: View {
                 .buttonStyle(.borderedProminent)
                 .disabled(app.inputs.isEmpty)
                 .keyboardShortcut(.return, modifiers: .command)
-            Button("Inspetor", systemImage: "sidebar.right") { showInspector.toggle() }
+            inspectorToggle
         }
+    }
+
+    private var inspectorToggle: some View {
+        Button("Inspetor", systemImage: "sidebar.right") { showInspector.toggle() }
+            .help(showInspector ? "Ocultar inspetor" : "Mostrar inspetor")
     }
 
     @ViewBuilder

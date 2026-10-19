@@ -24,9 +24,12 @@ struct PersistedState: Codable, Equatable {
     private static let key = "HyperImage.state.v1"
 
     static func load() -> PersistedState {
-        guard let data = UserDefaults.standard.data(forKey: key),
-              let state = try? JSONDecoder().decode(PersistedState.self, from: data) else { return PersistedState() }
-        return state
+        guard let data = UserDefaults.standard.data(forKey: key) else { return PersistedState() }
+        return decode(data)
+    }
+
+    static func decode(_ data: Data) -> PersistedState {
+        (try? TolerantJSON.decode(PersistedState.self, from: data, defaults: PersistedState())) ?? PersistedState()
     }
 
     func save() {

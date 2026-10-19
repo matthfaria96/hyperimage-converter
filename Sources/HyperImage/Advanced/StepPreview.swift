@@ -37,12 +37,12 @@ struct StepPreview: View {
             }
         }
         .task(id: sourceURL) { await loadSource() }
-        .task(id: RenderKey(options: options, ready: source != nil)) { await render() }
+        .task(id: RenderKey(options: options, source: source.map { ObjectIdentifier($0.image) })) { await render() }
     }
 
     private struct RenderKey: Equatable {
         let options: AdvancedOptions
-        let ready: Bool
+        let source: ObjectIdentifier?
     }
 
     private func loadSource() async {
@@ -67,6 +67,7 @@ struct StepPreview: View {
             info = "\(source.image.width) × \(source.image.height) → \(output.width) × \(output.height)"
             error = nil
         } catch {
+            guard !Task.isCancelled else { return }
             self.error = error.localizedDescription
         }
     }

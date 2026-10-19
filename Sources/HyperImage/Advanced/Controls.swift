@@ -38,6 +38,7 @@ struct DecimalField: View {
                 if !suffix.isEmpty { Text(suffix).foregroundStyle(.secondary) }
             }
         }
+        .onChange(of: value) { _, v in value = min(range.upperBound, max(range.lowerBound, v)) }
     }
 }
 
