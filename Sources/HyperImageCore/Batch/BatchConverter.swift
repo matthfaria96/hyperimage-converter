@@ -25,9 +25,19 @@ public struct BatchConverter: Sendable {
     public let settings: ConvertSettings
     public let maxConcurrency: Int
 
-    public init(settings: ConvertSettings) {
+    /// AI Upscale backend; nil outside the app bundle unless HYPERIMAGE_UPSCAYL points at one.
+    public let upscaler: Upscaler?
+    /// Fraction (0…1) of the file being upscaled, by record id. Upscales are long, one file can take minutes.
+    public let fileProgress: @Sendable (Int, Double) -> Void
+
+    public init(settings: ConvertSettings, upscaler: Upscaler? = Upscaler.bundled(),
+                fileProgress: @escaping @Sendable (Int, Double) -> Void = { _, _ in }) {
         self.settings = settings
-        self.maxConcurrency = settings.parallel ? max(1, min(ProcessInfo.processInfo.activeProcessorCount, 6)) : 1
+        self.upscaler = upscaler
+        self.fileProgress = fileProgress
+        // The GPU already parallelises one upscale; running several at once only fights over VRAM.
+        self.maxConcurrency = settings.mode == .upscale ? 1
+            : settings.parallel ? max(1, min(ProcessInfo.processInfo.activeProcessorCount, 6)) : 1
     }
 
     public func records(for items: [InputItem]) -> [ConversionRecord] {
@@ -42,13 +52,13 @@ public struct BatchConverter: Sendable {
         askOverwrite: @escaping @Sendable (URL) async -> OverwriteDecision,
         update: @escaping @Sendable (ConversionRecord) async -> Void
     ) async throws {
-        let pipeline = try ImagePipeline(options: settings.useAdvancedOptions ? settings.advanced : AdvancedOptions())
-        var standing: OverwriteDecision?
+        let pipeline = try ImagePipeline(options: settings.effectiveAdvancedOptions)
+        var standing: OverwriteDecision? = settings.skipExisting ? .noToAll : nil
         try await withThrowingTaskGroup(of: Void.self) { group in
             var running = 0
             for record in records {
                 try Task.checkCancellation()
-                if settings.askBeforeOverwrite, FileManager.default.fileExists(atPath: record.output.path) {
+                if settings.askBeforeOverwrite || settings.skipExisting, FileManager.default.fileExists(atPath: record.output.path) {
                     let decision: OverwriteDecision
                     if let standing { decision = standing } else { decision = await askOverwrite(record.output) }
                     switch decision {
@@ -65,7 +75,9 @@ public struct BatchConverter: Sendable {
                     try await group.next()
                     running -= 1
                 }
-                group.addTask { await update(convert(record, pipeline: pipeline)) }
+                group.addTask {
+                    await update(settings.mode == .upscale ? await upscale(record) : convert(record, pipeline: pipeline))
+                }
                 running += 1
             }
             try await group.waitForAll()
@@ -75,24 +87,42 @@ public struct BatchConverter: Sendable {
     func convert(_ record: ConversionRecord, pipeline: ImagePipeline) -> ConversionRecord {
         do {
             let loaded = try ImageLoader.load(record.input)
-            let data = try pipeline.encode(loaded, format: settings.format, settings: settings.formatSettings).data
+            let data = try OutputEncoder.encode(loaded, pipeline: pipeline, settings: settings).data
             let fm = FileManager.default
             try fm.createDirectory(at: record.output.deletingLastPathComponent(), withIntermediateDirectories: true)
             try data.write(to: record.output, options: .atomic)
-            if settings.keepDates {
-                var attributes: [FileAttributeKey: Any] = [:]
-                if let modified = (try? record.input.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate {
-                    attributes[.modificationDate] = modified
-                }
-                if let created = loaded.creationDate { attributes[.creationDate] = created }
-                if !attributes.isEmpty { try? fm.setAttributes(attributes, ofItemAtPath: record.output.path) }
-            }
+            copyDates(from: record.input, to: record.output)
             var done = record.with(status: .done)
             done.newSize = Int64(data.count)
             return done
         } catch {
             return record.with(status: .failed(error.localizedDescription))
         }
+    }
+
+    func upscale(_ record: ConversionRecord) async -> ConversionRecord {
+        do {
+            guard let upscaler else { throw UpscaleError.backendMissing }
+            let id = record.id, report = fileProgress
+            try await upscaler.upscale(record.input, to: record.output, settings: settings.upscale) { report(id, $0) }
+            copyDates(from: record.input, to: record.output)
+            var done = record.with(status: .done)
+            done.newSize = Self.fileSize(record.output)
+            return done
+        } catch is CancellationError {
+            return record
+        } catch {
+            return record.with(status: .failed(error.localizedDescription))
+        }
+    }
+
+    private func copyDates(from input: URL, to output: URL) {
+        guard settings.keepDates else { return }
+        let values = try? input.resourceValues(forKeys: [.contentModificationDateKey, .creationDateKey])
+        var attributes: [FileAttributeKey: Any] = [:]
+        if let modified = values?.contentModificationDate { attributes[.modificationDate] = modified }
+        if let created = values?.creationDate { attributes[.creationDate] = created }
+        if !attributes.isEmpty { try? FileManager.default.setAttributes(attributes, ofItemAtPath: output.path) }
     }
 
     public static func fileSize(_ url: URL) -> Int64 {

@@ -15,6 +15,20 @@ public struct ConvertSettings: Codable, Equatable, Sendable {
     public var showErrors = true
     public var parallel = true
     public var openFolderWhenDone = false
+    /// Simplified window: convert to `format`, or compress keeping each file's own format.
+    public var mode = ConvertMode.convert
+    /// Off: shrink images whose long side exceeds `maxLongSide` (unless Advanced Options already resize).
+    public var keepDimensions = true
+    public var maxLongSide = 2400
+    /// Lower the quality of lossy formats until each file fits under `maxFileSizeKB`.
+    public var limitFileSize = false
+    public var maxFileSizeKB = 500
+    public var preserveTransparency = true
+    /// Appends "-convertido" / "-comprimido" to output names.
+    public var addSuffix = false
+    /// Existing outputs are left alone without asking.
+    public var skipExisting = false
+    public var upscale = UpscaleSettings()
 
     public init() {}
 
@@ -56,15 +70,16 @@ public enum OutputPlanner {
         // Other inputs are reserved so an output can never replace a file that has not been read yet.
         let inputPaths = items.map { $0.url.standardizedFileURL.path.lowercased() }
         var used = Set(inputPaths)
-        let ext = settings.uppercaseExtension ? settings.format.fileExtension.uppercased() : settings.format.fileExtension
         return items.enumerated().map { offset, item in
+            let format = settings.outputFormat(for: item.url)
+            let ext = settings.uppercaseExtension ? format.fileExtension.uppercased() : format.fileExtension
             var folder = settings.outputFolderURL ?? item.url.deletingLastPathComponent()
             if let virtual = item.virtualFolder {
                 folder = folder.appendingPathComponent(virtual, isDirectory: true)
             } else if settings.outputFolderURL != nil, settings.keepFolderStructure, let relative = item.relativeDirectory, !relative.isEmpty {
                 folder = folder.appendingPathComponent(relative, isDirectory: true)
             }
-            let base = item.url.deletingPathExtension().lastPathComponent
+            let base = item.url.deletingPathExtension().lastPathComponent + settings.nameSuffix
             let own = inputPaths[offset]
             var candidate = folder.appendingPathComponent(base).appendingPathExtension(ext)
             var counter = 2

@@ -202,6 +202,8 @@ public struct FormatSettings: Codable, Equatable, Sendable {
     public var webp = WebPSettings()
     public var heic = HEIFSettings()
     public var avif = HEIFSettings(quality: 70)
+    /// Paint transparent pixels on white before encoding ("Preserve transparency" off).
+    public var flattenTransparency = false
 
     public init() {}
 

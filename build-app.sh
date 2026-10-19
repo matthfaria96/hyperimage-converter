@@ -41,6 +41,14 @@ cp Sources/CWebP/COPYING "$CONTENTS/Resources/Licenses/libwebp-COPYING.txt"
 cp Sources/CWebP/PATENTS "$CONTENTS/Resources/Licenses/libwebp-PATENTS.txt"
 cp Sources/CJPEG/README-libjpeg.txt "$CONTENTS/Resources/Licenses/libjpeg-README.txt"
 
+# AI Upscale backend (Upscayl, AGPL-3.0): a separate executable plus its models.
+[ -x Vendor/Upscayl/upscayl-bin ] || ./scripts/fetch-upscayl.sh
+cp Vendor/Upscayl/upscayl-bin "$CONTENTS/MacOS/upscayl-bin"
+mkdir -p "$CONTENTS/Resources/Upscayl"
+cp -R Vendor/Upscayl/models "$CONTENTS/Resources/Upscayl/models"
+cp Vendor/Upscayl/LICENSE-AGPL-3.0.txt "$CONTENTS/Resources/Licenses/upscayl-LICENSE-AGPL-3.0.txt"
+codesign --force --options runtime --sign - "$CONTENTS/MacOS/upscayl-bin"
+
 strip -x "$CONTENTS/MacOS/HyperImage" 2>/dev/null || true
 codesign --force --options runtime --sign - "$APP"
 codesign --verify --strict "$APP"

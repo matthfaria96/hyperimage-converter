@@ -18,6 +18,16 @@ Teclado → Atalhos de Teclado → Serviços.
 
 O Xcode é necessário (as Command Line Tools não trazem os plugins de macro do SwiftUI).
 
+## AI Upscale
+
+A aba **AI Upscale** amplia imagens em 2×, 3× ou 4× com o motor do [Upscayl](https://github.com/upscayl/upscayl)
+(Real-ESRGAN na GPU). O executável `upscayl-bin` e os modelos não ficam no repositório:
+`./scripts/fetch-upscayl.sh` baixa versões fixas, confere o SHA-256 e grava em `Vendor/Upscayl/`
+(o `build-app.sh` roda o script sozinho quando falta algo). O motor é AGPL-3.0 e roda como programa separado;
+a licença vai em `Contents/Resources/Licenses/`. Só entram os modelos que podem ser redistribuídos
+(Padrão, Lite, Alta fidelidade/HFA2k e Arte digital); Remacri, UltraSharp e Ultramix ficam de fora por terem
+licença não comercial. Os testes de upscale usam `Vendor/Upscayl` e são pulados se ele não tiver sido baixado.
+
 ## Idiomas
 A interface está em português (idioma de origem) e inglês. As traduções ficam em `Resources/Localizable.xcstrings`,
 que o `build-app.sh` compila para dentro do app. Depois de mudar textos no código, rode `scripts/sync-strings.sh` para

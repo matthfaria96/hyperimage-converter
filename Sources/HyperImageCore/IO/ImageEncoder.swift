@@ -23,6 +23,8 @@ public enum ImageEncoder {
     }
 
     public static func encode(_ input: Input, format: OutputFormat, settings: FormatSettings) throws -> Data {
+        var input = input
+        if settings.flattenTransparency { input.image = try ColorConversion.flattened(input.image, on: .white) }
         switch format {
         case .webp: return try WebPEncoder.encode(input.image, settings: settings.webp)
         case .pdf: return try PDFEncoder.encode(input.image, settings: settings.pdf, dpi: input.dpiX)
