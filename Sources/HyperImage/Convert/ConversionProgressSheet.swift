@@ -5,17 +5,15 @@ struct ConversionProgressSheet: View {
     @Environment(AppModel.self) private var app
     @Environment(\.dismiss) private var dismiss
     @Bindable var runner: ConversionRunner
+    @State private var sheetAlert: AppAlert?
+    @State private var reportedID = 0
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text(runner.isRunning ? "Convertendo…" : (runner.wasCancelled ? "Conversão cancelada" : "Conversão concluída"))
-                    .font(.title3.weight(.semibold))
-                Spacer()
-                Text("\(runner.finishedCount) de \(runner.records.count) arquivos")
-                    .foregroundStyle(.secondary).monospacedDigit()
-            }
+            ProgressHeader(runner: runner)
             ProgressView(value: runner.progress)
+                .tint(runner.isRunning ? .accentColor : ProgressHeader.Outcome(runner).tint)
+                .animation(.easeInOut(duration: 0.3), value: runner.progress)
             table
             footer
         }
@@ -24,17 +22,24 @@ struct ConversionProgressSheet: View {
         .overlay {
             if let prompt = runner.prompt { OverwritePanel(url: prompt.url, answer: runner.answer) }
         }
-        .onChange(of: runner.isRunning) { _, running in
-            if !running, runner.settings.showErrors, !runner.failures.isEmpty, !runner.wasCancelled {
-                app.alert = AppAlert(title: String(localized: "\(runner.failures.count) arquivo(s) com erro"),
-                                     message: runner.failures.prefix(8).map { r in
-                                         "\(r.input.lastPathComponent): \(errorText(r.status))"
-                                     }.joined(separator: "\n"))
-            }
-        }
+        .onChange(of: runner.completionID, initial: true) { _, id in reportIfNeeded(id) }
+        .alert(item: $sheetAlert) { Alert(title: Text($0.title), message: Text($0.message)) }
         .onChange(of: runner.openFolderWhenDone) { _, value in app.state.convert.openFolderWhenDone = value }
         .interactiveDismissDisabled(runner.isRunning)
         .onDisappear { if runner.isRunning { runner.cancel() } }
+    }
+
+    private func reportIfNeeded(_ id: Int) {
+        guard id != reportedID, !runner.isRunning else { return }
+        reportedID = id
+        if let failure = runner.failure {
+            sheetAlert = AppAlert(title: String(localized: "Falha na conversão"), message: failure)
+        } else if runner.settings.showErrors, !runner.failures.isEmpty, !runner.wasCancelled {
+            sheetAlert = AppAlert(title: String(localized: "\(runner.failures.count) arquivo(s) com erro"),
+                                  message: runner.failures.prefix(8).map { r in
+                                      "\(r.input.lastPathComponent): \(errorText(r.status))"
+                                  }.joined(separator: "\n"))
+        }
     }
 
     private var table: some View {
@@ -99,6 +104,81 @@ struct ConversionProgressSheet: View {
 
     private func duration(_ seconds: TimeInterval) -> String {
         Duration.seconds(max(0, seconds)).formatted(.time(pattern: .hourMinuteSecond))
+    }
+}
+
+/// Title row: a status symbol that pops when the batch ends, plus the space saved.
+private struct ProgressHeader: View {
+    enum Outcome {
+        case running, success, partial, cancelled, failed
+
+        init(_ runner: ConversionRunner) {
+            if runner.isRunning { self = .running }
+            else if runner.failure != nil { self = .failed }
+            else if runner.wasCancelled { self = .cancelled }
+            else if !runner.failures.isEmpty { self = .partial }
+            else { self = .success }
+        }
+
+        var tint: Color {
+            switch self {
+            case .running: .accentColor
+            case .success: .green
+            case .partial, .cancelled: .orange
+            case .failed: .red
+            }
+        }
+    }
+
+    let runner: ConversionRunner
+
+    var body: some View {
+        let outcome = Outcome(runner)
+        HStack(spacing: 10) {
+            Image(systemName: symbol(outcome))
+                .font(.title2)
+                .foregroundStyle(outcome.tint)
+                .contentTransition(.symbolEffect(.replace))
+                .symbolEffect(.bounce, value: runner.completionID)
+                .symbolEffect(.rotate, isActive: outcome == .running)
+            Text(title(outcome)).font(.title3.weight(.semibold))
+            if outcome != .running, runner.oldTotal > runner.newTotal, runner.oldTotal > 0 {
+                let saved = runner.oldTotal - runner.newTotal
+                Label("Economia de \(formatBytes(saved)) (\(Int((Double(saved) / Double(runner.oldTotal) * 100).rounded())) %)",
+                      systemImage: "arrow.down.circle.fill")
+                    .font(.callout.weight(.medium))
+                    .foregroundStyle(.green)
+                    .padding(.horizontal, 10).padding(.vertical, 4)
+                    .background(.green.opacity(0.14), in: .capsule)
+                    .transition(.scale(scale: 0.6).combined(with: .opacity))
+            }
+            Spacer()
+            Text("\(runner.finishedCount) de \(runner.records.count) arquivos")
+                .foregroundStyle(.secondary).monospacedDigit()
+                .contentTransition(.numericText())
+        }
+        .animation(.spring(response: 0.45, dampingFraction: 0.7), value: outcome == .running)
+        .animation(.default, value: runner.finishedCount)
+    }
+
+    private func symbol(_ outcome: Outcome) -> String {
+        switch outcome {
+        case .running: "arrow.triangle.2.circlepath"
+        case .success: "checkmark.circle.fill"
+        case .partial: "exclamationmark.triangle.fill"
+        case .cancelled: "stop.circle.fill"
+        case .failed: "xmark.octagon.fill"
+        }
+    }
+
+    private func title(_ outcome: Outcome) -> LocalizedStringKey {
+        switch outcome {
+        case .running: "Convertendo…"
+        case .success: "Conversão concluída"
+        case .partial: "Concluída com erros"
+        case .cancelled: "Conversão cancelada"
+        case .failed: "Falha na conversão"
+        }
     }
 }
 

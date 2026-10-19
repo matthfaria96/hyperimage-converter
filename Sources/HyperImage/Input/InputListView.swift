@@ -15,13 +15,7 @@ struct InputListView: View {
         @Bindable var app = app
         Group {
             if app.inputs.isEmpty {
-                ContentUnavailableView {
-                    Label("Nenhuma imagem na lista", systemImage: "photo.stack")
-                } description: {
-                    Text("Arraste imagens ou pastas do Finder ou da barra lateral, ou use ⌘O.")
-                } actions: {
-                    Button("Adicionar Arquivos…") { FilePanels.addFiles(to: app) }
-                }
+                EmptyDropZone(targeted: dropTargeted) { FilePanels.addFiles(to: app) }
             } else {
                 Table(app.inputs, selection: $app.selection) {
                     TableColumn("Nome") { item in
@@ -30,7 +24,7 @@ struct InputListView: View {
                             Text(item.url.lastPathComponent).lineLimit(1).truncationMode(.middle)
                         }
                     }
-                    .width(min: 180, ideal: 260)
+                    .width(min: 130, ideal: 200)
                     TableColumn("Pasta") { item in
                         if let virtual = item.virtualFolder {
                             Label(virtual, systemImage: "folder.badge.plus")
@@ -41,16 +35,16 @@ struct InputListView: View {
                                 .foregroundStyle(.secondary).lineLimit(1)
                         }
                     }
-                    .width(min: 80, ideal: 140)
+                    .width(min: 60, ideal: 100)
                     TableColumn("Dimensões") { item in DimensionsCell(url: item.url) }
-                        .width(min: 80, ideal: 100)
+                        .width(min: 84, ideal: 96)
                     TableColumn("Tamanho") { item in
                         Text(ByteCountFormatter.string(fromByteCount: BatchConverter.fileSize(item.url), countStyle: .file))
                             .monospacedDigit().foregroundStyle(.secondary)
                     }
-                    .width(min: 60, ideal: 80)
+                    .width(min: 54, ideal: 70)
                     TableColumn("Tipo") { item in Text(item.url.pathExtension.uppercased()).foregroundStyle(.secondary) }
-                        .width(min: 40, ideal: 60)
+                        .width(min: 36, ideal: 44)
                 }
                 .contextMenu(forSelectionType: URL.self) { urls in
                     Button("Pré-visualizar Conversão") { if let url = urls.first { preview(url) } }
@@ -95,15 +89,16 @@ struct InputListView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .safeAreaInset(edge: .bottom, spacing: 0) { statusBar }
         .dropDestination(for: URL.self) { urls, _ in
-            app.add(urls)
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) { app.add(urls) }
             return true
         } isTargeted: { dropTargeted = $0 }
         .overlay {
-            if dropTargeted {
-                RoundedRectangle(cornerRadius: 14).strokeBorder(Color.accentColor, style: StrokeStyle(lineWidth: 3, dash: [8, 6]))
-                    .padding(8).allowsHitTesting(false)
-            }
+            if dropTargeted && !app.inputs.isEmpty { DropOverlay() }
         }
+        .animation(.easeOut(duration: 0.2), value: dropTargeted)
+        #if DEBUG
+        .onAppear { if DebugLaunch.env["HYPERIMAGE_DROP"] != nil { dropTargeted = true } }
+        #endif
     }
 
     private var statusBar: some View {

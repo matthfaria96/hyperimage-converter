@@ -46,8 +46,8 @@ struct ConversionPreviewSheet: View {
             Divider()
             let layout = stacked ? AnyLayout(VStackLayout(spacing: 1)) : AnyLayout(HStackLayout(spacing: 1))
             layout {
-                pane(title: "Antes", image: result?.before, info: result?.beforeInfo)
-                pane(title: "Depois", image: result?.after, info: result?.afterInfo)
+                pane(title: "Antes", tint: .secondary, image: result?.before, info: result?.beforeInfo)
+                pane(title: "Depois", tint: .accentColor, image: result?.after, info: result?.afterInfo)
             }
             .overlay {
                 if result == nil && error == nil { ProgressView("Processando…") }
@@ -58,16 +58,23 @@ struct ConversionPreviewSheet: View {
         .task(id: url) { await render(url) }
     }
 
-    private func pane(title: LocalizedStringKey, image: CGImage?, info: String?) -> some View {
+    private func pane(title: LocalizedStringKey, tint: Color, image: CGImage?, info: String?) -> some View {
         VStack(spacing: 0) {
             HStack {
-                Text(title).font(.subheadline.weight(.semibold))
+                Text(title)
+                    .font(.caption.weight(.bold))
+                    .textCase(.uppercase)
+                    .foregroundStyle(tint == .secondary ? Color.primary : .white)
+                    .padding(.horizontal, 9).padding(.vertical, 3)
+                    .background(tint == .secondary ? AnyShapeStyle(.quaternary) : AnyShapeStyle(tint), in: .capsule)
                 Spacer()
                 Text(info ?? "").font(.caption).foregroundStyle(.secondary).monospacedDigit()
             }
             .padding(.horizontal, 12).padding(.vertical, 6)
             .background(.bar)
             ZoomableImage(image: image, zoom: zoom)
+                .opacity(image == nil ? 0 : 1)
+                .animation(.easeOut(duration: 0.3), value: image == nil)
         }
     }
 
@@ -82,9 +89,12 @@ struct ConversionPreviewSheet: View {
     private func render(_ url: URL) async {
         let settings = app.state.convert
         do {
-            result = try await Task.detached(priority: .userInitiated) { try PreviewResult.make(url: url, settings: settings) }.value
+            let made = try await Task.detached(priority: .userInitiated) { try PreviewResult.make(url: url, settings: settings) }.value
+            guard !Task.isCancelled else { return }
+            result = made
             error = nil
         } catch {
+            guard !Task.isCancelled else { return }
             self.error = error.localizedDescription
         }
     }

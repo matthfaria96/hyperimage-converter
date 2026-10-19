@@ -30,10 +30,14 @@ struct ThumbnailView: View {
         Group {
             if let image {
                 Image(nsImage: image).resizable().scaledToFit()
+                    .transition(.opacity.combined(with: .scale(scale: 0.92)))
             } else {
                 Image(nsImage: NSWorkspace.shared.icon(forFile: url.path)).resizable().scaledToFit().opacity(0.6)
             }
         }
-        .task(id: url) { image = await ThumbnailCache.shared.image(for: url, maxPixels: maxPixels) }
+        .task(id: url) {
+            let loaded = await ThumbnailCache.shared.image(for: url, maxPixels: maxPixels)
+            withAnimation(.easeOut(duration: 0.25)) { image = loaded }
+        }
     }
 }
