@@ -108,17 +108,18 @@ nonisolated struct PreviewResult: @unchecked Sendable {
 
     nonisolated static func make(url: URL, settings: ConvertSettings) throws -> PreviewResult {
         let loaded = try ImageLoader.load(url)
-        let pipeline = try ImagePipeline(options: settings.useAdvancedOptions ? settings.advanced : AdvancedOptions())
-        let output = try pipeline.encode(loaded, format: settings.format, settings: settings.formatSettings)
+        let pipeline = try ImagePipeline(options: settings.effectiveAdvancedOptions)
+        let format = settings.outputFormat(for: url)
+        let output = try OutputEncoder.encode(loaded, pipeline: pipeline, settings: settings)
         let data = output.data
-        guard let after = decode(data, format: settings.format, pixelSize: output.pixelSize) ?? output.image else {
-            throw ImagingError.encodeFailed(settings.format.displayName)
+        guard let after = decode(data, format: format, pixelSize: output.pixelSize) ?? output.image else {
+            throw ImagingError.encodeFailed(format.displayName)
         }
         let sizeText = { (bytes: Int64) in ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file) }
         return PreviewResult(
             before: loaded.image, after: after,
             beforeInfo: "\(loaded.image.width) × \(loaded.image.height) · \(sizeText(loaded.fileSize))",
-            afterInfo: "\(output.pixelSize.width) × \(output.pixelSize.height) · \(sizeText(Int64(data.count))) · \(settings.format.displayName)")
+            afterInfo: "\(output.pixelSize.width) × \(output.pixelSize.height) · \(sizeText(Int64(data.count))) · \(format.displayName)")
     }
 
     nonisolated private static func decode(_ data: Data, format: OutputFormat, pixelSize: PixelSize) -> CGImage? {

@@ -11,6 +11,8 @@ final class ConversionRunner {
     }
 
     private(set) var records: [ConversionRecord] = []
+    /// Progress inside the file currently being upscaled.
+    private(set) var partial: Double = 0
     private(set) var isRunning = false
     private(set) var wasCancelled = false
     private(set) var failure: String?
@@ -28,7 +30,10 @@ final class ConversionRunner {
     func start(items: [InputItem], settings: ConvertSettings) {
         task?.cancel()
         answer(.cancel)
-        let converter = BatchConverter(settings: settings)
+        partial = 0
+        let converter = BatchConverter(settings: settings, fileProgress: { _, fraction in
+            Task { @MainActor [weak self] in self?.partial = fraction }
+        })
         self.settings = settings
         openFolderWhenDone = settings.openFolderWhenDone
         records = converter.records(for: items)
@@ -74,6 +79,7 @@ final class ConversionRunner {
     private func apply(_ record: ConversionRecord) {
         guard record.id < records.count else { return }
         records[record.id] = record
+        partial = 0
     }
 
     private func finish() {
@@ -85,11 +91,32 @@ final class ConversionRunner {
         }
     }
 
+    /// Latest result for an input file, for the file cards (nil before the first run).
+    func record(for url: URL) -> ConversionRecord? { records.last { $0.input == url } }
+
+    var hasResults: Bool { !records.isEmpty }
+
+    /// The file an upscale is working on (upscales run one at a time, in order).
+    var currentUpscale: URL? {
+        guard isRunning, settings.mode == .upscale else { return nil }
+        return records.first { $0.status == .pending }?.input
+    }
+
+    func clearResults() {
+        guard !isRunning else { return }
+        records = []
+        endDate = nil
+        failure = nil
+        wasCancelled = false
+    }
+
     // MARK: Totals
 
     var finishedCount: Int { records.filter { $0.status != .pending && $0.status != .working }.count }
     var failures: [ConversionRecord] { records.filter { if case .failed = $0.status { true } else { false } } }
-    var progress: Double { records.isEmpty ? 1 : Double(finishedCount) / Double(records.count) }
+    var progress: Double {
+        records.isEmpty ? 1 : min(1, (Double(finishedCount) + (isRunning ? partial : 0)) / Double(records.count))
+    }
 
     var oldTotal: Int64 { records.filter { $0.status == .done }.map(\.oldSize).reduce(0, +) }
     var newTotal: Int64 { records.filter { $0.status == .done }.map(\.newSize).reduce(0, +) }

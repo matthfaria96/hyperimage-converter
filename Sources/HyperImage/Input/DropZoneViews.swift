@@ -99,3 +99,44 @@ private struct DropZoneFrame: View {
         }
     }
 }
+
+/// Slim drop area above a non-empty list, as in the simplified layout.
+struct CompactDropZone: View {
+    let targeted: Bool
+    let addFiles: () -> Void
+
+    var body: some View {
+        HStack(spacing: 14) {
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(Color.accentColor.opacity(targeted ? 0.35 : 0.18))
+                .frame(width: 44, height: 44)
+                .overlay {
+                    Image(systemName: targeted ? "arrow.down" : "square.and.arrow.down")
+                        .font(.system(size: 19, weight: .semibold))
+                        .foregroundStyle(.tint)
+                        .contentTransition(.symbolEffect(.replace))
+                        .symbolEffect(.bounce, value: targeted)
+                }
+            VStack(alignment: .leading, spacing: 2) {
+                Text(targeted ? "Solte para adicionar" : "Arraste mais imagens para cá").font(.headline)
+                    .contentTransition(.opacity)
+                Text("JPG, PNG, WebP, HEIC, TIFF, RAW e outros formatos").font(.caption).foregroundStyle(.secondary)
+            }
+            Spacer()
+            Button("Adicionar imagens…", action: addFiles)
+                .buttonStyle(.borderedProminent)
+        }
+        .padding(14)
+        .background {
+            RoundedRectangle(cornerRadius: 13, style: .continuous)
+                .fill(RadialGradient(colors: [Color.accentColor.opacity(targeted ? 0.25 : 0.1), .clear],
+                                     center: .top, startRadius: 0, endRadius: 260))
+        }
+        .overlay {
+            RoundedRectangle(cornerRadius: 13, style: .continuous)
+                .strokeBorder(targeted ? Color.accentColor : Color.secondary.opacity(0.35),
+                              style: StrokeStyle(lineWidth: targeted ? 2 : 1, dash: [6, 5]))
+        }
+        .animation(.spring(response: 0.35, dampingFraction: 0.75), value: targeted)
+    }
+}
