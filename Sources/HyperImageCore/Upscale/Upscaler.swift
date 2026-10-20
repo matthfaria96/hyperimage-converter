@@ -131,8 +131,8 @@ public struct Upscaler: Sendable {
             "-c", String(min(100, max(0, settings.compression))),
         ], progress: progress)
         guard fm.fileExists(atPath: partial.path) else { throw UpscaleError.failed(String(localized: "nenhum arquivo gerado")) }
-        try fm.createDirectory(at: output.deletingLastPathComponent(), withIntermediateDirectories: true)
         try Task.checkCancellation()
+        try fm.createDirectory(at: output.deletingLastPathComponent(), withIntermediateDirectories: true)
         // Swapped in atomically: the previous output is never deleted before the new one is in place.
         if fm.fileExists(atPath: output.path) {
             _ = try fm.replaceItemAt(output, withItemAt: partial)
