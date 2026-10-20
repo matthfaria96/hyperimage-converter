@@ -46,10 +46,43 @@ public struct AdvancedOptions: Codable, Equatable, Sendable {
         if dpi.enabled, dpi.x <= 0 || dpi.y <= 0 {
             return String(localized: "O DPI deve ser maior que 0.")
         }
+        if let limit = limitError() { return limit }
         if watermark.enabled, watermark.imagePath.isEmpty {
             return String(localized: "Escolha a imagem da marca d'água.")
         }
         return nil
+    }
+
+    /// Rejects pixel sizes above `SafeLimits` so hostile or mistyped values never reach allocation.
+    private func limitError() -> String? {
+        if resize.enabled {
+            let tooBig = switch resize.mode {
+            case .pixels: Self.exceeds(resize.width, resize.height)
+            case .oneSide: resize.sideLength > SafeLimits.maxSide
+            default: false
+            }
+            if tooBig { return String(localized: "O tamanho na aba Redimensionar passa do limite de 30 000 px por lado ou 400 megapixels.") }
+        }
+        if crop.enabled, crop.mode == .pixels, Self.exceeds(crop.width, crop.height) {
+            return String(localized: "O tamanho do recorte passa do limite de 30 000 px por lado ou 400 megapixels.")
+        }
+        if canvas.enabled, canvas.mode == .pixels, Self.exceeds(canvas.width, canvas.height) {
+            return String(localized: "O tamanho da tela passa do limite de 30 000 px por lado ou 400 megapixels.")
+        }
+        if border.enabled {
+            let sizes = [border.frame1.width, border.frame2.width, border.frame3.width,
+                         border.innerFrame.distance, border.innerFrame.width, border.shadow.radius, border.shadow.depth]
+            if sizes.contains(where: { abs($0) > SafeLimits.maxSide }) {
+                return String(localized: "A espessura da borda passa do limite de 30 000 px.")
+            }
+        }
+        return nil
+    }
+
+    private static func exceeds(_ width: Int, _ height: Int) -> Bool {
+        guard width <= SafeLimits.maxSide, height <= SafeLimits.maxSide else { return true }
+        let (area, overflow) = width.multipliedReportingOverflow(by: height)
+        return overflow || area > SafeLimits.maxPixels
     }
 
     public static func load(from url: URL) throws -> AdvancedOptions {

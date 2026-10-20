@@ -2551,6 +2551,46 @@
         }
       }
     },
+    "O tamanho na aba Redimensionar passa do limite de 30 000 px por lado ou 400 megapixels.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The size on the Resize tab exceeds the limit of 30,000 px per side or 400 megapixels."
+          }
+        }
+      }
+    },
+    "O tamanho do recorte passa do limite de 30 000 px por lado ou 400 megapixels.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The crop size exceeds the limit of 30,000 px per side or 400 megapixels."
+          }
+        }
+      }
+    },
+    "O tamanho da tela passa do limite de 30 000 px por lado ou 400 megapixels.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The canvas size exceeds the limit of 30,000 px per side or 400 megapixels."
+          }
+        }
+      }
+    },
+    "A espessura da borda passa do limite de 30 000 px.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The border thickness exceeds the 30,000 px limit."
+          }
+        }
+      }
+    },
     "O tamanho da tela deve ser maior que 0.": {
       "localizations": {
         "en": {

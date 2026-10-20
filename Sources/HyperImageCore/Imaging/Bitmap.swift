@@ -30,7 +30,7 @@ public struct Bitmap: @unchecked Sendable {
 
     public init(image: CGImage, colorSpace: CGColorSpace) throws {
         let width = image.width, height = image.height
-        var buffer = [UInt8](repeating: 0, count: width * height * 4)
+        var buffer = [UInt8](repeating: 0, count: try Bitmap.checkedByteCount(width: width, height: height))
         let drawn = buffer.withUnsafeMutableBytes { raw -> Bool in
             guard let ctx = CGContext(data: raw.baseAddress, width: width, height: height, bitsPerComponent: 8,
                                       bytesPerRow: width * 4, space: colorSpace, bitmapInfo: Bitmap.bitmapInfo) else { return false }
@@ -40,6 +40,17 @@ public struct Bitmap: @unchecked Sendable {
         }
         guard drawn else { throw ImagingError.cannotAllocate(width: width, height: height) }
         self.init(width: width, height: height, pixels: buffer, colorSpace: colorSpace)
+    }
+
+    /// Bytes needed for a `width` × `height` RGBA buffer; throws instead of overflowing or exceeding `SafeLimits.maxPixels`.
+    /// Only the total area is capped, so wide panoramas within 400 MP still decode.
+    public static func checkedByteCount(width: Int, height: Int) throws -> Int {
+        guard width > 0, height > 0 else { throw ImagingError.cannotAllocate(width: width, height: height) }
+        let (area, areaOverflow) = width.multipliedReportingOverflow(by: height)
+        guard !areaOverflow, area <= SafeLimits.maxPixels else { throw ImagingError.cannotAllocate(width: width, height: height) }
+        let (bytes, byteOverflow) = area.multipliedReportingOverflow(by: 4)
+        guard !byteOverflow else { throw ImagingError.cannotAllocate(width: width, height: height) }
+        return bytes
     }
 
     public var size: PixelSize { PixelSize(width: width, height: height) }
