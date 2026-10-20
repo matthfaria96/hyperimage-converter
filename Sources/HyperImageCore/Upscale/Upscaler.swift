@@ -76,10 +76,10 @@ public struct Upscaler: Sendable {
     public let executable: URL
     public let modelsFolder: URL
     /// Where the per-run `hyperimage-upscale-*` work folder is created.
-    public let tempRoot: URL
+    /// nil = a replacement folder on the output's volume, so the final swap stays a same-volume rename.
+    public let tempRoot: URL?
 
-    public init(executable: URL, modelsFolder: URL,
-                tempRoot: URL = FileManager.default.temporaryDirectory) {
+    public init(executable: URL, modelsFolder: URL, tempRoot: URL? = nil) {
         self.executable = executable
         self.modelsFolder = modelsFolder
         self.tempRoot = tempRoot
@@ -103,8 +103,7 @@ public struct Upscaler: Sendable {
     public func upscale(_ input: URL, to output: URL, settings: UpscaleSettings,
                         progress: @escaping @Sendable (Double) -> Void = { _ in }) async throws {
         let fm = FileManager.default
-        let temp = tempRoot.appendingPathComponent("hyperimage-upscale-\(UUID().uuidString)", isDirectory: true)
-        try fm.createDirectory(at: temp, withIntermediateDirectories: true)
+        let temp = try workFolder(near: output)
         defer { try? fm.removeItem(at: temp) }
 
         try Task.checkCancellation()
@@ -140,6 +139,29 @@ public struct Upscaler: Sendable {
         } else {
             try fm.moveItem(at: partial, to: output)
         }
+    }
+
+    /// Creates the per-run work folder: under `tempRoot` when set, otherwise on the output's volume.
+    private func workFolder(near output: URL) throws -> URL {
+        let fm = FileManager.default
+        if tempRoot == nil, let replacement = try? fm.url(for: .itemReplacementDirectory, in: .userDomainMask,
+                                                           appropriateFor: Self.existingAncestor(of: output), create: true) {
+            // Already unique and created; removed whole by the caller.
+            return replacement
+        }
+        let base = tempRoot ?? fm.temporaryDirectory
+        let temp = base.appendingPathComponent("hyperimage-upscale-\(UUID().uuidString)", isDirectory: true)
+        try fm.createDirectory(at: temp, withIntermediateDirectories: true)
+        return temp
+    }
+
+    /// The closest folder above `url` that already exists, used to pick the volume.
+    static func existingAncestor(of url: URL) -> URL {
+        var current = url.deletingLastPathComponent()
+        while !FileManager.default.fileExists(atPath: current.path), current.pathComponents.count > 1 {
+            current = current.deletingLastPathComponent()
+        }
+        return current
     }
 
     private func run(arguments: [String], progress: @escaping @Sendable (Double) -> Void) async throws {

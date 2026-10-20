@@ -126,4 +126,15 @@ struct UpscaleCleanupTests {
         #expect(try Data(contentsOf: output) == Data("old".utf8))
         #expect(Self.leftovers(in: scratch.url).isEmpty)
     }
+
+    @Test func defaultWorkFolderSwapsOnOutputVolume() async throws {
+        let scratch = try TemporaryDirectory()
+        let script = try Self.backend(in: scratch.url, exitCode: 0)
+        let output = scratch.url.appendingPathComponent("nested/out.png")
+        let upscaler = Upscaler(executable: script, modelsFolder: scratch.url)
+        try await upscaler.upscale(Fixtures.url("paisagem"), to: output, settings: UpscaleSettings())
+        #expect(try Data(contentsOf: output) == Data(contentsOf: Fixtures.url("paisagem")))
+        #expect(Upscaler.existingAncestor(of: scratch.url.appendingPathComponent("a/b/c.png")).standardizedFileURL
+            == scratch.url.standardizedFileURL)
+    }
 }
