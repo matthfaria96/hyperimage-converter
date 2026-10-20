@@ -8,7 +8,7 @@ enum FilePanels {
         panel.allowsMultipleSelection = true
         panel.canChooseDirectories = true
         panel.prompt = String(localized: "Adicionar")
-        if panel.runModal() == .OK { model.add(panel.urls) }
+        if panel.runModal() == .OK { model.addInBackground(panel.urls) }
     }
 
     static func chooseFolder(startingAt path: String = "", prompt: String = String(localized: "Escolher")) -> URL? {

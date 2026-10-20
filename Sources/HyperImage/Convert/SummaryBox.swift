@@ -10,26 +10,30 @@ struct SummaryBox: View {
 
     var body: some View {
         let mode = app.state.convert.mode
+        let showsProgress = runner.isRunning || runner.hasResults
         VStack(spacing: 10) {
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
                     Text(runner.hasResults && !runner.isRunning ? "Resultado" : "Resumo estimado").font(.callout.weight(.semibold))
                     Spacer()
-                    Text(app.inputs.count == 1 ? "1 imagem" : "\(app.inputs.count) imagens")
-                        .font(.caption).foregroundStyle(.secondary)
+                    Text(countText).font(.caption).foregroundStyle(.secondary)
                 }
                 Text(headline).font(.title2.weight(.bold)).monospacedDigit()
                     .contentTransition(.numericText())
                     .animation(.snappy, value: headline)
                 Text(detail).font(.caption).foregroundStyle(.secondary).lineLimit(2)
-                ProgressView(value: runner.isRunning || runner.hasResults ? runner.progress : 0)
-                    .tint(runner.failures.isEmpty ? .green : .orange)
-                    .animation(.easeInOut(duration: 0.3), value: runner.progress)
-                    .padding(.top, 4)
+                if showsProgress {
+                    ProgressView(value: runner.progress)
+                        .tint(runner.failures.isEmpty ? .green : .orange)
+                        .animation(.easeInOut(duration: 0.3), value: runner.progress)
+                        .padding(.top, 4)
+                        .transition(.opacity)
+                }
             }
             .padding(12)
             .background(.background, in: .rect(cornerRadius: 10))
             .overlay { RoundedRectangle(cornerRadius: 10).strokeBorder(Color.primary.opacity(0.08)) }
+            .accessibilityElement(children: .combine)
 
             if runner.isRunning {
                 Button(role: .cancel) { runner.cancel() } label: {
@@ -47,15 +51,36 @@ struct SummaryBox: View {
                 .controlSize(.large)
                 .keyboardShortcut(.return, modifiers: .command)
                 .disabled(app.inputs.isEmpty)
+                .help("⌘↩")
+                if runner.hasResults && !runner.wasCancelled {
+                    HStack {
+                        if runner.doneCount > 0 {
+                            Button("Mostrar no Finder", systemImage: "folder") {
+                                FilePanels.reveal(runner.records.filter { $0.status == .done }.map(\.output))
+                            }
+                        }
+                        if !runner.failures.isEmpty {
+                            Button("Ver erros (\(runner.failures.count))", systemImage: "exclamationmark.triangle") {
+                                app.route = .errors
+                            }
+                            .foregroundStyle(.orange)
+                        }
+                    }
+                    .buttonStyle(.borderless)
+                    .font(.callout)
+                    .transition(.opacity.combined(with: .move(edge: .bottom)))
+                }
             }
-            Text(status.text)
-                .font(.caption).foregroundStyle(status.color)
-                .multilineTextAlignment(.center)
-                .frame(maxWidth: .infinity)
-                .contentTransition(.opacity)
-            Text("Seus arquivos não saem deste Mac.").font(.caption2).foregroundStyle(.tertiary)
+            TimelineView(.periodic(from: .now, by: 1)) { context in
+                Text(statusText(now: context.date))
+                    .font(.caption).foregroundStyle(statusColor)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: .infinity)
+            }
         }
-        .task(id: EstimateKey(app.state.convert, urls: app.inputs.map(\.url))) {
+        .animation(.snappy, value: showsProgress)
+        .animation(.snappy, value: runner.isRunning)
+        .task(id: EstimateKey(app.state.convert, revision: app.inputsRevision)) {
             try? await Task.sleep(for: .milliseconds(450))
             guard !Task.isCancelled else { return }
             let settings = app.state.convert
@@ -65,7 +90,15 @@ struct SummaryBox: View {
             guard !Task.isCancelled else { return }
             estimate = result
         }
-        .onChange(of: app.inputs.map(\.url)) { runner.clearResults() }
+        .onChange(of: app.inputsRevision) { runner.clearResults() }
+    }
+
+    private var countText: String {
+        if runner.hasResults && !runner.isRunning {
+            let done = runner.doneCount
+            return done == 1 ? String(localized: "1 imagem pronta") : String(localized: "\(done) imagens prontas")
+        }
+        return app.inputs.count == 1 ? String(localized: "1 imagem") : String(localized: "\(app.inputs.count) imagens")
     }
 
     // MARK: Text
@@ -100,19 +133,34 @@ struct SummaryBox: View {
         total > 0 ? Int((Double(part) / Double(total) * 100).rounded()) : 0
     }
 
-    private var status: (text: String, color: Color) {
+    private func statusText(now: Date) -> String {
         if runner.isRunning {
-            return (String(localized: "Processando \(min(runner.finishedCount + 1, runner.records.count)) de \(runner.records.count)…"), .secondary)
+            let step = String(localized: "Processando \(min(runner.finishedCount + 1, runner.records.count)) de \(runner.records.count)")
+            guard let left = runner.remaining(now: now) else { return step + "…" }
+            return step + " · " + String(localized: "≈ \(Self.duration(left)) restantes")
         }
-        if let failure = runner.failure { return (failure, .red) }
+        if let failure = runner.failure { return failure }
         if runner.hasResults {
-            if runner.wasCancelled { return (String(localized: "Cancelado."), .orange) }
-            let done = runner.records.filter { $0.status == .done }.count
-            if !runner.failures.isEmpty { return (String(localized: "\(done) concluídas · \(runner.failures.count) com erro."), .orange) }
-            return (done == 1 ? String(localized: "1 imagem processada.") : String(localized: "\(done) imagens processadas."), .green)
+            if runner.wasCancelled { return String(localized: "Cancelado.") }
+            let done = runner.doneCount
+            if !runner.failures.isEmpty { return String(localized: "\(done) concluídas · \(runner.failures.count) com erro.") }
+            return done == 1 ? String(localized: "1 imagem processada.") : String(localized: "\(done) imagens processadas.")
         }
-        return app.inputs.isEmpty ? (String(localized: "Adicione imagens para começar."), .secondary)
-            : (String(localized: "Pronto para processar."), .secondary)
+        return app.inputs.isEmpty ? String(localized: "Adicione imagens para começar.") : String(localized: "Pronto para processar.")
+    }
+
+    private var statusColor: Color {
+        if runner.isRunning { return .secondary }
+        if runner.failure != nil { return .red }
+        if runner.hasResults { return runner.wasCancelled || !runner.failures.isEmpty ? .orange : .green }
+        return .secondary
+    }
+
+    static func duration(_ seconds: TimeInterval) -> String {
+        let s = Int(seconds.rounded())
+        if s < 60 { return String(localized: "\(max(s, 1)) s") }
+        if s < 3600 { return String(localized: "\(s / 60) min \(s % 60) s") }
+        return String(localized: "\(s / 3600) h \(s % 3600 / 60) min")
     }
 }
 
@@ -125,9 +173,9 @@ private struct EstimateKey: Equatable {
     let resize: [Int]
     let reduction: [Int]
     let upscale: UpscaleSettings
-    let urls: [URL]
+    let revision: Int
 
-    init(_ s: ConvertSettings, urls: [URL]) {
+    init(_ s: ConvertSettings, revision: Int) {
         mode = s.mode
         format = s.format
         formatSettings = s.effectiveFormatSettings
@@ -135,7 +183,7 @@ private struct EstimateKey: Equatable {
         resize = [s.keepDimensions ? 0 : s.maxLongSide]
         reduction = [s.maxFileSizeBytes ?? 0]
         upscale = s.upscale
-        self.urls = urls
+        self.revision = revision
     }
 }
 

@@ -4,9 +4,11 @@ import Testing
 @testable import HyperImage
 
 /// Copies the fixtures into a fresh folder, so tests can write next to them.
-struct Workspace {
+final class Workspace {
     let root: URL
     let images: [URL]
+
+    deinit { try? FileManager.default.removeItem(at: root) }
 
     init() throws {
         root = FileManager.default.temporaryDirectory.appendingPathComponent("hyperimage-app-\(UUID().uuidString)")
@@ -151,5 +153,36 @@ struct PersistenceTests {
         #expect(restored.convert.formatSettings.jpeg.quality == 42)
         #expect(restored.showPreview == false)
         #expect(restored.sort == InputSort())
+    }
+}
+
+
+@Suite(.serialized)
+struct BackgroundAddTests {
+    /// Folder scanning and sort-key reading happen off the main thread, and the result lands once, de-duplicated.
+    @Test func addInBackgroundScansDeduplicatesAndSorts() async throws {
+        let ws = try Workspace()
+        let app = AppModel()
+        app.setSort(InputSort(key: .size, descending: true))
+        app.addInBackground([ws.root.appendingPathComponent("Fotos")])
+        app.addInBackground([ws.images[0]]) // already inside the folder being scanned
+        for _ in 0..<200 where app.inputs.count < 2 || app.isScanning { try await Task.sleep(for: .milliseconds(25)) }
+        #expect(app.inputs.count == 2)
+        #expect(!app.isScanning)
+        let sizes = app.inputs.map { BatchConverter.fileSize($0.url) }
+        #expect(sizes == sizes.sorted(by: >))
+        try await Task.sleep(for: .milliseconds(200))
+        #expect(app.totalBytes == sizes.reduce(0, +))
+    }
+
+    @Test func undoRestoresRemovedFiles() throws {
+        let ws = try Workspace()
+        let app = AppModel()
+        app.add(ws.images)
+        let before = app.inputs
+        app.remove(Set(before.map(\.url)))
+        #expect(app.inputs.isEmpty)
+        app.restore(before)
+        #expect(app.inputs == before)
     }
 }

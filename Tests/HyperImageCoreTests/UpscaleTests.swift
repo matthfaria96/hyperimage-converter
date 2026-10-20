@@ -24,8 +24,8 @@ struct UpscaleTests {
 
     @Test(.enabled(if: UpscaleTests.available))
     func batchUpscalesEveryModelAndOddInput() async throws {
-        let dir = FileManager.default.temporaryDirectory.appendingPathComponent("up-\(UUID().uuidString)", isDirectory: true)
-        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        let scratch = try TemporaryDirectory()
+        let dir = scratch.url
         // A small TIFF exercises the temporary-PNG path.
         let fixture = try #require(Bundle.module.url(forResource: "retrato", withExtension: "jpg", subdirectory: "Fixtures"))
         let loaded = try ImageLoader.load(fixture)

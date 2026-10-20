@@ -2,13 +2,14 @@ import HyperImageCore
 import SwiftUI
 
 enum SheetRoute: Identifiable {
-    case formatSettings, advanced, conversionPreview(URL)
+    case formatSettings, advanced, conversionPreview(URL), errors
 
     var id: String {
         switch self {
         case .formatSettings: "format"
         case .advanced: "advanced"
         case let .conversionPreview(url): "preview-\(url.path)"
+        case .errors: "errors"
         }
     }
 }
@@ -17,7 +18,6 @@ struct MainView: View {
     @Environment(AppModel.self) private var app
     @Environment(\.openWindow) private var openWindow
     @State private var browser: BrowserModel?
-    @State private var sheet: SheetRoute?
     @State private var runner = ConversionRunner()
     /// The file browser is optional in the simplified layout: hidden until the sidebar button shows it.
     @State private var columns = NavigationSplitViewVisibility.detailOnly
@@ -33,29 +33,34 @@ struct MainView: View {
             // A plain trailing column instead of `.inspector`: on narrow windows the system inspector and the
             // toolbar kept re-laying each other out until AppKit aborted the launch.
             HStack(spacing: 0) {
-                WorkspaceView(runner: runner, preview: { sheet = .conversionPreview($0) })
+                WorkspaceView(runner: runner, browserVisible: columns != .detailOnly,
+                              toggleBrowser: { withAnimation { columns = columns == .detailOnly ? .all : .detailOnly } })
                     .frame(minWidth: 460)
                 Divider()
-                SettingsPanel(runner: runner, open: { sheet = $0 }, start: startConversion)
+                SettingsPanel(runner: runner, start: startConversion)
             }
         }
         .navigationTitle("HyperImage Converter")
+        .toolbar(removing: .sidebarToggle)
         .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                Button("Abrir pasta de saída", systemImage: "folder") { openOutputFolder() }
-                    .help("Abrir no Finder a pasta onde os arquivos são salvos")
-                    .disabled(app.state.convert.useOutputFolder && app.state.convert.outputFolder.isEmpty
-                              || !app.state.convert.useOutputFolder && app.inputs.isEmpty)
+            ToolbarItem(placement: .navigation) {
+                Button("Navegador de pastas", systemImage: "sidebar.leading") {
+                    withAnimation { columns = columns == .detailOnly ? .all : .detailOnly }
+                }
+                .help("Mostrar ou ocultar o navegador de pastas (⌃⌘S)")
             }
         }
-        .sheet(item: $sheet) { route in sheetView(route) }
+        .sheet(item: $app.route) { route in sheetView(route) }
         .overlay {
             if let prompt = runner.prompt { OverwritePanel(url: prompt.url, answer: runner.answer) }
         }
         .alert(item: $app.alert) { alert in
             Alert(title: Text(alert.title), message: Text(alert.message))
         }
-        .onChange(of: runner.completionID) { reportFailures() }
+        .onChange(of: runner.completionID) { batchFinished() }
+        .onChange(of: runner.isRunning) { _, running in app.isBusy = running }
+        .onChange(of: runner.progress) { _, value in DockProgress.show(runner.isRunning ? value : nil) }
+        .onChange(of: app.startRequest) { startConversion() }
         .onChange(of: runner.openFolderWhenDone) { _, value in app.state.convert.openFolderWhenDone = value }
         .onAppear {
             if browser == nil {
@@ -64,7 +69,7 @@ struct MainView: View {
                 browser = model
             }
             #if DEBUG
-            if let route = DebugLaunch.apply(to: app) { sheet = route }
+            if let route = DebugLaunch.apply(to: app) { app.route = route }
             if DebugLaunch.env["HYPERIMAGE_SHEET"] == "progress", !app.inputs.isEmpty { startConversion() }
             if DebugLaunch.env["HYPERIMAGE_WINDOW"] == "about" { openWindow(id: "about") }
             #endif
@@ -77,6 +82,7 @@ struct MainView: View {
         case .formatSettings: FormatSettingsSheet()
         case .advanced: AdvancedOptionsSheet()
         case let .conversionPreview(url): ConversionPreviewSheet(initial: url)
+        case .errors: ErrorListSheet(failures: runner.failures)
         }
     }
 
@@ -88,31 +94,23 @@ struct MainView: View {
             return
         }
         if settings.useOutputFolder && settings.outputFolder.isEmpty {
-            guard let folder = FilePanels.chooseFolder(prompt: String(localized: "Usar como Saída")) else { return }
+            guard let folder = FilePanels.chooseFolder(prompt: String(localized: "Usar como saída")) else { return }
             app.state.convert.outputFolder = folder.path
         }
         runner.start(items: app.inputs, settings: app.state.convert)
     }
 
-    private func openOutputFolder() {
-        let settings = app.state.convert
-        if let folder = settings.outputFolderURL {
-            try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-            NSWorkspace.shared.open(folder)
-        } else if let first = app.inputs.first {
-            NSWorkspace.shared.open(first.url.deletingLastPathComponent())
-        }
-    }
-
-    private func reportFailures() {
+    /// Errors are listed in the cards and in "Ver erros"; an alert only interrupts for a batch-wide failure.
+    private func batchFinished() {
         guard !runner.isRunning else { return }
+        DockProgress.show(nil)
         if let failure = runner.failure {
             app.alert = AppAlert(title: String(localized: "Falha na conversão"), message: failure)
         } else if runner.settings.showErrors, !runner.failures.isEmpty, !runner.wasCancelled {
-            app.alert = AppAlert(title: String(localized: "\(runner.failures.count) arquivo(s) com erro"),
-                                 message: runner.failures.prefix(8).map { r in
-                                     "\(r.input.lastPathComponent): \(errorText(r.status))"
-                                 }.joined(separator: "\n"))
+            app.route = .errors
         }
+        guard runner.hasResults, !runner.wasCancelled else { return }
+        CompletionNotifier.notify(done: runner.doneCount, failed: runner.failures.count,
+                                  saved: runner.oldTotal - runner.newTotal, mode: runner.settings.mode)
     }
 }

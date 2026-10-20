@@ -6,11 +6,10 @@ import Testing
 
 /// The simplified window's options: compress mode, size target, dimension limit, transparency, suffix, skip.
 struct SimpleModeTests {
-    private func tempDir() throws -> URL {
-        let dir = FileManager.default.temporaryDirectory.appendingPathComponent("simple-\(UUID().uuidString)", isDirectory: true)
-        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-        return dir
-    }
+    /// Folders handed out here are removed when the suite instance (one per test) goes away.
+    private let scratch = try! TemporaryDirectory()
+
+    private func tempDir() throws -> URL { scratch.url }
 
     private func copyFixture(_ name: String, to dir: URL) throws -> URL {
         let source = try #require(Bundle.module.url(forResource: name, withExtension: "jpg", subdirectory: "Fixtures"))

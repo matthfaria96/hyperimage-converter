@@ -41,14 +41,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     var model: AppModel? {
         didSet {
             guard let model, !pending.isEmpty else { return }
-            model.add(pending)
+            model.addInBackground(pending)
             pending = []
         }
     }
     private var pending: [URL] = []
 
     func application(_ application: NSApplication, open urls: [URL]) {
-        if let model { model.add(urls) } else { pending += urls }
+        if let model { model.addInBackground(urls) } else { pending += urls }
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -83,8 +83,34 @@ struct AppCommands: Commands {
             Button("Sobre o HyperImage Converter") { openWindow(id: "about") }
         }
         CommandGroup(after: .newItem) {
-            Button("Adicionar Arquivos…") { FilePanels.addFiles(to: model) }
+            Button("Adicionar imagens…") { FilePanels.addFiles(to: model) }
                 .keyboardShortcut("o")
+                .disabled(model.isBusy)
+        }
+        CommandMenu("Imagens") {
+            Button("Converter") { model.startRequest += 1 }
+                .keyboardShortcut(.return, modifiers: .command)
+                .disabled(model.inputs.isEmpty || model.isBusy)
+            Divider()
+            Button("Pré-visualizar") { if let url = model.previewTarget { model.route = .conversionPreview(url) } }
+                .keyboardShortcut("y")
+                .disabled(model.inputs.isEmpty || model.isBusy || model.state.convert.mode == .upscale)
+            Button("Ajustes do formato…") { model.route = .formatSettings }
+                .keyboardShortcut(",")
+                .disabled(model.isBusy || model.state.convert.mode != .convert)
+            Button("Edição avançada…") { model.route = .advanced }
+                .keyboardShortcut("a", modifiers: [.command, .shift])
+                .disabled(model.isBusy || model.state.convert.mode == .upscale)
+            Divider()
+            Button("Modo Converter") { model.state.convert.mode = .convert }
+                .keyboardShortcut("1")
+                .disabled(model.isBusy)
+            Button("Modo Comprimir") { model.state.convert.mode = .compress }
+                .keyboardShortcut("2")
+                .disabled(model.isBusy)
+            Button("Modo AI Upscale") { model.state.convert.mode = .upscale }
+                .keyboardShortcut("3")
+                .disabled(model.isBusy)
         }
         CommandMenu("Aparência") {
             Picker("Aparência", selection: Binding(get: { model.state.appearance }, set: { model.state.appearance = $0 })) {

@@ -1,35 +1,40 @@
 import HyperImageCore
 import SwiftUI
 
-/// Right side of the window: options grouped in cards, then the summary and the main action.
+/// Right side of the window: options grouped in cards; the summary and main action stay pinned below them.
 struct SettingsPanel: View {
     @Environment(AppModel.self) private var app
     let runner: ConversionRunner
-    let open: (SheetRoute) -> Void
     let start: () -> Void
 
     var body: some View {
         @Bindable var app = app
         let settings = $app.state.convert
-        VStack(spacing: 0) {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 18) {
-                    switch app.state.convert.mode {
-                    case .convert, .compress:
-                        OutputSection(settings: settings, open: open)
-                        ReductionSection(settings: settings)
-                    case .upscale:
-                        UpscaleSection(settings: settings.upscale)
-                    }
-                    SaveSection(settings: settings, open: open)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 18) {
+                switch app.state.convert.mode {
+                case .convert, .compress:
+                    OutputSection(settings: settings)
+                    ReductionSection(settings: settings)
+                    AdvancedEditSection(settings: settings)
+                case .upscale:
+                    UpscaleSection(settings: settings.upscale)
                 }
-                .padding(.horizontal, 16).padding(.vertical, 18)
-                .animation(.snappy, value: app.state.convert.mode)
-                .disabled(runner.isRunning)
+                SaveSection(settings: settings)
             }
-            Divider()
-            SummaryBox(runner: runner, start: start)
-                .padding(16)
+            .padding(.horizontal, 16).padding(.vertical, 18)
+            .animation(.snappy, value: app.state.convert.mode)
+            .disabled(runner.isRunning)
+        }
+        .scrollIndicators(.visible)
+        // Pinned, with its own bar background, so the cards scroll underneath instead of being covered.
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            // A Divider inside .overlay draws vertically, so the rule is a real stack member.
+            VStack(spacing: 0) {
+                Divider()
+                SummaryBox(runner: runner, start: start).padding(14)
+            }
+            .background(.bar)
         }
         .frame(width: 340)
         .background(.background.secondary)
@@ -46,6 +51,7 @@ struct PanelSection<Content: View>: View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title).font(.caption.weight(.bold)).textCase(.uppercase).foregroundStyle(.secondary)
                 .padding(.leading, 2)
+                .accessibilityAddTraits(.isHeader)
             VStack(alignment: .leading, spacing: 12) { content }
                 .padding(13)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -87,12 +93,48 @@ struct QualityRow: View {
             }
             Slider(value: Binding(get: { Double(value) }, set: { value = Int($0.rounded()) }), in: range)
                 .controlSize(.small)
+                .accessibilityLabel(Text(title))
+                .accessibilityValue(Text("\(value) %"))
             HStack {
                 Text("Menor arquivo")
                 Spacer()
                 Text("Mais qualidade")
             }
             .font(.caption2).foregroundStyle(.secondary)
+            .accessibilityHidden(true)
+        }
+    }
+}
+
+/// Number field + stepper + common presets, applied as the user types.
+private struct NumberRow: View {
+    let title: LocalizedStringKey
+    @Binding var value: Int
+    let range: ClosedRange<Int>
+    let step: Int
+    let unit: String
+    let presets: [(String, Int)]
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Text(title).font(.callout)
+            Spacer()
+            TextField(title, value: Binding(get: { value }, set: { value = min(max($0, range.lowerBound), range.upperBound) }),
+                      format: .number.grouping(.never))
+                .labelsHidden()
+                .frame(width: 64).multilineTextAlignment(.trailing)
+            Stepper(title, value: $value, in: range, step: step).labelsHidden()
+            Text(unit).foregroundStyle(.secondary)
+            Menu {
+                ForEach(presets, id: \.1) { name, preset in Button(name) { value = preset } }
+            } label: {
+                Image(systemName: "list.bullet")
+            }
+            .menuStyle(.borderlessButton)
+            .menuIndicator(.hidden)
+            .fixedSize()
+            .help("Valores comuns")
+            .accessibilityLabel("Valores comuns")
         }
     }
 }
@@ -100,8 +142,8 @@ struct QualityRow: View {
 // MARK: - Convert / Compress
 
 private struct OutputSection: View {
+    @Environment(AppModel.self) private var app
     @Binding var settings: ConvertSettings
-    let open: (SheetRoute) -> Void
 
     var body: some View {
         PanelSection(title: "Saída") {
@@ -119,30 +161,28 @@ private struct OutputSection: View {
                         get: { settings.formatSettings.quality(for: settings.format) ?? 80 },
                         set: { settings.formatSettings = settings.formatSettings.with(quality: $0, for: settings.format) }))
                 }
-                Button("Mais ajustes de \(settings.format.displayName)…") { open(.formatSettings) }
+                Button("Mais ajustes de \(settings.format.displayName)…") { app.route = .formatSettings }
                     .buttonStyle(.link).font(.caption)
+                    .help("⌘,")
             } else {
                 Label("Cada imagem mantém o próprio formato.", systemImage: "doc.on.doc")
                     .font(.callout).foregroundStyle(.secondary)
-                QualityRow(title: "Qualidade (JPEG, WebP, HEIC, AVIF)", value: Binding(
+                QualityRow(title: "Qualidade", value: Binding(
                     get: { settings.formatSettings.jpeg.quality },
                     set: { q in
                         settings.formatSettings = [OutputFormat.jpeg, .webp, .heic, .avif, .jpeg2000]
                             .reduce(settings.formatSettings) { $0.with(quality: q, for: $1) }
                     }))
+                Text("Vale para JPEG, WebP, HEIC, AVIF e JPEG 2000. PNG, GIF, BMP e TIFF são regravados sem perdas.")
+                    .font(.caption).foregroundStyle(.secondary)
             }
             Divider()
             ToggleRow(title: "Manter dimensões originais", help: "Não altera largura ou altura.", isOn: $settings.keepDimensions)
             if !settings.keepDimensions {
-                HStack {
-                    Text("Lado maior até").font(.callout)
-                    Spacer()
-                    TextField("", value: Binding(get: { settings.maxLongSide }, set: { settings.maxLongSide = min(max($0, 16), 50_000) }),
-                              format: .number.grouping(.never))
-                        .frame(width: 70).multilineTextAlignment(.trailing)
-                    Text("px").foregroundStyle(.secondary)
-                }
-                .transition(.opacity.combined(with: .move(edge: .top)))
+                NumberRow(title: "Lado maior até", value: $settings.maxLongSide, range: 16...50_000, step: 100, unit: "px",
+                          presets: [("1080 px (redes sociais)", 1080), ("1920 px (Full HD)", 1920), ("2400 px", 2400),
+                                    ("3840 px (4K)", 3840)])
+                    .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
     }
@@ -162,18 +202,13 @@ private struct ReductionSection: View {
 
     var body: some View {
         PanelSection(title: "Redução de tamanho") {
-            ToggleRow(title: "Limitar tamanho do arquivo", help: "Tenta atingir um peso máximo (formatos com perdas).",
+            ToggleRow(title: "Limitar tamanho do arquivo", help: "Reduz a qualidade até caber no tamanho escolhido.",
                       isOn: $settings.limitFileSize)
             if settings.limitFileSize {
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack {
-                        Text("Tamanho máximo").font(.callout.weight(.medium))
-                        Spacer()
-                        Text(formatBytes(Int64(settings.maxFileSizeKB) * 1024)).font(.callout.weight(.semibold)).monospacedDigit()
-                    }
-                    Slider(value: Binding(get: { Double(settings.maxFileSizeKB) }, set: { settings.maxFileSizeKB = Int($0) }),
-                           in: 50...5000, step: 50)
-                        .controlSize(.small)
+                VStack(alignment: .leading, spacing: 6) {
+                    NumberRow(title: "Tamanho máximo", value: $settings.maxFileSizeKB, range: 10...100_000, step: 50, unit: "KB",
+                              presets: [("100 KB", 100), ("250 KB", 250), ("500 KB", 500), ("1 MB", 1024), ("2 MB", 2048),
+                                        ("5 MB", 5120)])
                     if let note = losslessNote {
                         Label(note, systemImage: "info.circle").font(.caption).foregroundStyle(.orange)
                     }
@@ -181,7 +216,32 @@ private struct ReductionSection: View {
                 .transition(.opacity.combined(with: .move(edge: .top)))
             }
             Divider()
-            ToggleRow(title: "Preservar transparência", help: "Quando o formato permitir.", isOn: $settings.preserveTransparency)
+            ToggleRow(title: "Preservar transparência", help: "Quando o formato permitir; senão o fundo fica branco.",
+                      isOn: $settings.preserveTransparency)
+        }
+    }
+}
+
+/// Advanced Options get their own card: what is set, whether it applies, and one button to edit.
+private struct AdvancedEditSection: View {
+    @Environment(AppModel.self) private var app
+    @Binding var settings: ConvertSettings
+
+    var body: some View {
+        PanelSection(title: "Edição avançada") {
+            if settings.advanced.hasEnabledStep {
+                ActiveStepsSummary(options: settings.advanced)
+                ToggleRow(title: "Aplicar estas etapas", isOn: $settings.useAdvancedOptions)
+                if !settings.useAdvancedOptions {
+                    Label("Desativado — as etapas não serão aplicadas.", systemImage: "pause.circle")
+                        .font(.caption).foregroundStyle(.orange)
+                }
+            } else {
+                Text("Redimensionar, cortar, girar, ajustar cores, texto, marca d'água e bordas.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+            Button(settings.advanced.hasEnabledStep ? "Editar etapas…" : "Configurar…") { app.route = .advanced }
+                .help("⌘⇧A")
         }
     }
 }
@@ -195,10 +255,11 @@ private struct UpscaleSection: View {
         PanelSection(title: "Modelo de IA") {
             VStack(spacing: 6) {
                 ForEach(UpscaleModel.allCases, id: \.self) { model in
+                    let selected = settings.model == model
                     Button { withAnimation(.snappy) { settings.model = model } } label: {
                         HStack(spacing: 10) {
-                            Image(systemName: settings.model == model ? "largecircle.fill.circle" : "circle")
-                                .foregroundStyle(settings.model == model ? Color.accentColor : .secondary)
+                            Image(systemName: selected ? "largecircle.fill.circle" : "circle")
+                                .foregroundStyle(selected ? Color.accentColor : .secondary)
                             VStack(alignment: .leading, spacing: 1) {
                                 Text(model.title).font(.callout.weight(.medium))
                                 Text(model.help).font(.caption).foregroundStyle(.secondary)
@@ -206,10 +267,12 @@ private struct UpscaleSection: View {
                             Spacer()
                         }
                         .padding(8)
-                        .background(settings.model == model ? Color.accentColor.opacity(0.14) : .clear, in: .rect(cornerRadius: 8))
+                        .background(selected ? Color.accentColor.opacity(0.14) : .clear, in: .rect(cornerRadius: 8))
                         .contentShape(.rect)
                     }
                     .buttonStyle(.plain)
+                    .accessibilityElement(children: .combine)
+                    .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
                 }
             }
         }
@@ -232,21 +295,14 @@ private struct UpscaleSection: View {
                 .labelsHidden()
             }
             if settings.format != .png {
-                QualityRow(title: "Qualidade", value: Binding(get: { 100 - settings.compression }, set: { settings.compression = 100 - $0 }),
-                           range: 1...100)
+                QualityRow(title: "Qualidade", value: Binding(get: { 100 - settings.compression }, set: { settings.compression = 100 - $0 }))
             }
-            Label("Usa a GPU do Mac. Imagens grandes podem levar alguns segundos.", systemImage: "cpu")
+            Label("Usa a GPU do Mac. O tempo restante aparece depois do início.", systemImage: "cpu")
                 .font(.caption).foregroundStyle(.secondary)
         }
-        UpscaleCredits()
-    }
-}
-
-private struct UpscaleCredits: View {
-    var body: some View {
-        HStack(spacing: 4) {
-            Text("Motor de IA: Upscayl (AGPL-3.0) · Real-ESRGAN")
-            Link("Código-fonte", destination: URL(string: "https://github.com/upscayl/upscayl-ncnn")!)
+        VStack(alignment: .leading, spacing: 2) {
+            Text("Motor de IA: Upscayl (AGPL-3.0) com Real-ESRGAN.")
+            Link("Ver código-fonte do motor", destination: URL(string: "https://github.com/upscayl/upscayl-ncnn")!)
         }
         .font(.caption2).foregroundStyle(.secondary)
         .padding(.leading, 2)
@@ -255,11 +311,24 @@ private struct UpscaleCredits: View {
 
 // MARK: - Save
 
+/// One choice instead of two overlapping toggles.
+private enum ExistingFilePolicy: Hashable {
+    case ask, skip, replace
+
+    init(_ s: ConvertSettings) {
+        self = s.skipExisting ? .skip : (s.askBeforeOverwrite ? .ask : .replace)
+    }
+
+    func apply(to s: inout ConvertSettings) {
+        s.skipExisting = self == .skip
+        s.askBeforeOverwrite = self == .ask
+    }
+}
+
 private struct SaveSection: View {
     @Environment(AppModel.self) private var app
     @Binding var settings: ConvertSettings
-    let open: (SheetRoute) -> Void
-    @State private var showAdvanced = false
+    @State private var showMore = false
 
     var body: some View {
         PanelSection(title: "Salvar arquivos") {
@@ -278,24 +347,20 @@ private struct SaveSection: View {
             if settings.mode != .upscale {
                 Toggle("Adicionar sufixo ao nome (\(settings.mode == .compress ? "-comprimido" : "-convertido"))", isOn: $settings.addSuffix)
             }
-            Toggle("Não substituir arquivos existentes", isOn: $settings.skipExisting)
-            DisclosureGroup("Opções avançadas", isExpanded: $showAdvanced) {
+            Picker("Se o arquivo já existir", selection: Binding(get: { ExistingFilePolicy(settings) }, set: { $0.apply(to: &settings) })) {
+                Text("Perguntar").tag(ExistingFilePolicy.ask)
+                Text("Pular").tag(ExistingFilePolicy.skip)
+                Text("Substituir").tag(ExistingFilePolicy.replace)
+            }
+            DisclosureGroup("Mais opções", isExpanded: $showMore) {
                 VStack(alignment: .leading, spacing: 8) {
-                    if settings.mode != .upscale {
-                        Toggle("Usar opções avançadas", isOn: $settings.useAdvancedOptions)
-                        Button("Configurar Opções Avançadas…") { open(.advanced) }
-                        if settings.useAdvancedOptions { ActiveStepsSummary(options: settings.advanced) }
-                        Divider()
-                    }
-                    Toggle("Extensão em MAIÚSCULAS", isOn: $settings.uppercaseExtension)
+                    Toggle("Extensão em maiúsculas (.JPG)", isOn: $settings.uppercaseExtension)
                     Toggle("Manter data e hora originais", isOn: $settings.keepDates)
-                    Toggle("Perguntar antes de sobrescrever", isOn: $settings.askBeforeOverwrite)
-                        .disabled(settings.skipExisting)
-                    Toggle("Mostrar mensagens de erro", isOn: $settings.showErrors)
+                    Toggle("Abrir a lista de erros ao terminar", isOn: $settings.showErrors)
                     if settings.mode != .upscale {
                         Toggle("Processar várias imagens ao mesmo tempo", isOn: $settings.parallel)
                     }
-                    Toggle("Abrir pasta ao concluir", isOn: $settings.openFolderWhenDone)
+                    Toggle("Abrir a pasta ao concluir", isOn: $settings.openFolderWhenDone)
                 }
                 .padding(.top, 8)
             }
@@ -348,10 +413,10 @@ private struct OutputFolderRow: View {
                 .foregroundStyle(path.isEmpty ? .secondary : .primary)
                 .help(path)
             Spacer()
-            Button("Escolher…") {
+            Button(path.isEmpty ? "Escolher…" : "Alterar…") {
                 if let url = FilePanels.chooseFolder(startingAt: path) { path = url.path }
             }
-            Button("Mostrar", systemImage: "arrow.right.circle") {
+            Button("Abrir no Finder", systemImage: "arrow.up.forward.app") {
                 let url = URL(fileURLWithPath: (path as NSString).expandingTildeInPath)
                 try? FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
                 NSWorkspace.shared.open(url)

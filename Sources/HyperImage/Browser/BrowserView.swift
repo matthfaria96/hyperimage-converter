@@ -37,7 +37,7 @@ struct BrowserView: View {
 
     @ViewBuilder
     private func menu(for urls: Set<URL>) -> some View {
-        Button("Adicionar à Lista") { app.add(Array(urls)) }
+        Button("Adicionar à lista") { app.addInBackground(Array(urls)) }
         Button("Abrir no Visualizador") { urls.forEach { NSWorkspace.shared.open($0) } }
         Button("Mostrar no Finder") { FilePanels.reveal(Array(urls)) }
         Divider()
@@ -48,16 +48,16 @@ struct BrowserView: View {
         if urls.count == 1, let url = urls.first, browser.entries.first(where: { $0.url == url })?.isDirectory == true {
             browser.open(url)
         } else {
-            app.add(Array(urls))
+            app.addInBackground(Array(urls))
         }
     }
 
     private var footer: some View {
         VStack(spacing: 8) {
             HStack {
-                Button("Adicionar", systemImage: "plus") { app.add(Array(browser.selection)) }
+                Button("Adicionar", systemImage: "plus") { app.addInBackground(Array(browser.selection)) }
                     .disabled(browser.selection.isEmpty)
-                Button("Adicionar Todos", systemImage: "plus.square.on.square") { app.add(browser.files.map(\.url)) }
+                Button("Adicionar todas", systemImage: "plus.square.on.square") { app.addInBackground(browser.files.map(\.url)) }
                     .disabled(browser.files.isEmpty)
             }
             .controlSize(.small)

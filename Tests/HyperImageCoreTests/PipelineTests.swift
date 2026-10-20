@@ -160,7 +160,8 @@ struct PipelineTests {
         options.text.enabled = true
         options.text.text = "Olá $A"
         options.border.frame2.enabled = true
-        let file = try TemporaryDirectory().url.appendingPathComponent("o.hyperoptions")
+        let scratch = try TemporaryDirectory()
+        let file = scratch.url.appendingPathComponent("o.hyperoptions")
         try options.save(to: file)
         #expect(try AdvancedOptions.load(from: file) == options)
     }

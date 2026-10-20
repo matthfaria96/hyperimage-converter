@@ -1,18 +1,22 @@
 import HyperImageCore
 import SwiftUI
 
-/// One queued file as a card: thumbnail, name, details, result size and a remove button.
+/// One queued file as a card: thumbnail, name, details, result and the actions that appear on hover.
 struct FileCard: View {
     let item: InputItem
     let record: ConversionRecord?
     let isRunning: Bool
     let isSelected: Bool
     var showsRatio = true
+    var canPreview = true
     /// 0…1 while this file is being upscaled.
     var working: Double?
+    let preview: () -> Void
     let remove: () -> Void
     @State private var dimensions = ""
+    @State private var fileSize: Int64 = 0
     @State private var hovering = false
+    @State private var removeHover = false
 
     var body: some View {
         HStack(spacing: 11) {
@@ -26,25 +30,36 @@ struct FileCard: View {
                     if let folder = item.virtualFolder {
                         Label(folder, systemImage: "folder.badge.plus")
                             .font(.caption2).foregroundStyle(.tint).lineLimit(1)
-                            .help("Será salvo na subpasta \"\(folder)\" da pasta de saída")
+                            .help("Será salvo na subpasta \"\(folder)\" da saída")
                     }
                 }
-                Text(details).font(.caption).foregroundStyle(.secondary).lineLimit(1).monospacedDigit()
+                Text(details).font(.caption).foregroundStyle(detailsColor).lineLimit(1).truncationMode(.tail).monospacedDigit()
             }
             Spacer(minLength: 8)
             result
+            if canPreview, hovering, !isRunning {
+                Button(action: preview) {
+                    Image(systemName: "eye").frame(width: 28, height: 28)
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(.secondary)
+                .help("Pré-visualizar (barra de espaço)")
+                .accessibilityLabel("Pré-visualizar \(item.url.lastPathComponent)")
+                .transition(.opacity)
+            }
             Button(action: remove) {
                 Image(systemName: "xmark").font(.system(size: 11, weight: .semibold))
-                    .frame(width: 22, height: 22)
-                    .background(hovering ? Color.red.opacity(0.18) : .clear, in: .rect(cornerRadius: 6))
-                    .foregroundStyle(hovering ? .red : .secondary)
+                    .frame(width: 28, height: 28)
+                    .background(removeHover ? Color.red.opacity(0.18) : .clear, in: .rect(cornerRadius: 7))
+                    .foregroundStyle(removeHover ? .red : .secondary)
+                    .contentShape(.rect)
             }
             .buttonStyle(.plain)
-            .onHover { hovering = $0 }
+            .onHover { removeHover = $0 }
             .help("Remover da lista")
             .accessibilityLabel("Remover \(item.url.lastPathComponent)")
         }
-        .padding(.horizontal, 10).padding(.vertical, 9)
+        .padding(.horizontal, 10).padding(.vertical, 8)
         .background(isSelected ? AnyShapeStyle(Color.accentColor.opacity(0.16)) : AnyShapeStyle(.background.secondary),
                     in: .rect(cornerRadius: 10))
         .overlay {
@@ -52,24 +67,42 @@ struct FileCard: View {
                 .strokeBorder(isSelected ? Color.accentColor.opacity(0.7) : Color.primary.opacity(0.08))
         }
         .contentShape(.rect)
+        .onHover { hovering = $0 }
+        .animation(.easeOut(duration: 0.12), value: hovering)
+        // One VoiceOver element per file instead of five loose labels.
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel(Text("\(item.url.lastPathComponent), \(details)"))
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
+        .accessibilityAction(named: Text("Pré-visualizar")) { if canPreview { preview() } }
+        .accessibilityAction(named: Text("Remover")) { remove() }
         .task(id: item.url) {
-            let size = await Task.detached(priority: .utility) { ImageLoader.pixelSize(item.url) }.value
+            let url = item.url
+            let (size, bytes) = await Task.detached(priority: .utility) { (ImageLoader.pixelSize(url), BatchConverter.fileSize(url)) }.value
             dimensions = size.map { "\($0.width) × \($0.height)" } ?? ""
+            fileSize = bytes
         }
     }
 
     private var details: String {
-        let bytes = formatBytes(BatchConverter.fileSize(item.url))
-        let status: String = switch record?.status {
-        case .done?: String(localized: "Concluído")
-        case .skipped?: String(localized: "Pulado")
-        case .failed?: String(localized: "Erro")
-        case .working?: String(localized: "Processando…")
+        var parts = [fileSize > 0 ? formatBytes(fileSize) : nil, dimensions.isEmpty ? nil : dimensions]
+        switch record?.status {
+        case .done?: parts.append(String(localized: "Concluído"))
+        case .skipped?: parts.append(String(localized: "Pulado: já existia"))
+        case let .failed(message)?: parts.append(String(localized: "Erro: \(message)"))
+        case .working?: parts.append(String(localized: "Processando…"))
         case .pending?, nil:
-            if let working { String(localized: "Processando… \(Int(working * 100)) %") }
-            else { isRunning ? String(localized: "Na fila") : String(localized: "Pronto") }
+            if let working { parts.append(String(localized: "Processando… \(Int(working * 100)) %")) }
+            else { parts.append(isRunning ? String(localized: "Na fila") : String(localized: "Pronto")) }
         }
-        return [bytes, dimensions.isEmpty ? nil : dimensions, status].compactMap { $0 }.joined(separator: " · ")
+        return parts.compactMap { $0 }.joined(separator: " · ")
+    }
+
+    private var detailsColor: Color {
+        switch record?.status {
+        case .failed?: .red
+        case .skipped?: .orange
+        default: .secondary
+        }
     }
 
     @ViewBuilder
@@ -78,6 +111,7 @@ struct FileCard: View {
         case .done?:
             if let record {
                 VStack(alignment: .trailing, spacing: 2) {
+                    // Upscale grows the file on purpose, so the result is the new pixel size, not a percentage.
                     Text(formatBytes(record.newSize)).font(.callout.weight(.semibold)).monospacedDigit()
                     if showsRatio, let ratio = record.ratio {
                         let change = Int(((ratio - 1) * 100).rounded())
@@ -88,10 +122,10 @@ struct FileCard: View {
                 }
                 .transition(.scale(scale: 0.8).combined(with: .opacity))
             }
-        case let .failed(message)?:
-            Image(systemName: "xmark.octagon.fill").foregroundStyle(.red).help(message)
+        case .failed?:
+            Image(systemName: "xmark.octagon.fill").foregroundStyle(.red).accessibilityLabel("Erro")
         case .skipped?:
-            Image(systemName: "forward.fill").foregroundStyle(.orange).help("Arquivo já existia")
+            Image(systemName: "forward.fill").foregroundStyle(.orange).accessibilityLabel("Pulado")
         case .pending?, .working?, nil:
             if isRunning { ProgressView().controlSize(.small) }
         }

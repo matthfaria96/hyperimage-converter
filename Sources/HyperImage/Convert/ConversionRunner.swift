@@ -24,6 +24,18 @@ final class ConversionRunner {
     var prompt: OverwritePrompt?
     var openFolderWhenDone = false
 
+    // Aggregates are stored (refreshed once per update) so views can read them freely while a batch runs.
+    private(set) var finishedCount = 0
+    private(set) var doneCount = 0
+    private(set) var oldTotal: Int64 = 0
+    private(set) var newTotal: Int64 = 0
+    private(set) var failures: [ConversionRecord] = []
+    /// The first file still waiting: where an upscale (which runs in order) currently is.
+    private(set) var currentURL: URL?
+    @ObservationIgnored private var indexByURL: [URL: Int] = [:]
+    /// Bumped per run so late updates from a cancelled run never overwrite the new one.
+    @ObservationIgnored private var generation = 0
+
     private var task: Task<Void, Never>?
     private var continuation: CheckedContinuation<OverwriteDecision, Never>?
 
@@ -31,12 +43,16 @@ final class ConversionRunner {
         task?.cancel()
         answer(.cancel)
         partial = 0
+        generation += 1
+        let run = generation
         let converter = BatchConverter(settings: settings, fileProgress: { _, fraction in
-            Task { @MainActor [weak self] in self?.partial = fraction }
+            Task { @MainActor [weak self] in self?.report(fraction, run: run) }
         })
         self.settings = settings
         openFolderWhenDone = settings.openFolderWhenDone
         records = converter.records(for: items)
+        indexByURL = Dictionary(records.enumerated().map { ($1.input, $0) }, uniquingKeysWith: { _, last in last })
+        recount()
         isRunning = true
         wasCancelled = false
         failure = nil
@@ -47,12 +63,13 @@ final class ConversionRunner {
             do {
                 try await converter.run(queued,
                                         askOverwrite: { url in await self.ask(url) },
-                                        update: { record in await self.apply(record) })
+                                        update: { record in await self.apply(record, run: run) })
             } catch is CancellationError {
-                wasCancelled = true
+                if run == generation { wasCancelled = true }
             } catch {
-                failure = error.localizedDescription
+                if run == generation { failure = error.localizedDescription }
             }
+            guard run == generation else { return }
             finish()
         }
     }
@@ -76,10 +93,38 @@ final class ConversionRunner {
         }
     }
 
-    private func apply(_ record: ConversionRecord) {
-        guard record.id < records.count else { return }
+    private func apply(_ record: ConversionRecord, run: Int) {
+        guard run == generation, record.id < records.count else { return }
         records[record.id] = record
         partial = 0
+        recount()
+    }
+
+    /// Progress inside the current file, in whole-percent steps so the UI is not redrawn for every output line.
+    private func report(_ fraction: Double, run: Int) {
+        guard run == generation, fraction - partial >= 0.01 || fraction >= 0.999 else { return }
+        partial = fraction
+    }
+
+    private func recount() {
+        var finished = 0, done = 0, old: Int64 = 0, new: Int64 = 0
+        var failed: [ConversionRecord] = []
+        var firstPending: URL?
+        for record in records {
+            switch record.status {
+            case .pending: if firstPending == nil { firstPending = record.input }
+            case .working: break
+            case .done: finished += 1; done += 1; old += record.oldSize; new += record.newSize
+            case .skipped: finished += 1
+            case .failed: finished += 1; failed.append(record)
+            }
+        }
+        finishedCount = finished
+        doneCount = done
+        oldTotal = old
+        newTotal = new
+        failures = failed
+        currentURL = firstPending
     }
 
     private func finish() {
@@ -92,19 +137,18 @@ final class ConversionRunner {
     }
 
     /// Latest result for an input file, for the file cards (nil before the first run).
-    func record(for url: URL) -> ConversionRecord? { records.last { $0.input == url } }
+    func record(for url: URL) -> ConversionRecord? { indexByURL[url].map { records[$0] } }
 
     var hasResults: Bool { !records.isEmpty }
 
     /// The file an upscale is working on (upscales run one at a time, in order).
-    var currentUpscale: URL? {
-        guard isRunning, settings.mode == .upscale else { return nil }
-        return records.first { $0.status == .pending }?.input
-    }
+    var currentUpscale: URL? { isRunning && settings.mode == .upscale ? currentURL : nil }
 
     func clearResults() {
         guard !isRunning else { return }
         records = []
+        indexByURL = [:]
+        recount()
         endDate = nil
         failure = nil
         wasCancelled = false
@@ -112,19 +156,17 @@ final class ConversionRunner {
 
     // MARK: Totals
 
-    var finishedCount: Int { records.filter { $0.status != .pending && $0.status != .working }.count }
-    var failures: [ConversionRecord] { records.filter { if case .failed = $0.status { true } else { false } } }
     var progress: Double {
         records.isEmpty ? 1 : min(1, (Double(finishedCount) + (isRunning ? partial : 0)) / Double(records.count))
     }
 
-    var oldTotal: Int64 { records.filter { $0.status == .done }.map(\.oldSize).reduce(0, +) }
-    var newTotal: Int64 { records.filter { $0.status == .done }.map(\.newSize).reduce(0, +) }
 
+    /// Time left, from the pace so far (the partial upscale counts, so the first file already gives an estimate).
     func remaining(now: Date) -> TimeInterval? {
-        let done = finishedCount
-        guard isRunning, done > 0 else { return nil }
+        let progressed = Double(finishedCount) + partial
+        guard isRunning, progressed > 0.05 else { return nil }
         let elapsed = now.timeIntervalSince(startDate)
-        return elapsed / Double(done) * Double(records.count - done)
+        guard elapsed > 2 else { return nil }
+        return elapsed / progressed * (Double(records.count) - progressed)
     }
 }

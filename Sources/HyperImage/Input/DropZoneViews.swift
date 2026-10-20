@@ -4,6 +4,7 @@ import SwiftUI
 struct EmptyDropZone: View {
     let targeted: Bool
     let addFiles: () -> Void
+    var browse: (() -> Void)?
 
     var body: some View {
         VStack(spacing: 22) {
@@ -12,15 +13,21 @@ struct EmptyDropZone: View {
                 Text(targeted ? "Solte para adicionar" : "Arraste suas imagens para cá")
                     .font(.title2.weight(.semibold))
                     .contentTransition(.opacity)
-                Text("Imagens ou pastas do Finder ou da barra lateral — ou use ⌘O.")
+                Text("Imagens ou pastas do Finder — ou use ⌘O.")
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
             }
-            Button("Adicionar Arquivos…", systemImage: "plus", action: addFiles)
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
-                .opacity(targeted ? 0 : 1)
+            VStack(spacing: 8) {
+                Button("Adicionar imagens…", systemImage: "plus", action: addFiles)
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
+                if let browse {
+                    Button("ou navegue pelas pastas do Mac", action: browse)
+                        .buttonStyle(.link).font(.callout)
+                }
+            }
+            .opacity(targeted ? 0 : 1)
         }
         .padding(40)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -49,6 +56,7 @@ struct DropOverlay: View {
 private struct DropIllustration: View {
     let targeted: Bool
     @State private var floating = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         ZStack {
@@ -68,6 +76,7 @@ private struct DropIllustration: View {
         .offset(y: floating && !targeted ? -5 : 0)
         .scaleEffect(targeted ? 1.08 : 1)
         .onAppear {
+            guard !reduceMotion else { return }
             withAnimation(.easeInOut(duration: 2.2).repeatForever(autoreverses: true)) { floating = true }
         }
     }
@@ -87,10 +96,11 @@ private struct DropIllustration: View {
 /// Dashed border whose dashes "march" while targeted.
 private struct DropZoneFrame: View {
     let targeted: Bool
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        TimelineView(.animation(paused: !targeted)) { context in
-            let phase = targeted ? context.date.timeIntervalSinceReferenceDate * -28 : 0
+        TimelineView(.animation(paused: !targeted || reduceMotion)) { context in
+            let phase = targeted && !reduceMotion ? context.date.timeIntervalSinceReferenceDate * -28 : 0
             RoundedRectangle(cornerRadius: 22, style: .continuous)
                 .fill(Color.accentColor.opacity(targeted ? 0.08 : 0))
                 .strokeBorder(targeted ? Color.accentColor : Color.secondary.opacity(0.35),

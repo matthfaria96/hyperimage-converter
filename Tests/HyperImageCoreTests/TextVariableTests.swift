@@ -36,8 +36,11 @@ struct TextVariableTests {
     }
 }
 
-struct TemporaryDirectory {
+/// A scratch folder that deletes itself when the test ends (tests used to leave hundreds behind).
+final class TemporaryDirectory {
     let url: URL
+
+    deinit { try? FileManager.default.removeItem(at: url) }
 
     init() throws {
         url = FileManager.default.temporaryDirectory.appendingPathComponent("hyperimage-tests-\(UUID().uuidString)")
