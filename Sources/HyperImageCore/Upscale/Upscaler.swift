@@ -129,8 +129,13 @@ public struct Upscaler: Sendable {
         ], progress: progress)
         guard fm.fileExists(atPath: partial.path) else { throw UpscaleError.failed(String(localized: "nenhum arquivo gerado")) }
         try fm.createDirectory(at: output.deletingLastPathComponent(), withIntermediateDirectories: true)
-        if fm.fileExists(atPath: output.path) { try fm.removeItem(at: output) }
-        try fm.moveItem(at: partial, to: output)
+        try Task.checkCancellation()
+        // Swapped in atomically: the previous output is never deleted before the new one is in place.
+        if fm.fileExists(atPath: output.path) {
+            _ = try fm.replaceItemAt(output, withItemAt: partial)
+        } else {
+            try fm.moveItem(at: partial, to: output)
+        }
     }
 
     private func run(arguments: [String], progress: @escaping @Sendable (Double) -> Void) async throws {
