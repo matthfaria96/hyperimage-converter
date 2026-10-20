@@ -76,6 +76,31 @@ struct HostileOptionsTests {
         #expect(shadow.validationError() != nil)
     }
 
+    @Test func validationRejectsOversizedRelativeSizes() {
+        var pct = AdvancedOptions(); pct.resize.enabled = true; pct.resize.mode = .percentage
+        pct.resize.percentage = 1e12
+        #expect(pct.validationError() != nil)
+        pct.resize.percentage = 200
+        #expect(pct.validationError() == nil)
+
+        var print = AdvancedOptions(); print.resize.enabled = true; print.resize.mode = .printSize
+        print.resize.printWidth = 1_000; print.resize.printDPI = 300
+        #expect(print.validationError() != nil)
+
+        var canvas = AdvancedOptions(); canvas.canvas.enabled = true; canvas.canvas.mode = .percentage
+        canvas.canvas.percentWidth = .infinity
+        #expect(canvas.validationError() != nil)
+
+        var expand = AdvancedOptions(); expand.canvas.enabled = true; expand.canvas.mode = .expand
+        expand.canvas.expandUnit = .pixels; expand.canvas.expandHorizontal = 40_000
+        #expect(expand.validationError() != nil)
+        expand.canvas.expandHorizontal = 100
+        #expect(expand.validationError() == nil)
+
+        var side = AdvancedOptions(); side.resize.enabled = true; side.resize.mode = .oneSide; side.resize.sideLength = 0
+        #expect(side.validationError() != nil)
+    }
+
     @Test func bitmapByteCountIsChecked() throws {
         #expect(try Bitmap.checkedByteCount(width: 100, height: 100) == 40_000)
         #expect(throws: ImagingError.self) { try Bitmap.checkedByteCount(width: Int.max / 2, height: 4) }

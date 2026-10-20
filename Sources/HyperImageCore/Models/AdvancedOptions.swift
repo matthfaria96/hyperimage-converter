@@ -59,14 +59,16 @@ public struct AdvancedOptions: Codable, Equatable, Sendable {
             let tooBig = switch resize.mode {
             case .pixels: Self.exceeds(resize.width, resize.height)
             case .oneSide: resize.sideLength > SafeLimits.maxSide
-            default: false
+            case .percentage: Self.exceeds(resize.percentage, Self.maxPercent)
+            case .printSize: Self.exceedsSide(resize.printUnit.pixels(resize.printWidth, dpi: resize.printDPI))
+                || Self.exceedsSide(resize.printUnit.pixels(resize.printHeight, dpi: resize.printDPI))
             }
             if tooBig { return String(localized: "O tamanho na aba Redimensionar passa do limite de 30 000 px por lado ou 400 megapixels.") }
         }
         if crop.enabled, crop.mode == .pixels, Self.exceeds(crop.width, crop.height) {
             return String(localized: "O tamanho do recorte passa do limite de 30 000 px por lado ou 400 megapixels.")
         }
-        if canvas.enabled, canvas.mode == .pixels, Self.exceeds(canvas.width, canvas.height) {
+        if canvas.enabled, canvasTooBig {
             return String(localized: "O tamanho da tela passa do limite de 30 000 px por lado ou 400 megapixels.")
         }
         if border.enabled {
@@ -78,6 +80,23 @@ public struct AdvancedOptions: Codable, Equatable, Sendable {
         }
         return nil
     }
+
+    /// Largest percentage that can still be valid: a 1 px side scaled up to `maxSide`.
+    private static let maxPercent = Double(SafeLimits.maxSide) * 100
+
+    private var canvasTooBig: Bool {
+        let expandLimit = canvas.expandUnit == .pixels ? Double(SafeLimits.maxSide) : Self.maxPercent
+        return switch canvas.mode {
+        case .pixels: Self.exceeds(canvas.width, canvas.height)
+        case .percentage: Self.exceeds(canvas.percentWidth, Self.maxPercent) || Self.exceeds(canvas.percentHeight, Self.maxPercent)
+        case .expand: Self.exceeds(canvas.expandHorizontal, expandLimit) || Self.exceeds(canvas.expandVertical, expandLimit)
+        }
+    }
+
+    /// True for NaN, infinity or anything above `limit`.
+    private static func exceeds(_ value: Double, _ limit: Double) -> Bool { !(value <= limit) }
+
+    private static func exceedsSide(_ pixels: Double) -> Bool { exceeds(pixels, Double(SafeLimits.maxSide)) }
 
     private static func exceeds(_ width: Int, _ height: Int) -> Bool {
         guard width <= SafeLimits.maxSide, height <= SafeLimits.maxSide else { return true }
