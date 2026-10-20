@@ -12,6 +12,8 @@ public enum SafeLimits {
 
 extension Int {
     /// Rounds `value` to an Int, or nil when it is NaN, infinite or too large to convert safely.
+    /// A non-nil result can still be about 9e15: it is not a valid dimension, so callers must
+    /// clamp it (for example to `SafeLimits.maxSide`) before using it as a size.
     init?(safe value: Double) {
         guard value.isFinite, abs(value) < SafeLimits.maxExactDouble else { return nil }
         self.init(value.rounded())
