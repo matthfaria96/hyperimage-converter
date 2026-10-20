@@ -7,14 +7,14 @@
 
 ### Segurança de dados (SAFE)
 
-- [ ] **SAFE-01**: O app nunca grava a saída por cima do arquivo de origem sem confirmação explícita (saída = entrada é detectada e tratada)
-- [ ] **SAFE-02**: O botão padrão (Return) do aviso de sobrescrever não é a ação destrutiva
-- [ ] **SAFE-03**: Arquivos temporários do upscale são limpos em sucesso, erro e cancelamento
+- [x] **SAFE-01**: O app nunca grava a saída por cima do arquivo de origem sem confirmação explícita (saída = entrada é detectada e tratada)
+- [x] **SAFE-02**: O botão padrão (Return) do aviso de sobrescrever não é a ação destrutiva
+- [x] **SAFE-03**: Arquivos temporários do upscale são limpos em sucesso, erro e cancelamento
 
 ### Robustez (ROB)
 
-- [ ] **ROB-01**: Arquivos `.ccf`/`.hyperoptions` malformados (NaN, Inf, valores enormes) nunca derrubam o app; mostram erro
-- [ ] **ROB-02**: Dimensões vindas de opções são limitadas a valores seguros
+- [x] **ROB-01**: Arquivos `.ccf`/`.hyperoptions` malformados (NaN, Inf, valores enormes) nunca derrubam o app; mostram erro
+- [x] **ROB-02**: Dimensões vindas de opções são limitadas a valores seguros
 - [ ] **ROB-03**: Lotes grandes de imagens de alta resolução não estouram memória (orçamento de concorrência por tamanho)
 - [ ] **ROB-04**: Sair do app durante o AI Upscale encerra o `upscayl-bin`
 - [ ] **ROB-05**: Build sem warnings (incluindo ConversionRunner.swift:49)
@@ -55,11 +55,11 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SAFE-01 | Phase 1 | Pending |
-| SAFE-02 | Phase 1 | Pending |
-| SAFE-03 | Phase 1 | Pending |
-| ROB-01 | Phase 1 | Pending |
-| ROB-02 | Phase 1 | Pending |
+| SAFE-01 | Phase 1 | Complete |
+| SAFE-02 | Phase 1 | Complete |
+| SAFE-03 | Phase 1 | Complete |
+| ROB-01 | Phase 1 | Complete |
+| ROB-02 | Phase 1 | Complete |
 | ROB-03 | Phase 2 | Pending |
 | ROB-04 | Phase 2 | Pending |
 | ROB-05 | Phase 2 | Pending |
