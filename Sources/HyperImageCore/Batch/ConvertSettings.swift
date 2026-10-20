@@ -67,10 +67,11 @@ public struct InputItem: Hashable, Identifiable, Sendable {
 public enum OutputPlanner {
     /// Destination for each item, in order. Names produced twice within the batch get a numeric suffix.
     public static func destinations(for items: [InputItem], settings: ConvertSettings) -> [URL] {
-        // Other inputs are reserved so an output can never replace a file that has not been read yet.
+        // Every input (including the item's own file) is reserved, so an output never equals any input path:
+        // same-format in-place runs get the next free "-N" name instead of overwriting the original.
         let inputPaths = items.map { $0.url.standardizedFileURL.path.lowercased() }
         var used = Set(inputPaths)
-        return items.enumerated().map { offset, item in
+        return items.map { item in
             let format = settings.outputFormat(for: item.url)
             let ext = settings.uppercaseExtension ? format.fileExtension.uppercased() : format.fileExtension
             var folder = settings.outputFolderURL ?? item.url.deletingLastPathComponent()
@@ -80,10 +81,9 @@ public enum OutputPlanner {
                 folder = folder.appendingPathComponent(relative, isDirectory: true)
             }
             let base = item.url.deletingPathExtension().lastPathComponent + settings.nameSuffix
-            let own = inputPaths[offset]
             var candidate = folder.appendingPathComponent(base).appendingPathExtension(ext)
             var counter = 2
-            while used.contains(candidate.standardizedFileURL.path.lowercased()) && candidate.standardizedFileURL.path.lowercased() != own {
+            while used.contains(candidate.standardizedFileURL.path.lowercased()) {
                 candidate = folder.appendingPathComponent("\(base)-\(counter)").appendingPathExtension(ext)
                 counter += 1
             }

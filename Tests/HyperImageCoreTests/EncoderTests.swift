@@ -188,7 +188,7 @@ struct OutputSafetyTests {
         settings.useOutputFolder = false
         let items = [InputItem(url: URL(fileURLWithPath: "/f/x.png")), InputItem(url: URL(fileURLWithPath: "/f/x.jpg"))]
         let out = OutputPlanner.destinations(for: items, settings: settings)
-        #expect(out.map(\.path) == ["/f/x-2.jpg", "/f/x.jpg"])
+        #expect(out.map(\.path) == ["/f/x-2.jpg", "/f/x-3.jpg"])
     }
 
     @Test func virtualFoldersBecomeSubfolders() {

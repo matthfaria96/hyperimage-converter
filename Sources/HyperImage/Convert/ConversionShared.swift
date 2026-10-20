@@ -41,13 +41,13 @@ struct OverwritePanel: View {
                     Spacer()
                     Button("Pular Todos") { answer(.noToAll) }
                     Button("Pular") { answer(.no) }
+                        .keyboardShortcut(.defaultAction)
+                        .buttonStyle(.borderedProminent)
                 }
                 HStack {
                     Spacer()
                     Button("Sobrescrever Todos") { answer(.yesToAll) }
                     Button("Sobrescrever") { answer(.yes) }
-                        .keyboardShortcut(.defaultAction)
-                        .buttonStyle(.borderedProminent)
                 }
             }
             .padding(20)
