@@ -72,7 +72,7 @@ public struct AdvancedOptions: Codable, Equatable, Sendable {
         if border.enabled {
             let sizes = [border.frame1.width, border.frame2.width, border.frame3.width,
                          border.innerFrame.distance, border.innerFrame.width, border.shadow.radius, border.shadow.depth]
-            if sizes.contains(where: { abs($0) > SafeLimits.maxSide }) {
+            if sizes.contains(where: { $0 > SafeLimits.maxSide || $0 < -SafeLimits.maxSide }) {
                 return String(localized: "A espessura da borda passa do limite de 30 000 px.")
             }
         }

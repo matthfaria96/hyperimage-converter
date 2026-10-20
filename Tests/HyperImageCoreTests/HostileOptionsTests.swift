@@ -69,6 +69,13 @@ struct HostileOptionsTests {
         #expect(AdvancedOptions().validationError() == nil)
     }
 
+    @Test func borderValidationSurvivesIntMin() {
+        var o = AdvancedOptions(); o.border.enabled = true; o.border.frame1.width = Int.min
+        #expect(o.validationError() != nil)
+        var shadow = AdvancedOptions(); shadow.border.enabled = true; shadow.border.shadow.depth = Int.min
+        #expect(shadow.validationError() != nil)
+    }
+
     @Test func bitmapByteCountIsChecked() throws {
         #expect(try Bitmap.checkedByteCount(width: 100, height: 100) == 40_000)
         #expect(throws: ImagingError.self) { try Bitmap.checkedByteCount(width: Int.max / 2, height: 4) }
