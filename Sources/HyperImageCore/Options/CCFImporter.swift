@@ -36,15 +36,15 @@ public enum CCFImporter {
         r.mode = p.bool("BasedOneSide") == true ? .oneSide
             : p.bool("InPercentage") == true ? .percentage
             : p.bool("InPrintSize") == true ? .printSize : .pixels
-        if let w = p.positiveInt("resizeWidth") { r.width = w }
-        if let h = p.positiveInt("resizeHeight") { r.height = h }
+        if let w = p.dimension("resizeWidth") { r.width = w }
+        if let h = p.dimension("resizeHeight") { r.height = h }
         if let pct = p.positive("ResizePercentage") { r.percentage = pct }
         if let w = p.positive("ResizePW") { r.printWidth = w }
         if let h = p.positive("ResizePH") { r.printHeight = h }
         r.printUnit = p.int("ResizeUnit") == 1 ? .centimeter : .inch
         if let dpi = p.positive("ResizeDPI") { r.printDPI = dpi }
         if let side = p.int("BasedSideNo"), ResizeSide.allCases.indices.contains(side) { r.side = ResizeSide.allCases[side] }
-        if let length = p.positiveInt("BasedSize") { r.sideLength = length }
+        if let length = p.dimension("BasedSize") { r.sideLength = length }
         if let filter = p.int("ResizeFilter"), ResizeFilter.allCases.indices.contains(filter) { r.filter = ResizeFilter.allCases[filter] }
         r.switchToMatchLongSides = p.bool("SwitchWH") ?? r.switchToMatchLongSides
         r.preserveAspectRatio = p.bool("PreserveAspectRatio") ?? r.preserveAspectRatio
@@ -72,8 +72,8 @@ public enum CCFImporter {
         c.useOrigin = p.bool("CropUseXY") ?? false
         c.originX = max(0, p.int("CropX") ?? 0)
         c.originY = max(0, p.int("CropY") ?? 0)
-        if let w = p.positiveInt("CropW") { c.width = w }
-        if let h = p.positiveInt("CropH") { c.height = h }
+        if let w = p.dimension("CropW") { c.width = w }
+        if let h = p.dimension("CropH") { c.height = h }
         if let w = p.positive("CropRW") { c.ratioWidth = w }
         if let h = p.positive("CropRH") { c.ratioHeight = h }
         if let w = p.positive("CropPW") { c.printWidth = w }
@@ -88,8 +88,8 @@ public enum CCFImporter {
         var c = base
         c.enabled = p.bool("UseCanvasResize") ?? false
         c.mode = p.bool("canvasExpand") == true ? .expand : (p.bool("canvasInPixel") ?? true) ? .pixels : .percentage
-        if let w = p.positiveInt("canvasW") { c.width = w }
-        if let h = p.positiveInt("canvasH") { c.height = h }
+        if let w = p.dimension("canvasW") { c.width = w }
+        if let h = p.dimension("canvasH") { c.height = h }
         if let w = p.positive("canvasW2") { c.percentWidth = w }
         if let h = p.positive("canvasH2") { c.percentHeight = h }
         if let w = p.positive("canvasW3") { c.expandHorizontal = w }
@@ -185,14 +185,14 @@ public enum CCFImporter {
         b.frame2 = frame(p, "2", b.frame2)
         b.frame3 = frame(p, "3", b.frame3)
         b.innerFrame.enabled = p.bool("InFrame") ?? b.innerFrame.enabled
-        b.innerFrame.distance = p.int("InFD") ?? b.innerFrame.distance
-        b.innerFrame.width = p.int("InFW") ?? b.innerFrame.width
+        b.innerFrame.distance = p.clampedInt("InFD") ?? b.innerFrame.distance
+        b.innerFrame.width = p.clampedInt("InFW") ?? b.innerFrame.width
         b.innerFrame.color = p.color("InFC") ?? b.innerFrame.color
         b.innerFrame.fillColor = p.color("InFFC") ?? b.innerFrame.fillColor
         if let opacity = p.double("InFO") { b.innerFrame.fillOpacity = min(100, max(0, opacity)) }
         b.shadow.enabled = p.bool("BorderShadow") ?? b.shadow.enabled
-        b.shadow.radius = p.int("RadiusEdit") ?? b.shadow.radius
-        b.shadow.depth = p.int("DepthEdit") ?? b.shadow.depth
+        b.shadow.radius = p.clampedInt("RadiusEdit") ?? b.shadow.radius
+        b.shadow.depth = p.clampedInt("DepthEdit") ?? b.shadow.depth
         b.shadow.background = p.color("ShadowBK") ?? b.shadow.background
         b.shadow.color = p.color("ShadowColor") ?? b.shadow.color
         return b
@@ -200,7 +200,7 @@ public enum CCFImporter {
 
     private static func frame(_ p: Fields, _ n: String, _ base: FrameLine) -> FrameLine {
         FrameLine(enabled: p.bool("Frame\(n)") ?? base.enabled,
-                  width: p.int("F\(n)W") ?? base.width,
+                  width: p.clampedInt("F\(n)W") ?? base.width,
                   color: p.color("F\(n)C") ?? base.color)
     }
 
@@ -215,6 +215,10 @@ public enum CCFImporter {
         func text(_ key: String) -> String? { values[key]?.text }
         func positive(_ key: String) -> Double? { double(key).flatMap { $0 > 0 ? $0 : nil } }
         func positiveInt(_ key: String) -> Int? { int(key).flatMap { $0 > 0 ? $0 : nil } }
+        /// A positive pixel dimension, capped at `SafeLimits.maxSide`.
+        func dimension(_ key: String) -> Int? { positiveInt(key).map { min($0, SafeLimits.maxSide) } }
+        /// A pixel size that may be zero or negative, kept within ±`SafeLimits.maxSide`.
+        func clampedInt(_ key: String) -> Int? { int(key).map { Swift.min(Swift.max($0, -SafeLimits.maxSide), SafeLimits.maxSide) } }
 
         func set(_ key: String) -> [String]? {
             if case .set(let members)? = values[key] { members } else { nil }

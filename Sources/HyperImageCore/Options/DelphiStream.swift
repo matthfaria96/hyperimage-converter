@@ -13,7 +13,7 @@ public enum DelphiValue: Equatable, Sendable {
     var int: Int? {
         switch self {
         case .integer(let v): v
-        case .double(let v): Int(v.rounded())
+        case .double(let v): Int(safe: v)
         case .string(let s): Int(s.trimmingCharacters(in: .whitespaces))
         default: nil
         }
