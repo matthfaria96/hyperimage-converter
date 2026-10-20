@@ -45,6 +45,37 @@ struct HostileOptionsTests {
         if let o { #expect(o.resize.width == ResizeOptions().width) }
     }
 
+    @Test func validationRejectsOversizedDimensions() {
+        func resize(_ w: Int, _ h: Int) -> String? {
+            var o = AdvancedOptions(); o.resize.enabled = true; o.resize.mode = .pixels
+            o.resize.width = w; o.resize.height = h
+            return o.validationError()
+        }
+        #expect(resize(30_001, 10) != nil)
+        #expect(resize(30_000, 10_000) == nil)
+        #expect(resize(25_000, 20_000) != nil)
+
+        var side = AdvancedOptions(); side.resize.enabled = true; side.resize.mode = .oneSide; side.resize.sideLength = 40_000
+        #expect(side.validationError() != nil)
+        var crop = AdvancedOptions(); crop.crop.enabled = true; crop.crop.mode = .pixels; crop.crop.width = 50_000
+        #expect(crop.validationError() != nil)
+        var canvas = AdvancedOptions(); canvas.canvas.enabled = true; canvas.canvas.mode = .pixels; canvas.canvas.width = 31_000
+        #expect(canvas.validationError() != nil)
+        var border = AdvancedOptions(); border.border.enabled = true; border.border.frame1.width = 30_001
+        #expect(border.validationError() != nil)
+        var inner = AdvancedOptions(); inner.border.enabled = true; inner.border.innerFrame.enabled = true
+        inner.border.innerFrame.distance = 30_001
+        #expect(inner.validationError() != nil)
+        #expect(AdvancedOptions().validationError() == nil)
+    }
+
+    @Test func bitmapByteCountIsChecked() throws {
+        #expect(try Bitmap.checkedByteCount(width: 100, height: 100) == 40_000)
+        #expect(throws: ImagingError.self) { try Bitmap.checkedByteCount(width: Int.max / 2, height: 4) }
+        #expect(throws: ImagingError.self) { try Bitmap.checkedByteCount(width: 30_000, height: 30_000) }
+        #expect(throws: ImagingError.self) { try Bitmap.checkedByteCount(width: 0, height: 10) }
+    }
+
     /// Encodes a positive integer-valued double as a little-endian x87 extended.
     private func extended(_ v: Int) -> [UInt8] {
         let exponent = Int.bitWidth - 1 - v.leadingZeroBitCount
