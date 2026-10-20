@@ -59,8 +59,9 @@ struct DataSafetyTests {
 /// SAFE-03: upscale temp directories are removed on every exit; existing outputs are swapped atomically.
 @Suite(.serialized)
 struct UpscaleCleanupTests {
-    private static func leftovers() -> Set<String> {
-        let names = (try? FileManager.default.contentsOfDirectory(atPath: FileManager.default.temporaryDirectory.path)) ?? []
+    /// Work folders left in the test's own scratch root (isolated from suites running in parallel).
+    private static func leftovers(in root: URL) -> Set<String> {
+        let names = (try? FileManager.default.contentsOfDirectory(atPath: root.path)) ?? []
         return Set(names.filter { $0.hasPrefix("hyperimage-upscale-") })
     }
 
@@ -81,52 +82,48 @@ struct UpscaleCleanupTests {
 
     @Test func missingBackendLeavesNoTempDir() async throws {
         let scratch = try TemporaryDirectory()
-        let before = Self.leftovers()
-        let upscaler = Upscaler(executable: scratch.url.appendingPathComponent("absent"), modelsFolder: scratch.url)
+                let upscaler = Upscaler(executable: scratch.url.appendingPathComponent("absent"), modelsFolder: scratch.url, tempRoot: scratch.url)
         await #expect(throws: UpscaleError.self) {
             try await upscaler.upscale(Fixtures.url("retrato"), to: scratch.url.appendingPathComponent("out.png"), settings: UpscaleSettings())
         }
-        #expect(Self.leftovers().subtracting(before).isEmpty)
+        #expect(Self.leftovers(in: scratch.url).isEmpty)
     }
 
     @Test func cancelledUpscaleLeavesNoTempDir() async throws {
         let scratch = try TemporaryDirectory()
-        let before = Self.leftovers()
-        let script = try Self.backend(in: scratch.url, exitCode: 0)
-        let upscaler = Upscaler(executable: script, modelsFolder: scratch.url)
+                let script = try Self.backend(in: scratch.url, exitCode: 0)
+        let upscaler = Upscaler(executable: script, modelsFolder: scratch.url, tempRoot: scratch.url)
         let output = scratch.url.appendingPathComponent("out.png")
         let task = Task {
             try await upscaler.upscale(Fixtures.url("paisagem"), to: output, settings: UpscaleSettings())
         }
         task.cancel()
         _ = await task.result
-        #expect(Self.leftovers().subtracting(before).isEmpty)
+        #expect(Self.leftovers(in: scratch.url).isEmpty)
         #expect(!FileManager.default.fileExists(atPath: output.path))
     }
 
     @Test func successReplacesExistingOutputAndCleansUp() async throws {
         let scratch = try TemporaryDirectory()
-        let before = Self.leftovers()
-        let script = try Self.backend(in: scratch.url, exitCode: 0)
+                let script = try Self.backend(in: scratch.url, exitCode: 0)
         let output = scratch.url.appendingPathComponent("out.png")
         try Data("old".utf8).write(to: output)
-        let upscaler = Upscaler(executable: script, modelsFolder: scratch.url)
+        let upscaler = Upscaler(executable: script, modelsFolder: scratch.url, tempRoot: scratch.url)
         try await upscaler.upscale(Fixtures.url("paisagem"), to: output, settings: UpscaleSettings())
         #expect(try Data(contentsOf: output) == Data(contentsOf: Fixtures.url("paisagem")))
-        #expect(Self.leftovers().subtracting(before).isEmpty)
+        #expect(Self.leftovers(in: scratch.url).isEmpty)
     }
 
     @Test func failingBackendKeepsExistingOutput() async throws {
         let scratch = try TemporaryDirectory()
-        let before = Self.leftovers()
-        let script = try Self.backend(in: scratch.url, exitCode: 1)
+                let script = try Self.backend(in: scratch.url, exitCode: 1)
         let output = scratch.url.appendingPathComponent("out.png")
         try Data("old".utf8).write(to: output)
-        let upscaler = Upscaler(executable: script, modelsFolder: scratch.url)
+        let upscaler = Upscaler(executable: script, modelsFolder: scratch.url, tempRoot: scratch.url)
         await #expect(throws: (any Error).self) {
             try await upscaler.upscale(Fixtures.url("paisagem"), to: output, settings: UpscaleSettings())
         }
         #expect(try Data(contentsOf: output) == Data("old".utf8))
-        #expect(Self.leftovers().subtracting(before).isEmpty)
+        #expect(Self.leftovers(in: scratch.url).isEmpty)
     }
 }

@@ -75,10 +75,14 @@ public enum UpscaleError: LocalizedError {
 public struct Upscaler: Sendable {
     public let executable: URL
     public let modelsFolder: URL
+    /// Where the per-run `hyperimage-upscale-*` work folder is created.
+    public let tempRoot: URL
 
-    public init(executable: URL, modelsFolder: URL) {
+    public init(executable: URL, modelsFolder: URL,
+                tempRoot: URL = FileManager.default.temporaryDirectory) {
         self.executable = executable
         self.modelsFolder = modelsFolder
+        self.tempRoot = tempRoot
     }
 
     /// The copy inside the app bundle, or `HYPERIMAGE_UPSCAYL` (a folder holding upscayl-bin and models/) in tests.
@@ -99,7 +103,7 @@ public struct Upscaler: Sendable {
     public func upscale(_ input: URL, to output: URL, settings: UpscaleSettings,
                         progress: @escaping @Sendable (Double) -> Void = { _ in }) async throws {
         let fm = FileManager.default
-        let temp = fm.temporaryDirectory.appendingPathComponent("hyperimage-upscale-\(UUID().uuidString)", isDirectory: true)
+        let temp = tempRoot.appendingPathComponent("hyperimage-upscale-\(UUID().uuidString)", isDirectory: true)
         try fm.createDirectory(at: temp, withIntermediateDirectories: true)
         defer { try? fm.removeItem(at: temp) }
 
