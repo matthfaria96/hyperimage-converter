@@ -68,4 +68,37 @@ final class ConcurrencyBudgetTests: XCTestCase {
         XCTAssertNil(ConcurrencyBudget.pixelCount(of: url))
         XCTAssertNil(ConcurrencyBudget.pixelCount(of: dir.appendingPathComponent("missing.png")))
     }
+
+    // MARK: BatchConverter wiring (small image + injected tiny memory instead of a 50 MP file)
+
+    private func records(_ urls: [URL]) -> [ConversionRecord] {
+        urls.enumerated().map { ConversionRecord(id: $0.offset, input: $0.element, output: $0.element.appendingPathExtension("out"),
+                                                 status: .pending, oldSize: 0, newSize: 0) }
+    }
+
+    private func settings(_ mode: ConvertMode) -> ConvertSettings {
+        var s = ConvertSettings()
+        s.mode = mode
+        s.parallel = true
+        return s
+    }
+
+    func testWorkerLimitShrinksForLargeSourceUnderSmallMemory() throws {
+        let big = try writePNG(width: 2000, height: 1500, name: "big.png")
+        let small = try writePNG(width: 30, height: 20, name: "small.png")
+        let converter = BatchConverter(settings: settings(.convert), upscaler: nil, physicalMemory: 64 << 20)
+        XCTAssertEqual(converter.workerLimit(for: records([small, big, small])), 1)
+    }
+
+    func testWorkerLimitKeepsCPUCapForSmallImages() throws {
+        let small = try writePNG(width: 30, height: 20, name: "small.png")
+        let converter = BatchConverter(settings: settings(.convert), upscaler: nil, physicalMemory: 16 * gib)
+        XCTAssertEqual(converter.workerLimit(for: records([small, small])), converter.maxConcurrency)
+    }
+
+    func testUpscaleAlwaysOneWorker() throws {
+        let small = try writePNG(width: 30, height: 20, name: "small.png")
+        let converter = BatchConverter(settings: settings(.upscale), upscaler: nil, physicalMemory: 1024 * gib)
+        XCTAssertEqual(converter.workerLimit(for: records([small])), 1)
+    }
 }
