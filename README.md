@@ -57,3 +57,10 @@ atualizar o catálogo e traduza as entradas novas (no Xcode ou editando o JSON).
   exposto pelo ImageIO. BMP sem RLE e sem 65536 cores, e GIF sem entrelaçamento, pelo mesmo motivo.
 - As opções são salvas como JSON (`.hyperoptions`). Arquivos `.ccf` do original podem ser carregados (só leitura);
   o `.ccf` não guarda o caminho da marca d'água, então ele precisa ser escolhido de novo.
+
+## Licença
+
+O HyperImage Converter é software livre sob a [GNU General Public License v3.0](LICENSE). Copyright (C) 2026 Matheus Faria.
+Componentes de terceiros: IJG libjpeg (licença IJG; "This software is based in part on the work of the Independent JPEG Group."),
+libwebp (BSD 3-Clause) e o motor do Upscayl (AGPL-3.0, roda como programa separado). Os textos vão em
+`Contents/Resources/Licenses/` e aparecem em Sobre → Licenças de código aberto.

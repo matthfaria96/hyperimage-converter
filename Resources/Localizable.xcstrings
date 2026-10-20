@@ -3850,6 +3850,66 @@
           }
         }
       }
+    },
+    "Licenças de código aberto": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open-source licenses"
+          }
+        }
+      }
+    },
+    "O HyperImage Converter converte, redimensiona e comprime imagens em lote, com renomeação, ajustes, marcas d'água e recorte sem perdas de JPEG. Também amplia imagens com IA (AI Upscale).": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HyperImage Converter converts, resizes and compresses images in batches, with renaming, adjustments, watermarks and lossless JPEG cropping. It also enlarges images with AI (AI Upscale)."
+          }
+        }
+      }
+    },
+    "O HyperImage Converter tem código aberto e usa os projetos abaixo. As licenças estão reproduzidas na íntegra.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HyperImage Converter is open source and builds on the projects below. Their licenses are reproduced in full."
+          }
+        }
+      }
+    },
+    "O HyperImage Converter é software livre sob a GNU GPL v3.0. Ele usa os projetos de código aberto listados nas licenças.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HyperImage Converter is free software under the GNU GPL v3.0. It builds on the open-source projects listed in its licenses."
+          }
+        }
+      }
+    },
+    "Versão %@ (%@)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Version %1$@ (%2$@)"
+          }
+        }
+      }
+    },
+    "witchmymac.com": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "witchmymac.com"
+          }
+        }
+      }
     }
   },
   "version": "1.0"
