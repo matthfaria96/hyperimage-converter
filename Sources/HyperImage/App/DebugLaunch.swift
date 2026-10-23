@@ -49,7 +49,7 @@ enum DebugLaunch {
             app.state.convert.outputFolder = out
         }
         switch env["HYPERIMAGE_SHEET"] {
-        case "advanced": return .advanced
+        case "advanced": return .advanced(env["HYPERIMAGE_STEP"].flatMap(AdvancedStep.init(rawValue:)))
         case "format": return .formatSettings
         case "rename": return .renamePreview
         case "preview": return app.inputs.first.map { .conversionPreview($0.url) }

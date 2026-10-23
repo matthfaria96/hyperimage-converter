@@ -5,6 +5,7 @@ import SwiftUI
 struct AdvancedOptionsSheet: View {
     @Environment(AppModel.self) private var app
     @Environment(\.dismiss) private var dismiss
+    var initialStep: AdvancedStep?
     @State private var draft = AdvancedOptions()
     @State private var step: AdvancedStep = .resize
     @State private var presets: [PixelSize] = []
@@ -37,7 +38,7 @@ struct AdvancedOptionsSheet: View {
         .frame(minWidth: 1080, minHeight: 680)
         .onAppear {
             draft = app.state.convert.advanced
-            step = app.state.lastAdvancedStep
+            step = initialStep ?? app.state.lastAdvancedStep
             presets = app.state.resizePresets
         }
         .onChange(of: step) { _, s in app.state.lastAdvancedStep = s }

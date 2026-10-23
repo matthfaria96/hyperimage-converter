@@ -101,7 +101,7 @@ struct AppCommands: Commands {
             Button("Ajustes do formato…") { model.route = .formatSettings }
                 .keyboardShortcut(",")
                 .disabled(model.isBusy || model.state.convert.mode != .convert)
-            Button("Edição avançada…") { model.route = .advanced }
+            Button("Edição avançada…") { model.route = .advanced(nil) }
                 .keyboardShortcut("a", modifiers: [.command, .shift])
                 .disabled(model.isBusy || [.upscale, .rename].contains(model.state.convert.mode))
             Divider()

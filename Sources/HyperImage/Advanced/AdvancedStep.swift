@@ -66,4 +66,12 @@ enum AdvancedStep: String, CaseIterable, Codable, Identifiable {
         }
         return copy
     }
+
+    /// Switching a step on also turns on "Aplicar estas etapas", so the switch is never a no-op.
+    func applying(_ enabled: Bool, to s: ConvertSettings) -> ConvertSettings {
+        var copy = s
+        copy.advanced = setting(enabled, in: s.advanced)
+        if enabled { copy.useAdvancedOptions = true }
+        return copy
+    }
 }

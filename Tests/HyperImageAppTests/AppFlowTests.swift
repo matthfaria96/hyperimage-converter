@@ -276,3 +276,25 @@ struct BatchNumbersTests {
         #expect(BatchNumbers(old: 0, new: 0).saved == 0)
     }
 }
+
+struct AdvancedStepToggleTests {
+    @Test func onEnablesApply() {
+        let s = AdvancedStep.crop.applying(true, to: ConvertSettings())
+        #expect(s.advanced.crop.enabled)
+        #expect(s.useAdvancedOptions)
+    }
+
+    @Test func offKeepsApply() {
+        var base = ConvertSettings()
+        base.useAdvancedOptions = true
+        base.advanced.crop.enabled = true
+        let s = AdvancedStep.crop.applying(false, to: base)
+        #expect(!s.advanced.crop.enabled)
+        #expect(s.useAdvancedOptions)
+    }
+
+    @Test func routeIDs() {
+        #expect(SheetRoute.advanced(.crop).id == "advanced-crop")
+        #expect(SheetRoute.advanced(nil).id == "advanced")
+    }
+}

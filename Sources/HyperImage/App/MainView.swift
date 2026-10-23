@@ -2,12 +2,12 @@ import HyperImageCore
 import SwiftUI
 
 enum SheetRoute: Identifiable {
-    case formatSettings, advanced, conversionPreview(URL), errors, renamePreview
+    case formatSettings, advanced(AdvancedStep?), conversionPreview(URL), errors, renamePreview
 
     var id: String {
         switch self {
         case .formatSettings: "format"
-        case .advanced: "advanced"
+        case let .advanced(step): step.map { "advanced-\($0.rawValue)" } ?? "advanced"
         case let .conversionPreview(url): "preview-\(url.path)"
         case .errors: "errors"
         case .renamePreview: "renamePreview"
@@ -81,7 +81,7 @@ struct MainView: View {
     private func sheetView(_ route: SheetRoute) -> some View {
         switch route {
         case .formatSettings: FormatSettingsSheet()
-        case .advanced: AdvancedOptionsSheet()
+        case let .advanced(step): AdvancedOptionsSheet(initialStep: step)
         case let .conversionPreview(url): ConversionPreviewSheet(initial: url)
         case .errors: ErrorListSheet(failures: runner.failures)
         case .renamePreview: RenamePreviewSheet()
