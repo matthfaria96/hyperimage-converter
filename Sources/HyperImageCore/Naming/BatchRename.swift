@@ -54,9 +54,11 @@ public enum BatchRename {
             }
             let finalExt = settings.extensionCase.apply(newExt)
             let name = finalExt.isEmpty ? base : "\(base).\(finalExt)"
-            return RenameEntry(number: offset + 1, source: url, destination: url.deletingLastPathComponent().appendingPathComponent(name), conflict: false)
+            // Names the file system would refuse are flagged now instead of failing halfway through the rename.
+            return RenameEntry(number: offset + 1, source: url, destination: url.deletingLastPathComponent().appendingPathComponent(name),
+                               conflict: !RenameTemplate.isValidFileName(name))
         }
-        // A destination is a conflict if two entries target it, or an unrelated file already has that name.
+        // A destination is a conflict if two entries target it, an unrelated file already has that name, or it is invalid.
         let sources = Set(files.map(key))
         var seen: [String: Int] = [:]
         for entry in entries { seen[key(entry.destination), default: 0] += 1 }
@@ -64,7 +66,7 @@ public enum BatchRename {
             var copy = entry
             let target = key(entry.destination)
             let existsOutside = !sources.contains(target) && FileManager.default.fileExists(atPath: entry.destination.path)
-            copy.conflict = !entry.unchanged && ((seen[target] ?? 0) > 1 || existsOutside)
+            copy.conflict = !entry.unchanged && (entry.conflict || (seen[target] ?? 0) > 1 || existsOutside)
             return copy
         }
         return blockingChains(entries)

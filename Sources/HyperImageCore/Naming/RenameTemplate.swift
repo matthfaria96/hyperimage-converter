@@ -57,8 +57,18 @@ public enum RenameTemplate {
 
     /// Removes characters macOS filenames cannot contain.
     static func sanitized(_ name: String) -> String {
-        let cleaned = name.replacingOccurrences(of: "/", with: "-").replacingOccurrences(of: ":", with: "-")
+        let cleaned = withoutSeparators(name)
         return cleaned.isEmpty ? "_" : cleaned
+    }
+
+    /// `/` would make a subfolder path and `:` shows as `/` in Finder.
+    static func withoutSeparators(_ text: String) -> String {
+        text.replacingOccurrences(of: "/", with: "-").replacingOccurrences(of: ":", with: "-")
+    }
+
+    /// A single file name macOS accepts: not empty, not `.`/`..`, at most 255 UTF-8 bytes.
+    public static func isValidFileName(_ name: String) -> Bool {
+        !name.isEmpty && name != "." && name != ".." && name.utf8.count <= 255 && !name.contains("/")
     }
 }
 
@@ -86,6 +96,6 @@ public struct SearchReplaceRule: Codable, Equatable, Sendable {
         }
         let newExt = extensionPair.search.isEmpty ? ext
             : ext.replacingOccurrences(of: extensionPair.search, with: extensionPair.replace, options: options)
-        return (RenameTemplate.sanitized(newName), newExt)
+        return (RenameTemplate.sanitized(newName), RenameTemplate.withoutSeparators(newExt))
     }
 }

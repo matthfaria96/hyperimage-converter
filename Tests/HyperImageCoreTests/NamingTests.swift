@@ -42,6 +42,21 @@ struct RenameTemplateTests {
         #expect(rule.apply(name: "img_0001", ext: "JPEG") == ("img 0001", "JPEG"))
     }
 
+    @Test func extensionReplacementCannotAddSeparators() {
+        var rule = SearchReplaceRule()
+        rule.extensionPair = .init(search: "jpg", replace: "x/y:z")
+        #expect(rule.apply(name: "a", ext: "jpg") == ("a", "x-y-z"))
+    }
+
+    @Test func fileNameValidity() {
+        #expect(RenameTemplate.isValidFileName("a.jpg"))
+        #expect(!RenameTemplate.isValidFileName(""))
+        #expect(!RenameTemplate.isValidFileName("."))
+        #expect(!RenameTemplate.isValidFileName(".."))
+        #expect(RenameTemplate.isValidFileName(String(repeating: "é", count: 127)))
+        #expect(!RenameTemplate.isValidFileName(String(repeating: "é", count: 128)))
+    }
+
     @Test func extensionCase() {
         #expect(ExtensionCase.upper.apply("jpg") == "JPG")
         #expect(ExtensionCase.lower.apply("JpG") == "jpg")
@@ -78,6 +93,18 @@ struct BatchRenameTests {
         #expect(entries.allSatisfy { $0.conflict })
         let outcome = BatchRename.execute(entries)
         #expect(outcome.renamed == 0)
+    }
+
+    @Test func flagsNamesTooLong() throws {
+        let dir = try TemporaryDirectory()
+        let file = dir.url.appendingPathComponent("a.jpg")
+        try Data().write(to: file)
+        var settings = BatchRenameSettings()
+        settings.template = String(repeating: "*", count: 300)
+        let entries = BatchRename.plan([file], settings: settings, dates: { _ in Date() })
+        #expect(entries.map(\.conflict) == [true])
+        #expect(BatchRename.execute(entries).renamed == 0)
+        #expect(FileManager.default.fileExists(atPath: file.path))
     }
 
     @Test func templateNumbersFromStart() throws {
