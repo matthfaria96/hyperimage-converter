@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: ready_to_plan
+status: planning
 stopped_at: Roadmap criado, pronto para `/gsd-plan-phase 1`
-last_updated: "2026-10-23T02:17:50.679Z"
-last_activity: 2026-10-20
+last_updated: "2026-10-23T05:10:11.756Z"
+last_activity: 2026-10-23
 progress:
-  total_phases: 5
+  total_phases: 6
   completed_phases: 3
-  total_plans: 4
-  completed_plans: 2
-  percent: 60
+  total_plans: 10
+  completed_plans: 10
+  percent: 100
 ---
 
 # Project State
@@ -43,6 +43,7 @@ Progress: [░░░░░░░░░░] 0%
 ### Roadmap Evolution
 
 - Phase 02.1 inserted after Phase 2: Usuário pediu de volta as funções do FastStone que sumiram com o layout simplificado (URGENT)
+- Phase 02.1.1 inserted after Phase 02.1: Usuário pediu design premium nativo macOS 26 com animações em toda ação (URGENT)
 
 ### Decisions
 

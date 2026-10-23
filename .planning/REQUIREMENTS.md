@@ -42,6 +42,12 @@
 - [x] **FS-04**: Detalhes do progresso (antigo/novo, proporção, economia, decorrido/restante)
 - [x] **FS-05**: Etapas da edição avançada visíveis e ativáveis direto no painel
 
+### Interface nativa (UI)
+
+- [ ] **UI-01**: Estrutura nativa macOS 26 (split view, toolbar com modos, inspector) com Liquid Glass e controles de sistema padronizados em todas as telas
+- [ ] **UI-02**: Toda ação do usuário tem animação (modo, opções, lista, progresso, conclusão), com Reduce Motion respeitado
+- [ ] **UI-03**: Problemas visuais P-01..P-15 corrigidos e verificados em capturas light/dark/estreita
+
 ### Testes (TEST)
 
 - [ ] **TEST-01**: Testes cobrem parser com entradas hostis, saída in-place, limites de tamanho, desfazer e cancelamento do upscale
@@ -86,10 +92,13 @@
 | FS-03 | Phase 02.1 | Complete |
 | FS-04 | Phase 02.1 | Complete |
 | FS-05 | Phase 02.1 | Complete |
+| UI-01 | Phase 02.1.1 | Pending |
+| UI-02 | Phase 02.1.1 | Pending |
+| UI-03 | Phase 02.1.1 | Pending |
 
 **Coverage:**
-- v1 requirements: 23 total
-- Mapped to phases: 23
+- v1 requirements: 26 total
+- Mapped to phases: 26
 - Unmapped: 0
 
 ---

@@ -59,6 +59,20 @@ Plans:
 - [x] 02.1-05-PLAN.md — Edição avançada card with the 10 steps, switches, and open-on-step (FS-05)
 - [x] 02.1-06-PLAN.md — pt + en strings, About/README, full verification (tests, 0 warnings, smoke pt/en)
 
+### Phase 02.1.1: Design premium nativo macOS 26 (INSERTED)
+
+**Goal:** A interface inteira parece um app nativo Apple do macOS 26: estrutura nativa (split view, toolbar, inspector), Liquid Glass, tipografia e controles de sistema padronizados, e toda ação tem animação
+**Requirements**: UI-01, UI-02, UI-03
+**Success Criteria** (what must be TRUE):
+  1. Nenhum dos problemas P-01..P-15 do CONTEXT aparece nas capturas finais (light, dark e janela estreita)
+  2. Trocar de modo, mostrar/ocultar cards, ligar opções, adicionar/remover arquivos, progresso e conclusão são animados; Reduce Motion respeitado
+  3. Todas as funções existentes continuam alcançáveis; testes, smoke e build (0 warnings) passam
+**Depends on:** Phase 2.1
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 02.1.1 to break down)
+
 ### Phase 3: Correção dos resultados
 **Goal**: O arquivo gerado corresponde ao que a interface prometeu, e falhas dizem o motivo real
 **Depends on**: Phase 2
