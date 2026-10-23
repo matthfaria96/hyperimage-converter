@@ -78,11 +78,14 @@ public struct Upscaler: Sendable {
     /// Where the per-run `hyperimage-upscale-*` work folder is created.
     /// nil = a replacement folder on the output's volume, so the final swap stays a same-volume rename.
     public let tempRoot: URL?
+    /// Where running backends are tracked so quitting the app can stop them.
+    public let registry: ProcessRegistry
 
-    public init(executable: URL, modelsFolder: URL, tempRoot: URL? = nil) {
+    public init(executable: URL, modelsFolder: URL, tempRoot: URL? = nil, registry: ProcessRegistry = .shared) {
         self.executable = executable
         self.modelsFolder = modelsFolder
         self.tempRoot = tempRoot
+        self.registry = registry
     }
 
     /// The copy inside the app bundle, or `HYPERIMAGE_UPSCAYL` (a folder holding upscayl-bin and models/) in tests.
@@ -183,9 +186,16 @@ public struct Upscaler: Sendable {
         }
         try await withTaskCancellationHandler {
             try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
-                process.terminationHandler = { _ in continuation.resume() }
+                process.terminationHandler = { finished in
+                    registry.unregister(finished)
+                    continuation.resume()
+                }
                 do {
                     try process.run()
+                    // Tracked so quitting the app stops it (applicationWillTerminate → terminateAll).
+                    registry.register(process)
+                    // It may have exited before registration; never leave a stale entry behind.
+                    if !process.isRunning { registry.unregister(process) }
                     // A cancel that arrived before launch found no running process to stop.
                     if Task.isCancelled { process.terminate() }
                 } catch {

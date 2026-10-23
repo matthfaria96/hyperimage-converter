@@ -68,4 +68,48 @@ final class ProcessRegistryTests: XCTestCase {
         XCTAssertEqual(registry.count, 1)
         registry.terminateAll(timeout: 1)
     }
+
+    /// A fake backend that just hangs, like a long upscayl-bin run.
+    private func hangingBackend(in dir: URL) throws -> URL {
+        let script = dir.appendingPathComponent("upscayl-bin")
+        try Data("#!/bin/sh\nexec /bin/sleep 30\n".utf8).write(to: script)
+        try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: script.path)
+        return script
+    }
+
+    func testUpscalerRegistersBackendAndTerminateAllStopsIt() async throws {
+        let scratch = try TemporaryDirectory()
+        let registry = ProcessRegistry()
+        let upscaler = Upscaler(executable: try hangingBackend(in: scratch.url), modelsFolder: scratch.url,
+                                tempRoot: scratch.url, registry: registry)
+        let input = Fixtures.url("paisagem")
+        let task = Task {
+            try await upscaler.upscale(input, to: scratch.url.appendingPathComponent("out.png"), settings: UpscaleSettings())
+        }
+        let deadline = Date().addingTimeInterval(5)
+        while registry.count == 0, Date() < deadline { try await Task.sleep(nanoseconds: 20_000_000) }
+        XCTAssertEqual(registry.count, 1, "backend should be registered while running")
+
+        let start = Date()
+        registry.terminateAll(timeout: 1)
+        XCTAssertLessThan(Date().timeIntervalSince(start), 1.5)
+        let result = await task.result
+        XCTAssertThrowsError(try result.get(), "a killed backend must surface as a failure")
+        XCTAssertEqual(registry.count, 0)
+    }
+
+    func testUpscalerUnregistersAfterNormalExit() async throws {
+        let scratch = try TemporaryDirectory()
+        let registry = ProcessRegistry()
+        let script = scratch.url.appendingPathComponent("upscayl-bin")
+        try Data("#!/bin/sh\nexit 1\n".utf8).write(to: script)
+        try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: script.path)
+        let upscaler = Upscaler(executable: script, modelsFolder: scratch.url, tempRoot: scratch.url, registry: registry)
+        let input = Fixtures.url("paisagem")
+        do {
+            try await upscaler.upscale(input, to: scratch.url.appendingPathComponent("out.png"), settings: UpscaleSettings())
+            XCTFail("exit 1 should fail")
+        } catch {}
+        XCTAssertEqual(registry.count, 0)
+    }
 }

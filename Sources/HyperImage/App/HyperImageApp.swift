@@ -1,4 +1,5 @@
 import AppKit
+import HyperImageCore
 import SwiftUI
 
 @main
@@ -70,6 +71,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { true }
 
     func applicationWillTerminate(_ notification: Notification) {
+        // upscayl-bin would otherwise outlive the app and keep the GPU busy.
+        ProcessRegistry.shared.terminateAll()
         model?.saveNow()
     }
 }
