@@ -34,6 +34,27 @@ extension OutputFormat {
     }
 }
 
+/// Comprimir's three levels; the slider can still pick any quality in between.
+public enum CompressionLevel: String, CaseIterable, Sendable {
+    case light, balanced, strong
+
+    public var quality: Int {
+        switch self {
+        case .light: 85
+        case .balanced: 72
+        case .strong: 50
+        }
+    }
+
+    /// The level whose quality matches exactly, or nil for a custom value.
+    public static func matching(_ quality: Int) -> CompressionLevel? { allCases.first { $0.quality == quality } }
+}
+
+extension OutputFormat {
+    /// Formats with a quality setting (the ones Comprimir can shrink by lowering it).
+    public static let lossyFormats: [OutputFormat] = [.jpeg, .webp, .heic, .avif, .jpeg2000]
+}
+
 extension FormatSettings {
     /// The 0–100 quality the format's encoder uses, or nil when it is lossless.
     public func quality(for format: OutputFormat) -> Int? {
@@ -79,7 +100,9 @@ extension ConvertSettings {
     }
 
     /// Advanced Options when enabled, plus the quick "limit dimensions" resize when it does not clash with them.
+    /// Comprimir only compresses: no edits and no resizing.
     public var effectiveAdvancedOptions: AdvancedOptions {
+        if mode == .compress { return AdvancedOptions() }
         var options = useAdvancedOptions ? advanced : AdvancedOptions()
         if !keepDimensions, !options.resize.enabled, maxLongSide > 0 {
             options.resize.enabled = true
@@ -91,14 +114,28 @@ extension ConvertSettings {
         return options
     }
 
+    /// Quality used by Converter when the user has not chosen to reduce it: visually lossless.
+    public static let fullQualityLevel = 95
+
     public var effectiveFormatSettings: FormatSettings {
         var settings = formatSettings
-        settings.flattenTransparency = !preserveTransparency
-        if !preserveTransparency { settings.gif.transparent = false }
+        switch mode {
+        case .convert where fullQuality:
+            settings = settings.with(quality: Self.fullQualityLevel, for: format)
+        case .compress:
+            settings = OutputFormat.lossyFormats.reduce(settings) { $0.with(quality: compressQuality, for: $1) }
+        default:
+            break
+        }
+        // Compress keeps each file as it was, transparency included.
+        let flatten = mode != .compress && !preserveTransparency
+        settings.flattenTransparency = flatten
+        if flatten { settings.gif.transparent = false }
         return settings
     }
 
-    public var maxFileSizeBytes: Int? { limitFileSize && maxFileSizeKB > 0 ? maxFileSizeKB * 1024 : nil }
+    /// The size target belongs to Comprimir; Converter never lowers the quality behind the user's back.
+    public var maxFileSizeBytes: Int? { mode == .compress && limitFileSize && maxFileSizeKB > 0 ? maxFileSizeKB * 1024 : nil }
 }
 
 /// Encodes one loaded file with everything the settings ask for, including the file-size target.

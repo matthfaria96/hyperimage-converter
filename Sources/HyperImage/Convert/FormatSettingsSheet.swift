@@ -11,7 +11,16 @@ struct FormatSettingsSheet: View {
     var body: some View {
         VStack(spacing: 0) {
             Form {
-                Section("Ajustes de \(format.displayName)") { fields }
+                Section {
+                    fields
+                } header: {
+                    Text("Ajustes de \(format.displayName)")
+                } footer: {
+                    if app.state.convert.fullQuality && draft.quality(for: format) != nil {
+                        Label("Qualidade máxima ativa: a qualidade escolhida aqui só vale com “Reduzir a qualidade” ligado no painel.",
+                              systemImage: "info.circle")
+                    }
+                }
             }
             .formStyle(.grouped)
             HStack(spacing: 10) {

@@ -17,10 +17,14 @@ public struct ConvertSettings: Codable, Equatable, Sendable {
     public var openFolderWhenDone = false
     /// Simplified window: convert to `format`, or compress keeping each file's own format.
     public var mode = ConvertMode.convert
+    /// Converter: encode lossy formats at `fullQuality` unless the user chose to reduce the quality.
+    public var fullQuality = true
+    /// Comprimir: the one quality level applied to every lossy format.
+    public var compressQuality = CompressionLevel.balanced.quality
     /// Off: shrink images whose long side exceeds `maxLongSide` (unless Advanced Options already resize).
     public var keepDimensions = true
     public var maxLongSide = 2400
-    /// Lower the quality of lossy formats until each file fits under `maxFileSizeKB`.
+    /// Comprimir only: lower the quality of lossy formats until each file fits under `maxFileSizeKB`.
     public var limitFileSize = false
     public var maxFileSizeKB = 500
     public var preserveTransparency = true

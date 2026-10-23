@@ -67,8 +67,9 @@ struct SimpleModeTests {
         let dir = try tempDir()
         let input = try copyFixture("paisagem", to: dir)
         var s = ConvertSettings()
+        s.mode = .compress
         s.outputFolder = dir.appendingPathComponent("out").path
-        s.formatSettings.jpeg.quality = 100
+        s.compressQuality = 100
         s.limitFileSize = true
         s.maxFileSizeKB = 20
         let records = try await run(s, [input])
@@ -120,5 +121,45 @@ struct SimpleModeTests {
         let records = try await run(s, [input])
         #expect(records.first?.status == .skipped)
         #expect(try Data(contentsOf: target) == Data("antigo".utf8))
+    }
+}
+
+/// Converter and Comprimir pick their quality differently; each must not leak into the other.
+struct ModeQualityTests {
+    @Test func convertUsesFullQualityUnlessReduced() {
+        var s = ConvertSettings()
+        s.format = .webp
+        s.formatSettings = s.formatSettings.with(quality: 40, for: .webp)
+        #expect(s.effectiveFormatSettings.quality(for: .webp) == ConvertSettings.fullQualityLevel)
+        s.fullQuality = false
+        #expect(s.effectiveFormatSettings.quality(for: .webp) == 40)
+    }
+
+    @Test func compressAppliesItsLevelToEveryLossyFormat() {
+        var s = ConvertSettings()
+        s.mode = .compress
+        s.compressQuality = CompressionLevel.strong.quality
+        for format in OutputFormat.lossyFormats {
+            #expect(s.effectiveFormatSettings.quality(for: format) == 50)
+        }
+    }
+
+    @Test func sizeLimitAndEditsBelongToTheirMode() {
+        var s = ConvertSettings()
+        s.limitFileSize = true
+        s.maxFileSizeKB = 100
+        s.useAdvancedOptions = true
+        s.advanced.text.enabled = true
+        #expect(s.maxFileSizeBytes == nil)
+        #expect(s.effectiveAdvancedOptions.text.enabled)
+        s.mode = .compress
+        #expect(s.maxFileSizeBytes == 100 * 1024)
+        #expect(!s.effectiveAdvancedOptions.text.enabled)
+        #expect(!s.effectiveAdvancedOptions.resize.enabled)
+    }
+
+    @Test func levelsMatchTheirQuality() {
+        #expect(CompressionLevel.matching(72) == .balanced)
+        #expect(CompressionLevel.matching(73) == nil)
     }
 }

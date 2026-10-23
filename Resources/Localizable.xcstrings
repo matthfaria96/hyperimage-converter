@@ -601,6 +601,16 @@
         }
       }
     },
+    "Adicione imagens": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add images"
+          }
+        }
+      }
+    },
     "Adicione imagens para começar.": {
       "localizations": {
         "en": {
@@ -921,6 +931,16 @@
         }
       }
     },
+    "Arquivos menores, com alguma perda.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Smaller files, with some loss."
+          }
+        }
+      }
+    },
     "Arquivos muito pequenos; nem todos os programas abrem.": {
       "localizations": {
         "en": {
@@ -977,6 +997,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "The chosen images will be saved inside a subfolder with this name, in the destination you set. Nothing is created now."
+          }
+        }
+      }
+    },
+    "Até": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Up to"
           }
         }
       }
@@ -1047,6 +1077,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "BMP — compatibility"
+          }
+        }
+      }
+    },
+    "Baixa mais a qualidade só dos arquivos que passarem do limite.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lowers the quality further only for files over the limit."
           }
         }
       }
@@ -1141,12 +1181,12 @@
         }
       }
     },
-    "Cada imagem mantém o próprio formato. A qualidade vale para JPEG, WebP, HEIC, AVIF e JPEG 2000; PNG, GIF, BMP e TIFF são regravados sem perdas.": {
+    "Cada imagem mantém o próprio formato. JPEG, WebP, HEIC, AVIF e JPEG 2000 são comprimidos; PNG, GIF, BMP e TIFF são regravados sem perdas.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Each image keeps its own format. Quality applies to JPEG, WebP, HEIC, AVIF and JPEG 2000; PNG, GIF, BMP and TIFF are rewritten losslessly."
+            "value": "Each image keeps its own format. JPEG, WebP, HEIC, AVIF and JPEG 2000 are compressed; PNG, GIF, BMP and TIFF are rewritten losslessly."
           }
         }
       }
@@ -1281,6 +1321,16 @@
         }
       }
     },
+    "Comparar antes e depois…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compare Before and After…"
+          }
+        }
+      }
+    },
     "Compensação de exposição": {
       "localizations": {
         "en": {
@@ -1397,6 +1447,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Convert images"
+          }
+        }
+      }
+    },
+    "Converter muda só o formato. Para diminuir o tamanho dos arquivos, use Comprimir.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Convert only changes the format. To make files smaller, use Compress."
+          }
+        }
+      }
+    },
+    "Converter para": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Convert to"
           }
         }
       }
@@ -1631,6 +1701,16 @@
         }
       }
     },
+    "Desligado: as imagens mantêm a qualidade máxima.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Off: images keep maximum quality."
+          }
+        }
+      }
+    },
     "Deslocamento X": {
       "localizations": {
         "en": {
@@ -1677,6 +1757,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "File day"
+          }
+        }
+      }
+    },
+    "Dimensões": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dimensions"
           }
         }
       }
@@ -1801,16 +1891,6 @@
         }
       }
     },
-    "Em PNG, GIF, BMP e TIFF o limite não se aplica: esses formatos não têm ajuste de qualidade.": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "In PNG, GIF, BMP and TIFF the limit does not apply: these formats have no quality setting."
-          }
-        }
-      }
-    },
     "Em pixels": {
       "localizations": {
         "en": {
@@ -1847,6 +1927,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Interlaced"
+          }
+        }
+      }
+    },
+    "Equilibrada": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Balanced"
+          }
+        }
+      }
+    },
+    "Equilibrada: boa economia sem perda perceptível na maioria das fotos.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Balanced: good savings with no visible loss in most photos."
           }
         }
       }
@@ -2011,6 +2111,16 @@
         }
       }
     },
+    "Estimativa a partir de até 3 imagens da lista.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estimated from up to 3 images in the list."
+          }
+        }
+      }
+    },
     "Exatamente": {
       "localizations": {
         "en": {
@@ -2157,6 +2267,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Format"
+          }
+        }
+      }
+    },
+    "Forte": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Strong"
+          }
+        }
+      }
+    },
+    "Forte: arquivos bem menores; detalhes finos podem suavizar.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Strong: much smaller files; fine detail may soften."
           }
         }
       }
@@ -2611,22 +2741,32 @@
         }
       }
     },
+    "Leve": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Light"
+          }
+        }
+      }
+    },
+    "Leve: quase sem diferença visível, arquivos um pouco menores.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Light: almost no visible difference, slightly smaller files."
+          }
+        }
+      }
+    },
     "Licenças de código aberto": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Open-source licenses"
-          }
-        }
-      }
-    },
-    "Limitar tamanho do arquivo": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Limit file size"
           }
         }
       }
@@ -3321,6 +3461,16 @@
         }
       }
     },
+    "Nível": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Level"
+          }
+        }
+      }
+    },
     "Número F": {
       "localizations": {
         "en": {
@@ -3397,16 +3547,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "The file is not a FastStone options file (.ccf)."
-          }
-        }
-      }
-    },
-    "O formato %@ não tem ajuste de qualidade; o limite não se aplica.": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "The %@ format has no quality setting; the limit does not apply."
           }
         }
       }
@@ -3885,16 +4025,6 @@
         }
       }
     },
-    "Preservar transparência": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Preserve transparency"
-          }
-        }
-      }
-    },
     "Preto e branco": {
       "localizations": {
         "en": {
@@ -4157,12 +4287,22 @@
         }
       }
     },
-    "Quando o formato permitir; senão o fundo fica branco.": {
+    "Qualidade máxima ativa: a qualidade escolhida aqui só vale com “Reduzir a qualidade” ligado no painel.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "When the format allows it; otherwise the background becomes white."
+            "value": "Maximum quality is on: the quality chosen here only applies with “Reduce quality” turned on in the panel."
+          }
+        }
+      }
+    },
+    "Qualidade personalizada: %lld %%.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Custom quality: %lld %%."
           }
         }
       }
@@ -4237,16 +4377,6 @@
         }
       }
     },
-    "Reduz a qualidade até caber no tamanho escolhido.": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Lowers the quality until it fits the chosen size."
-          }
-        }
-      }
-    },
     "Reduzir": {
       "localizations": {
         "en": {
@@ -4257,12 +4387,12 @@
         }
       }
     },
-    "Redução de tamanho": {
+    "Reduzir a qualidade": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Size reduction"
+            "value": "Reduce quality"
           }
         }
       }
@@ -4403,16 +4533,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Saturation"
-          }
-        }
-      }
-    },
-    "Saída": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Output"
           }
         }
       }
@@ -4757,12 +4877,12 @@
         }
       }
     },
-    "Tamanho máximo": {
+    "Tamanho máximo por arquivo": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Maximum size"
+            "value": "Maximum size per file"
           }
         }
       }
@@ -4957,6 +5077,16 @@
         }
       }
     },
+    "Ver a imagem selecionada (ou a primeira) comprimida, lado a lado com a original (barra de espaço)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "See the selected (or first) image compressed, side by side with the original (Space)"
+          }
+        }
+      }
+    },
     "Ver erros (%lld)": {
       "localizations": {
         "en": {
@@ -5113,6 +5243,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "hour, minute, second"
+          }
+        }
+      }
+    },
+    "maior": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "larger"
+          }
+        }
+      }
+    },
+    "menor": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "smaller"
           }
         }
       }

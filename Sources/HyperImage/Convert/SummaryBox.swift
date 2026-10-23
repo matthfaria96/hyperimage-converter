@@ -6,14 +6,16 @@ struct SummaryBox: View {
     @Environment(AppModel.self) private var app
     let runner: ConversionRunner
     let start: () -> Void
-    @State private var estimate: Estimate?
+    let estimate: Estimate?
+    /// Off in Comprimir, whose panel already leads with the estimate.
+    var showsEstimate = true
 
     private var finished: Bool { runner.hasResults && !runner.isRunning }
 
     var body: some View {
         let mode = app.state.convert.mode
         VStack(alignment: .leading, spacing: 12) {
-            if !app.inputs.isEmpty {
+            if !app.inputs.isEmpty && (showsEstimate || finished) {
                 VStack(alignment: .leading, spacing: 3) {
                     HStack {
                         Text(finished ? "Resultado" : "Estimativa").font(.subheadline.weight(.semibold)).foregroundStyle(.secondary)
@@ -83,16 +85,6 @@ struct SummaryBox: View {
         .animation(.snappy, value: runner.hasResults)
         .animation(.snappy, value: app.inputs.isEmpty)
         .sensoryFeedback(.success, trigger: runner.completionID) { _, _ in finished && runner.failures.isEmpty && !runner.wasCancelled }
-        .task(id: EstimateKey(app.state.convert, revision: app.inputsRevision)) {
-            try? await Task.sleep(for: .milliseconds(450))
-            guard !Task.isCancelled else { return }
-            let settings = app.state.convert
-            let urls = app.inputs.map(\.url)
-            let work = Task.detached(priority: .utility) { Estimate.make(urls: urls, settings: settings) }
-            let result = await withTaskCancellationHandler { await work.value } onCancel: { work.cancel() }
-            guard !Task.isCancelled else { return }
-            estimate = result
-        }
         .onChange(of: app.inputsRevision) { runner.clearResults() }
     }
 
@@ -191,7 +183,7 @@ private struct StatusLine: View {
 }
 
 /// Only what changes the output bytes; folder, overwrite and message options must not re-encode samples.
-private struct EstimateKey: Equatable {
+struct EstimateKey: Equatable {
     let mode: ConvertMode
     let format: OutputFormat
     let formatSettings: FormatSettings
@@ -201,7 +193,10 @@ private struct EstimateKey: Equatable {
     let upscale: UpscaleSettings
     let revision: Int
 
+    let quality: [Int]
+
     init(_ s: ConvertSettings, revision: Int) {
+        quality = [s.fullQuality ? 1 : 0, s.compressQuality]
         mode = s.mode
         format = s.format
         formatSettings = s.effectiveFormatSettings
@@ -210,6 +205,21 @@ private struct EstimateKey: Equatable {
         reduction = [s.maxFileSizeBytes ?? 0]
         upscale = s.upscale
         self.revision = revision
+    }
+}
+
+/// Shared by the summary and Comprimir's preview, so the samples are encoded once per change.
+@Observable
+final class EstimateStore {
+    private(set) var estimate: Estimate?
+
+    func refresh(urls: [URL], settings: ConvertSettings) async {
+        try? await Task.sleep(for: .milliseconds(350))
+        guard !Task.isCancelled else { return }
+        let work = Task.detached(priority: .utility) { Estimate.make(urls: urls, settings: settings) }
+        let result = await withTaskCancellationHandler { await work.value } onCancel: { work.cancel() }
+        guard !Task.isCancelled else { return }
+        withAnimation(.snappy) { estimate = result }
     }
 }
 

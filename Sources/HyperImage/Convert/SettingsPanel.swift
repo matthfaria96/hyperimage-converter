@@ -6,21 +6,22 @@ struct SettingsPanel: View {
     @Environment(AppModel.self) private var app
     let runner: ConversionRunner
     let start: () -> Void
+    @State private var estimator = EstimateStore()
 
     var body: some View {
         @Bindable var app = app
         let settings = $app.state.convert
         Form {
-            if app.state.showPreview, let item = app.selectedItem {
-                PreviewSection(item: item)
-            }
             switch app.state.convert.mode {
-            case .convert, .compress:
-                OutputSection(settings: settings)
-                ReductionSection(settings: settings)
-                AdvancedStepsSection(settings: settings)
+            case .convert:
+                selectedPreview
+                ConvertSections(settings: settings)
+            case .compress:
+                CompressSections(settings: settings, estimate: estimator.estimate, hasInputs: !app.inputs.isEmpty)
+                selectedPreview
                 SaveSection(settings: settings)
             case .upscale:
+                selectedPreview
                 UpscaleSections(settings: settings.upscale)
                 SaveSection(settings: settings)
             }
@@ -39,12 +40,22 @@ struct SettingsPanel: View {
         .scrollEdgeEffectHidden(true, for: .bottom)
         // Floating, so the form scrolls underneath instead of being covered.
         .safeAreaInset(edge: .bottom, spacing: 0) {
-            SummaryBox(runner: runner, start: start)
+            // Comprimir shows its estimate up top, so its summary keeps only the action and the result.
+            SummaryBox(runner: runner, start: start, estimate: estimator.estimate,
+                       showsEstimate: app.state.convert.mode != .compress)
             .padding(14)
             .glassEffect(.regular, in: .rect(cornerRadius: 20))
             .padding(.horizontal, 14).padding(.bottom, 12).padding(.top, 4)
         }
         .frame(width: 360)
+        .task(id: EstimateKey(app.state.convert, revision: app.inputsRevision)) {
+            await estimator.refresh(urls: app.inputs.map(\.url), settings: app.state.convert)
+        }
+    }
+
+    @ViewBuilder
+    private var selectedPreview: some View {
+        if app.state.showPreview, let item = app.selectedItem { PreviewSection(item: item) }
     }
 }
 
@@ -128,91 +139,9 @@ struct NumberRow: View {
     }
 }
 
-// MARK: - Convert / Compress
-
-private struct OutputSection: View {
-    @Environment(AppModel.self) private var app
-    @Binding var settings: ConvertSettings
-
-    var body: some View {
-        Section {
-            if settings.mode == .convert {
-                Picker("Formato", selection: $settings.format) {
-                    ForEach(OutputFormat.allCases, id: \.self) { Text($0.menuTitle).tag($0) }
-                }
-                if settings.formatSettings.quality(for: settings.format) != nil {
-                    QualityRow(title: "Qualidade", value: Binding(
-                        get: { settings.formatSettings.quality(for: settings.format) ?? 80 },
-                        set: { settings.formatSettings = settings.formatSettings.with(quality: $0, for: settings.format) }))
-                }
-                LabeledContent("Ajustes de \(settings.format.displayName)") {
-                    Button("Mais ajustes…") { app.route = .formatSettings }
-                        .help("⌘,")
-                }
-            } else {
-                QualityRow(title: "Qualidade", value: Binding(
-                    get: { settings.formatSettings.jpeg.quality },
-                    set: { q in
-                        settings.formatSettings = [OutputFormat.jpeg, .webp, .heic, .avif, .jpeg2000]
-                            .reduce(settings.formatSettings) { $0.with(quality: q, for: $1) }
-                    }))
-            }
-            ToggleRow(title: "Manter dimensões originais", help: "Não altera largura ou altura.", isOn: $settings.keepDimensions.animation(.snappy))
-            if !settings.keepDimensions {
-                NumberRow(title: "Lado maior até", value: $settings.maxLongSide, range: 16...50_000, step: 100, unit: "px",
-                          presets: [("1080 px (redes sociais)", 1080), ("1920 px (Full HD)", 1920), ("2400 px", 2400),
-                                    ("3840 px (4K)", 3840)])
-                    .transition(.blurReplace)
-            }
-        } header: {
-            Text("Saída")
-        } footer: {
-            if settings.mode == .convert {
-                Text(settings.format.help)
-            } else {
-                Text("Cada imagem mantém o próprio formato. A qualidade vale para JPEG, WebP, HEIC, AVIF e JPEG 2000; PNG, GIF, BMP e TIFF são regravados sem perdas.")
-            }
-        }
-    }
-}
-
-private struct ReductionSection: View {
-    @Binding var settings: ConvertSettings
-
-    /// The size target only lowers the quality of lossy formats; say so when it cannot apply.
-    private var losslessNote: LocalizedStringKey? {
-        if settings.mode == .compress {
-            return "Em PNG, GIF, BMP e TIFF o limite não se aplica: esses formatos não têm ajuste de qualidade."
-        }
-        return settings.formatSettings.quality(for: settings.format) == nil
-            ? "O formato \(settings.format.displayName) não tem ajuste de qualidade; o limite não se aplica." : nil
-    }
-
-    var body: some View {
-        Section {
-            ToggleRow(title: "Limitar tamanho do arquivo", help: "Reduz a qualidade até caber no tamanho escolhido.",
-                      isOn: $settings.limitFileSize.animation(.snappy))
-            if settings.limitFileSize {
-                NumberRow(title: "Tamanho máximo", value: $settings.maxFileSizeKB, range: 10...100_000, step: 50, unit: "KB",
-                          presets: [("100 KB", 100), ("250 KB", 250), ("500 KB", 500), ("1 MB", 1024), ("2 MB", 2048),
-                                    ("5 MB", 5120)])
-                    .transition(.blurReplace)
-            }
-            ToggleRow(title: "Preservar transparência", help: "Quando o formato permitir; senão o fundo fica branco.",
-                      isOn: $settings.preserveTransparency)
-        } header: {
-            Text("Redução de tamanho")
-        } footer: {
-            if settings.limitFileSize, let note = losslessNote {
-                Label(note, systemImage: "info.circle").foregroundStyle(.orange)
-            }
-        }
-    }
-}
-
 // MARK: - AI Upscale
 
-private struct UpscaleSections: View {
+struct UpscaleSections: View {
     @Binding var settings: UpscaleSettings
 
     var body: some View {
@@ -278,7 +207,7 @@ private enum ExistingFilePolicy: Hashable {
     }
 }
 
-private struct SaveSection: View {
+struct SaveSection: View {
     @Environment(AppModel.self) private var app
     @Binding var settings: ConvertSettings
     @State private var showMore = false
@@ -297,7 +226,10 @@ private struct SaveSection: View {
             }
             if settings.mode != .upscale {
                 Toggle("Adicionar sufixo (\(settings.mode == .compress ? "-comprimido" : "-convertido"))", isOn: $settings.addSuffix)
-                    .disabled(settings.rename)
+                    .disabled(settings.rename && settings.mode == .convert)
+            }
+            // Naming templates belong to converting; Comprimir keeps names simple.
+            if settings.mode == .convert {
                 OutputRenameRows(settings: $settings)
             }
             Picker("Se o arquivo já existir", selection: Binding(get: { ExistingFilePolicy(settings) }, set: { $0.apply(to: &settings) })) {
