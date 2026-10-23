@@ -88,13 +88,16 @@ public struct Upscaler: Sendable {
         self.registry = registry
     }
 
-    /// The copy inside the app bundle, or `HYPERIMAGE_UPSCAYL` (a folder holding upscayl-bin and models/) in tests.
+    /// The copy inside the app bundle. Debug builds only also honour `HYPERIMAGE_UPSCAYL`
+    /// (a folder holding upscayl-bin and models/); release builds never launch an environment-chosen binary.
     public static func bundled() -> Upscaler? {
         let fm = FileManager.default
+        #if DEBUG
         if let dir = ProcessInfo.processInfo.environment["HYPERIMAGE_UPSCAYL"] {
             let folder = URL(fileURLWithPath: dir, isDirectory: true)
             return Upscaler(executable: folder.appendingPathComponent("upscayl-bin"), modelsFolder: folder.appendingPathComponent("models"))
         }
+        #endif
         guard let exec = Bundle.main.executableURL?.deletingLastPathComponent().appendingPathComponent("upscayl-bin"),
               let models = Bundle.main.resourceURL?.appendingPathComponent("Upscayl/models"),
               fm.isExecutableFile(atPath: exec.path) else { return nil }

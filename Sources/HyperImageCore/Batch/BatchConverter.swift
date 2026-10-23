@@ -25,7 +25,7 @@ public struct BatchConverter: Sendable {
     public let settings: ConvertSettings
     public let maxConcurrency: Int
 
-    /// AI Upscale backend; nil outside the app bundle unless HYPERIMAGE_UPSCAYL points at one.
+    /// AI Upscale backend; nil outside the app bundle unless, in debug builds, HYPERIMAGE_UPSCAYL points at one.
     public let upscaler: Upscaler?
     /// Fraction (0…1) of the file being upscaled, by record id. Upscales are long, one file can take minutes.
     public let fileProgress: @Sendable (Int, Double) -> Void
