@@ -29,15 +29,26 @@ public struct BatchConverter: Sendable {
     public let upscaler: Upscaler?
     /// Fraction (0…1) of the file being upscaled, by record id. Upscales are long, one file can take minutes.
     public let fileProgress: @Sendable (Int, Double) -> Void
+    /// Memory the worker budget is sized against; injectable for tests.
+    public let physicalMemory: UInt64
 
     public init(settings: ConvertSettings, upscaler: Upscaler? = Upscaler.bundled(),
-                fileProgress: @escaping @Sendable (Int, Double) -> Void = { _, _ in }) {
+                fileProgress: @escaping @Sendable (Int, Double) -> Void = { _, _ in },
+                physicalMemory: UInt64 = ProcessInfo.processInfo.physicalMemory) {
         self.settings = settings
+        self.physicalMemory = physicalMemory
         self.upscaler = upscaler
         self.fileProgress = fileProgress
         // The GPU already parallelises one upscale; running several at once only fights over VRAM.
         self.maxConcurrency = settings.mode == .upscale ? 1
             : settings.parallel ? max(1, min(ProcessInfo.processInfo.activeProcessorCount, 6)) : 1
+    }
+
+    /// CPU cap (maxConcurrency) narrowed by the memory the sources will need once decoded.
+    func workerLimit(for records: [ConversionRecord]) -> Int {
+        guard maxConcurrency > 1 else { return 1 }
+        return ConcurrencyBudget.workers(pixelCounts: records.map { ConcurrencyBudget.pixelCount(of: $0.input) },
+                                         base: maxConcurrency, physicalMemory: physicalMemory)
     }
 
     public func records(for items: [InputItem]) -> [ConversionRecord] {
@@ -54,6 +65,7 @@ public struct BatchConverter: Sendable {
     ) async throws {
         let pipeline = try ImagePipeline(options: settings.effectiveAdvancedOptions)
         var standing: OverwriteDecision? = settings.skipExisting ? .noToAll : nil
+        let limit = workerLimit(for: records)
         try await withThrowingTaskGroup(of: Void.self) { group in
             var running = 0
             for record in records {
@@ -71,7 +83,7 @@ public struct BatchConverter: Sendable {
                         continue
                     }
                 }
-                if running >= maxConcurrency {
+                if running >= limit {
                     try await group.next()
                     running -= 1
                 }
