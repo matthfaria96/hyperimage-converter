@@ -40,12 +40,14 @@ public struct RenameOutcome: Sendable {
 /// Renames the original files in place (the "Batch Rename" tab).
 public enum BatchRename {
     public static func plan(_ files: [URL], settings: BatchRenameSettings, dates: (URL) -> Date) -> [RenameEntry] {
+        let needsDate = RenameTemplate.usesDate(settings.template)
         var entries: [RenameEntry] = files.enumerated().map { offset, url in
             let ext = url.pathExtension
             let base: String, newExt: String
             switch settings.method {
             case .template:
-                base = RenameTemplate.render(settings.template, originalURL: url, number: settings.startNumber + offset, date: dates(url))
+                base = RenameTemplate.render(settings.template, originalURL: url, number: settings.startNumber + offset,
+                                             date: needsDate ? dates(url) : .distantPast)
                 newExt = ext
             case .searchReplace:
                 (base, newExt) = settings.searchReplace.apply(name: url.deletingPathExtension().lastPathComponent, ext: ext)

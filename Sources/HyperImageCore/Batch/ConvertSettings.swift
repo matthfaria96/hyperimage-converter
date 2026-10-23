@@ -76,6 +76,7 @@ public enum OutputPlanner {
         // same-format in-place runs get the next free "-N" name instead of overwriting the original.
         let inputPaths = items.map { $0.url.standardizedFileURL.path.lowercased() }
         var used = Set(inputPaths)
+        let needsDate = settings.rename && RenameTemplate.usesDate(settings.renameTemplate)
         return items.enumerated().map { offset, item in
             let format = settings.outputFormat(for: item.url)
             let ext = settings.uppercaseExtension ? format.fileExtension.uppercased() : format.fileExtension
@@ -88,7 +89,8 @@ public enum OutputPlanner {
             let base: String
             if settings.rename, settings.mode != .upscale {
                 base = RenameTemplate.render(settings.renameTemplate, originalURL: item.url,
-                                             number: settings.renameStartNumber + offset, date: dates(item.url))
+                                             number: settings.renameStartNumber + offset,
+                                             date: needsDate ? dates(item.url) : .distantPast)
             } else {
                 base = item.url.deletingPathExtension().lastPathComponent + settings.nameSuffix
             }

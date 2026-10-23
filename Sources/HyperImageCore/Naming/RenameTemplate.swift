@@ -17,6 +17,11 @@ public enum ExtensionCase: String, Codable, CaseIterable, Sendable {
 public enum RenameTemplate {
     public static func usesSequence(_ template: String) -> Bool { template.contains("#") }
 
+    /// True when the template has a date token, so callers can skip reading each file's date otherwise.
+    public static func usesDate(_ template: String) -> Bool {
+        template.range(of: #"\$[YMDHNS]"#, options: [.regularExpression, .caseInsensitive]) != nil
+    }
+
     /// Produces a base name (no extension).
     public static func render(_ template: String, originalURL: URL, number: Int, date: Date) -> String {
         let original = originalURL.deletingPathExtension().lastPathComponent

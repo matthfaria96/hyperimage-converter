@@ -25,6 +25,13 @@ struct RenameTemplateTests {
         #expect(!RenameTemplate.usesSequence("*_tn"))
     }
 
+    @Test func dateDetection() {
+        #expect(RenameTemplate.usesDate("$Y-$M-$D_###"))
+        #expect(RenameTemplate.usesDate("x$s"))
+        #expect(!RenameTemplate.usesDate("Image#####"))
+        #expect(!RenameTemplate.usesDate("$P_*"))
+    }
+
     @Test func searchReplace() {
         var rule = SearchReplaceRule()
         rule.pairs[0] = .init(search: "IMG", replace: "Foto")

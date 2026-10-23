@@ -50,17 +50,23 @@ final class ConversionRunner {
         })
         self.settings = settings
         openFolderWhenDone = settings.openFolderWhenDone
-        records = converter.records(for: items)
-        indexByURL = Dictionary(records.enumerated().map { ($1.input, $0) }, uniquingKeysWith: { _, last in last })
+        records = []
+        indexByURL = [:]
         recount()
         isRunning = true
         wasCancelled = false
         failure = nil
         startDate = Date()
         endDate = nil
-        let queued = records
         task = Task {
+            // Planning the outputs reads every file (size, maybe date): keep it off the main actor.
+            let queued = await Task.detached(priority: .userInitiated) { converter.records(for: items) }.value
+            guard run == generation else { return }
+            records = queued
+            indexByURL = Dictionary(queued.enumerated().map { ($1.input, $0) }, uniquingKeysWith: { _, last in last })
+            recount()
             do {
+                try Task.checkCancellation()
                 try await converter.run(queued,
                                         askOverwrite: { url in await self.ask(url) },
                                         update: { record in await self.apply(record, run: run) })
@@ -157,7 +163,7 @@ final class ConversionRunner {
     // MARK: Totals
 
     var progress: Double {
-        records.isEmpty ? 1 : min(1, (Double(finishedCount) + (isRunning ? partial : 0)) / Double(records.count))
+        records.isEmpty ? (isRunning ? 0 : 1) : min(1, (Double(finishedCount) + (isRunning ? partial : 0)) / Double(records.count))
     }
 
 
