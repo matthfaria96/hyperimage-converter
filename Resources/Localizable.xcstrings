@@ -757,6 +757,16 @@
         }
       }
     },
+    "Adicione arquivos para ver o novo nome.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add files to see the new name."
+          }
+        }
+      }
+    },
     "Adicione imagens para começar.": {
       "localizations": {
         "en": {

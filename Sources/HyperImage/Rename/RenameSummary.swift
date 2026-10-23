@@ -9,6 +9,7 @@ struct RenameSummary: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
+            if !app.inputs.isEmpty {
             VStack(alignment: .leading, spacing: 3) {
                 HStack {
                     Text("Exemplo").font(.subheadline.weight(.semibold)).foregroundStyle(.secondary)
@@ -23,6 +24,13 @@ struct RenameSummary: View {
                 Text("Os arquivos originais serão renomeados.").font(.callout).foregroundStyle(.secondary)
             }
             .accessibilityElement(children: .combine)
+            .transition(.blurReplace)
+            } else {
+                Label("Adicione arquivos para ver o novo nome.", systemImage: "character.cursor.ibeam")
+                    .font(.callout).foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity)
+                    .transition(.blurReplace)
+            }
 
             Button(action: start) {
                 Label("Renomear arquivos", systemImage: "character.cursor.ibeam")
@@ -43,6 +51,7 @@ struct RenameSummary: View {
             }
         }
         .animation(.snappy, value: app.lastRename.isEmpty)
+        .animation(.snappy, value: app.inputs.isEmpty)
         .task(id: ExampleKey(settings: app.state.rename, revision: app.inputsRevision)) {
             guard let first = app.inputs.first?.url else { example = nil; return }
             let settings = app.state.rename
