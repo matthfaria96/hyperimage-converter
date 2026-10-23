@@ -75,6 +75,14 @@ enum DebugLaunch {
             app.state.convert.advanced = options
             app.state.convert.useAdvancedOptions = true
         }
+        if env["HYPERIMAGE_EXPAND"] != nil {
+            // Every optional row visible at once, for layout screenshots.
+            app.state.convert.fullQuality = false
+            app.state.convert.keepDimensions = false
+            app.state.convert.limitFileSize = true
+            app.state.convert.rename = true
+            app.state.convert.compressQuality = 64
+        }
         if let format = env["HYPERIMAGE_FORMAT"].flatMap(OutputFormat.init(rawValue:)) { app.state.convert.format = format }
         if let mode = env["HYPERIMAGE_MODE"].flatMap(ConvertMode.init(rawValue:)) { app.state.convert.mode = mode }
         if let step = env["HYPERIMAGE_STEP"].flatMap(AdvancedStep.init(rawValue:)) { app.state.lastAdvancedStep = step }

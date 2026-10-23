@@ -7,15 +7,13 @@ struct SummaryBox: View {
     let runner: ConversionRunner
     let start: () -> Void
     let estimate: Estimate?
-    /// Off in Comprimir, whose panel already leads with the estimate.
-    var showsEstimate = true
 
     private var finished: Bool { runner.hasResults && !runner.isRunning }
 
     var body: some View {
         let mode = app.state.convert.mode
         VStack(alignment: .leading, spacing: 12) {
-            if !app.inputs.isEmpty && (showsEstimate || finished) {
+            if !app.inputs.isEmpty {
                 VStack(alignment: .leading, spacing: 3) {
                     HStack {
                         Text(finished ? "Resultado" : "Estimativa").font(.subheadline.weight(.semibold)).foregroundStyle(.secondary)

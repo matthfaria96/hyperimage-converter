@@ -25,7 +25,7 @@ shot() {
   rm -rf "$OUT/$NAME"
   # Mode is persisted between launches: start every shot in Converter unless the shot overrides it.
   if [ -n "${REAL:-}" ]; then SNAP=""; else SNAP="$OUT/$NAME"; fi
-  env HYPERIMAGE_FILES="$FILES" HYPERIMAGE_OUT="$TMP_OUT" HYPERIMAGE_SNAPSHOT="$SNAP" HYPERIMAGE_MODE=convert \
+  env HYPERIMAGE_FILES="$FILES" HYPERIMAGE_OUT="$TMP_OUT" HYPERIMAGE_SNAPSHOT="$SNAP" HYPERIMAGE_MODE="${MODE:-convert}" \
     HYPERIMAGE_APPEARANCE="${APPEARANCE:-}" HYPERIMAGE_ACTIVATE=1 "$@" \
     .build/debug/HyperImage ${LANG_ARGS:-} >/dev/null 2>&1 &
   PID=$!

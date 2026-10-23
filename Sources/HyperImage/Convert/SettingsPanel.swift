@@ -40,9 +40,8 @@ struct SettingsPanel: View {
         .scrollEdgeEffectHidden(true, for: .bottom)
         // Floating, so the form scrolls underneath instead of being covered.
         .safeAreaInset(edge: .bottom, spacing: 0) {
-            // Comprimir shows its estimate up top, so its summary keeps only the action and the result.
-            SummaryBox(runner: runner, start: start, estimate: estimator.estimate,
-                       showsEstimate: app.state.convert.mode != .compress)
+            // Same layout in every mode, so the floating summary keeps one size while switching tabs.
+            SummaryBox(runner: runner, start: start, estimate: estimator.estimate)
             .padding(14)
             .glassEffect(.regular, in: .rect(cornerRadius: 20))
             .padding(.horizontal, 14).padding(.bottom, 12).padding(.top, 4)
@@ -92,7 +91,10 @@ struct QualityRow: View {
                     .contentTransition(.numericText(value: Double(value)))
                     .animation(.snappy, value: value)
             }
-            Slider(value: Binding(get: { Double(value) }, set: { value = Int($0.rounded()) }), in: range)
+            // Unlabelled and stretched, so the grouped form does not push it into the trailing half of the row.
+            Slider(value: Binding(get: { Double(value) }, set: { value = Int($0.rounded()) }), in: range) { EmptyView() }
+                .labelsHidden()
+                .frame(maxWidth: .infinity)
                 .accessibilityLabel(Text(title))
                 .accessibilityValue(Text("\(value) %"))
             HStack {
@@ -296,12 +298,11 @@ private struct OutputFolderRow: View {
                         Label {
                             Text(url.lastPathComponent).lineLimit(1).truncationMode(.middle)
                         } icon: {
-                            Image(nsImage: NSWorkspace.shared.icon(forFile: url.path))
-                                .resizable().frame(width: 18, height: 18)
+                            Image(systemName: "folder.fill").foregroundStyle(.tint)
                         }
                     }
-                    .menuStyle(.borderlessButton)
-                    .fixedSize()
+                    .menuStyle(.button)
+                    .frame(maxWidth: 190, alignment: .trailing)
                     .help(url.path)
                 } else {
                     Button("Escolher…") { choose() }

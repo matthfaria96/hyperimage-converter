@@ -51,6 +51,8 @@ struct CompressSections: View {
                                     ("5 MB", 5120)])
                     .transition(.blurReplace)
             }
+        } header: {
+            Text("Opções")
         } footer: {
             Text("Cada imagem mantém o próprio formato e nunca fica maior que o original. PSD, RAW e outros formatos que o Mac não grava são ignorados.")
         }

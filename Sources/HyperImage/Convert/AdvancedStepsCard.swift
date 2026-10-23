@@ -44,7 +44,9 @@ struct AdvancedStepsSection: View {
                     // Fixed icon column so every step name starts at the same x.
                     Image(systemName: step.symbol).foregroundStyle(.tint).frame(width: 20)
                     Text(step.title)
-                    Image(systemName: "chevron.right").font(.caption2).foregroundStyle(.tertiary)
+                    Spacer(minLength: 4)
+                    // Same column on every row, just before the switch.
+                    Image(systemName: "chevron.right").font(.caption.weight(.semibold)).foregroundStyle(.tertiary)
                 }
                 .contentShape(.rect)
             }
