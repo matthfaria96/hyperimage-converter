@@ -14,8 +14,8 @@ struct FormatSettingsSheet: View {
                 Section("Ajustes de \(format.displayName)") { fields }
             }
             .formStyle(.grouped)
-            HStack {
-                Button("Restaurar Padrões") { draft = draft.resetting(format) }
+            HStack(spacing: 10) {
+                Button("Restaurar Padrões") { withAnimation(.snappy) { draft = draft.resetting(format) } }
                 Spacer()
                 Button("Cancelar", role: .cancel) { dismiss() }
                     .keyboardShortcut(.cancelAction)
@@ -24,8 +24,10 @@ struct FormatSettingsSheet: View {
                     dismiss()
                 }
                 .keyboardShortcut(.defaultAction)
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(.glassProminent)
             }
+            .buttonStyle(.glass)
+            .controlSize(.large)
             .padding()
         }
         .frame(width: 460)

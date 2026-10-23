@@ -53,29 +53,43 @@ struct BrowserView: View {
     }
 
     private var footer: some View {
-        VStack(spacing: 8) {
-            HStack {
-                Button("Adicionar", systemImage: "plus") { app.addInBackground(Array(browser.selection)) }
+        VStack(alignment: .leading, spacing: 8) {
+            GlassEffectContainer(spacing: 8) {
+                HStack(spacing: 8) {
+                    Button { app.addInBackground(Array(browser.selection)) } label: {
+                        Label("Adicionar", systemImage: "plus").frame(maxWidth: .infinity)
+                    }
                     .disabled(browser.selection.isEmpty)
-                Button("Adicionar todas", systemImage: "plus.square.on.square") { app.addInBackground(browser.files.map(\.url)) }
+                    .help("Adicionar os itens selecionados à lista")
+                    Button { app.addInBackground(browser.files.map(\.url)) } label: {
+                        Label("Todas", systemImage: "plus.square.on.square").frame(maxWidth: .infinity)
+                    }
                     .disabled(browser.files.isEmpty)
+                    .help("Adicionar todas as imagens desta pasta")
+                }
+                .buttonStyle(.glass)
+                .lineLimit(1)
             }
-            .controlSize(.small)
-            .buttonStyle(.bordered)
-            HStack {
+            .frame(maxWidth: .infinity)
+            HStack(spacing: 6) {
                 Picker("Tipo", selection: Binding(get: { browser.filter }, set: { browser.setFilter($0); app.state.filterName = $0.name })) {
                     ForEach(ImageFileTypes.filters) { Text($0.name).tag($0) }
                 }
                 .labelsHidden()
-                .controlSize(.small)
-                Spacer()
-                Text("\(browser.folderCount) pastas, \(browser.files.count) arquivos")
-                    .font(.caption)
+                .pickerStyle(.menu)
+                .buttonStyle(.borderless)
+                .frame(maxWidth: 150, alignment: .leading)
+                Spacer(minLength: 4)
+                Text("\(browser.files.count) arquivos")
+                    .font(.callout)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
+                    .monospacedDigit()
+                    .contentTransition(.numericText())
             }
         }
-        .padding(10)
+        .padding(.horizontal, 12).padding(.vertical, 10)
+        .animation(.snappy, value: browser.files.count)
     }
 }
 
@@ -145,7 +159,8 @@ private struct BrowserRow: View {
                     ThumbnailView(url: entry.url, maxPixels: 64)
                 }
             }
-            .frame(width: 26, height: 26)
+            .frame(width: 28, height: 28)
+            .clipShape(.rect(cornerRadius: 4))
             VStack(alignment: .leading, spacing: 1) {
                 Text(entry.name).lineLimit(1).truncationMode(.middle)
                 if !entry.isDirectory {
@@ -183,7 +198,8 @@ private struct BrowserGrid: View {
                         Text(entry.name).font(.caption).lineLimit(1).truncationMode(.middle)
                     }
                     .padding(6)
-                    .background(selected ? Color.accentColor.opacity(0.25) : .clear, in: .rect(cornerRadius: 8))
+                    .background(selected ? Color.accentColor.opacity(0.25) : .clear, in: .rect(cornerRadius: 10))
+                    .animation(.snappy, value: selected)
                     .contentShape(.rect)
                     .draggable(entry.url)
                     .onTapGesture(count: 2) { activate([entry.url]) }

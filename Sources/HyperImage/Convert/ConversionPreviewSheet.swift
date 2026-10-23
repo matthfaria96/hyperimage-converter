@@ -40,7 +40,7 @@ struct ConversionPreviewSheet: View {
                     Button("Próxima", systemImage: "chevron.right") { step(1) }
                 }
                 .fixedSize()
-                Button("Fechar") { dismiss() }.keyboardShortcut(.cancelAction)
+                Button("Fechar") { dismiss() }.keyboardShortcut(.cancelAction).buttonStyle(.glass)
             }
             .padding(12)
             Divider()
@@ -54,7 +54,7 @@ struct ConversionPreviewSheet: View {
                 if let error { ContentUnavailableView("Não foi possível pré-visualizar", systemImage: "exclamationmark.triangle", description: Text(error)) }
             }
         }
-        .frame(minWidth: 1000, minHeight: 680)
+        .frame(minWidth: 940, minHeight: 560)
         .task(id: url) { await render(url) }
     }
 
@@ -65,8 +65,8 @@ struct ConversionPreviewSheet: View {
                     .font(.caption.weight(.bold))
                     .textCase(.uppercase)
                     .foregroundStyle(tint == .secondary ? Color.primary : .white)
-                    .padding(.horizontal, 9).padding(.vertical, 3)
-                    .background(tint == .secondary ? AnyShapeStyle(.quaternary) : AnyShapeStyle(tint), in: .capsule)
+                    .padding(.horizontal, 10).padding(.vertical, 4)
+                    .glassEffect(tint == .secondary ? .regular : .regular.tint(tint), in: .capsule)
                 Spacer()
                 Text(info ?? "").font(.caption).foregroundStyle(.secondary).monospacedDigit()
             }
@@ -74,7 +74,8 @@ struct ConversionPreviewSheet: View {
             .background(.bar)
             ZoomableImage(image: image, zoom: zoom)
                 .opacity(image == nil ? 0 : 1)
-                .animation(.easeOut(duration: 0.3), value: image == nil)
+                .blur(radius: image == nil ? 12 : 0)
+                .animation(.smooth(duration: 0.35), value: image == nil)
         }
     }
 
@@ -179,16 +180,20 @@ struct ZoomableImage: View {
     }
 }
 
+/// Subtle transparency grid, like Preview's: low contrast in both appearances so the image stays the focus.
 struct CheckerboardBackground: View {
+    @Environment(\.colorScheme) private var scheme
+
     var body: some View {
         Canvas { ctx, size in
-            let tile: CGFloat = 10
+            let tile: CGFloat = 8
+            let shade = Color.primary.opacity(scheme == .dark ? 0.045 : 0.05)
             for row in 0...Int(size.height / tile) {
                 for col in 0...Int(size.width / tile) where (row + col).isMultiple(of: 2) {
-                    ctx.fill(Path(CGRect(x: CGFloat(col) * tile, y: CGFloat(row) * tile, width: tile, height: tile)), with: .color(.gray.opacity(0.12)))
+                    ctx.fill(Path(CGRect(x: CGFloat(col) * tile, y: CGFloat(row) * tile, width: tile, height: tile)), with: .color(shade))
                 }
             }
         }
-        .background(Color(nsColor: .textBackgroundColor))
+        .background(Color(nsColor: .underPageBackgroundColor))
     }
 }

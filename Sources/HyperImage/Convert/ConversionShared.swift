@@ -42,7 +42,7 @@ struct OverwritePanel: View {
                     Button("Pular Todos") { answer(.noToAll) }
                     Button("Pular") { answer(.no) }
                         .keyboardShortcut(.defaultAction)
-                        .buttonStyle(.borderedProminent)
+                        .buttonStyle(.glassProminent)
                 }
                 HStack {
                     Spacer()
@@ -50,10 +50,12 @@ struct OverwritePanel: View {
                     Button("Sobrescrever") { answer(.yes) }
                 }
             }
-            .padding(20)
-            .frame(width: 440)
-            .background(.regularMaterial, in: .rect(cornerRadius: 16))
-            .shadow(radius: 20)
+            .buttonStyle(.glass)
+            .padding(22)
+            .frame(width: 460)
+            .glassEffect(.regular, in: .rect(cornerRadius: 24))
+            .shadow(color: .black.opacity(0.25), radius: 24, y: 8)
+            .transition(.scale(scale: 0.94).combined(with: .opacity))
         }
     }
 }

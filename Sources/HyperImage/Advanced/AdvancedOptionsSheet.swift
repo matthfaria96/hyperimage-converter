@@ -35,7 +35,7 @@ struct AdvancedOptionsSheet: View {
             Divider()
             footer
         }
-        .frame(minWidth: 1080, minHeight: 680)
+        .frame(minWidth: 1000, minHeight: 580)
         .animation(.snappy, value: step)
         .onAppear {
             draft = app.state.convert.advanced
@@ -80,7 +80,7 @@ struct AdvancedOptionsSheet: View {
     }
 
     private var footer: some View {
-        HStack {
+        HStack(spacing: 10) {
             Button("Desativar Tudo") {
                 draft = AdvancedStep.allCases.reduce(draft) { $1.setting(false, in: $0) }
             }
@@ -97,13 +97,15 @@ struct AdvancedOptionsSheet: View {
                 }
             }
             Spacer()
-            Text("A ordem de aplicação segue a lista ao lado.").font(.caption).foregroundStyle(.secondary)
+            Label("A ordem de aplicação segue a lista ao lado.", systemImage: "arrow.down").font(.callout).foregroundStyle(.secondary)
             Spacer()
             Button("Cancelar", role: .cancel) { dismiss() }.keyboardShortcut(.cancelAction)
             Button("OK") { commit() }
                 .keyboardShortcut(.defaultAction)
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(.glassProminent)
         }
+        .buttonStyle(.glass)
+        .controlSize(.large)
         .padding(14)
     }
 

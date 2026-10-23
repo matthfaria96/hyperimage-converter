@@ -61,6 +61,7 @@ struct MainView: View {
         .overlay {
             if let prompt = runner.prompt { OverwritePanel(url: prompt.url, answer: runner.answer) }
         }
+        .animation(.snappy, value: runner.prompt?.url)
         .alert(item: $app.alert) { alert in
             Alert(title: Text(alert.title), message: Text(alert.message))
         }

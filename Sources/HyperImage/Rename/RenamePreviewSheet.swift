@@ -45,9 +45,11 @@ struct RenamePreviewSheet: View {
                     dismiss()
                 }
                 .keyboardShortcut(.defaultAction)
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(.glassProminent)
                 .disabled(changes == 0)
             }
+            .buttonStyle(.glass)
+            .controlSize(.large)
             .padding(14)
             .background(.bar)
         }

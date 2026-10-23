@@ -25,14 +25,20 @@ struct StepPreview: View {
                     Text(error).font(.callout).foregroundStyle(.secondary).multilineTextAlignment(.center).padding()
                 }
             }
-            .clipShape(.rect(cornerRadius: 10))
+            .clipShape(.rect(cornerRadius: 12))
+            .animation(.smooth(duration: 0.25), value: showingOriginal)
             HStack {
-                Text(showingOriginal ? "Original" : info).font(.caption).foregroundStyle(.secondary).monospacedDigit()
+                Text(showingOriginal ? "Original" : info).font(.callout).foregroundStyle(.secondary).monospacedDigit()
+                    .contentTransition(.numericText())
                 Spacer()
-                Text("Segure para ver o original")
-                    .font(.caption)
-                    .padding(.horizontal, 10).padding(.vertical, 4)
-                    .background(.quaternary, in: .capsule)
+                Label("Segurar: original", systemImage: showingOriginal ? "eye.fill" : "eye")
+                    .font(.callout)
+                    .lineLimit(1)
+                    .fixedSize()
+                    .help("Mantenha pressionado para comparar com a imagem original")
+                    .contentTransition(.symbolEffect(.replace))
+                    .padding(.horizontal, 12).padding(.vertical, 6)
+                    .glassEffect(.regular.interactive(), in: .capsule)
                     .onLongPressGesture(minimumDuration: 0, maximumDistance: 50) {} onPressingChanged: { showingOriginal = $0 }
             }
         }

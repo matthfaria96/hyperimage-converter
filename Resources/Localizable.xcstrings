@@ -697,6 +697,16 @@
         }
       }
     },
+    "Adicionar os itens selecionados à lista": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add the selected items to the list"
+          }
+        }
+      }
+    },
     "Adicionar sufixo (%@)": {
       "localizations": {
         "en": {
@@ -713,6 +723,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Add All"
+          }
+        }
+      }
+    },
+    "Adicionar todas as imagens desta pasta": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add every image in this folder"
           }
         }
       }
@@ -2987,6 +3007,16 @@
         }
       }
     },
+    "Mantenha pressionado para comparar com a imagem original": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Press and hold to compare with the original image"
+          }
+        }
+      }
+    },
     "Manter dados EXIF / IPTC": {
       "localizations": {
         "en": {
@@ -4853,12 +4883,12 @@
         }
       }
     },
-    "Segure para ver o original": {
+    "Segurar: original": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Hold to see the original"
+            "value": "Hold: original"
           }
         }
       }
@@ -5289,6 +5319,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Move out of Subfolder"
+          }
+        }
+      }
+    },
+    "Todas": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All"
           }
         }
       }
