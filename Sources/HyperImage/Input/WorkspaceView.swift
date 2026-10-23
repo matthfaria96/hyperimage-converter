@@ -182,7 +182,6 @@ extension ConvertMode {
         case .convert: "Converter"
         case .compress: "Comprimir"
         case .upscale: "AI Upscale"
-        case .rename: "Renomear"
         }
     }
 
@@ -191,7 +190,6 @@ extension ConvertMode {
         case .convert: "arrow.triangle.2.circlepath"
         case .compress: "arrow.down.right.and.arrow.up.left"
         case .upscale: "sparkles"
-        case .rename: "character.cursor.ibeam"
         }
     }
 
@@ -200,7 +198,6 @@ extension ConvertMode {
         case .convert: "Converter imagens"
         case .compress: "Comprimir imagens"
         case .upscale: "AI Upscale"
-        case .rename: "Renomear arquivos"
         }
     }
 
@@ -209,7 +206,6 @@ extension ConvertMode {
         case .convert: "Converta formatos ou reduza o tamanho em poucos cliques."
         case .compress: "Comprima arquivos mantendo o formato e a melhor qualidade possível."
         case .upscale: "Aumente a resolução em até 4× recriando detalhes com IA, direto no seu Mac."
-        case .rename: "Use modelos, numeração ou buscar e substituir. Os originais são renomeados."
         }
     }
 
@@ -218,7 +214,6 @@ extension ConvertMode {
         case .convert: "Converter imagens"
         case .compress: "Comprimir imagens"
         case .upscale: "Ampliar imagens"
-        case .rename: "Renomear arquivos"
         }
     }
 }

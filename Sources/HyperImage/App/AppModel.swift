@@ -20,8 +20,6 @@ final class AppModel {
     var alert: AppAlert?
     /// Sheet shown over the main window; menu commands set it too.
     var route: SheetRoute?
-    /// Moves of the last rename, kept so it can be undone. Not persisted.
-    var lastRename: [RenameMove] = []
     /// Bumped by the "Converter" menu command; MainView starts the batch when it changes.
     var startRequest = 0
     /// Set while a batch runs, so menu commands can disable themselves.

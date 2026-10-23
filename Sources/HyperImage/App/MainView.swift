@@ -2,7 +2,7 @@ import HyperImageCore
 import SwiftUI
 
 enum SheetRoute: Identifiable {
-    case formatSettings, advanced(AdvancedStep?), conversionPreview(URL), errors, renamePreview
+    case formatSettings, advanced(AdvancedStep?), conversionPreview(URL), errors
 
     var id: String {
         switch self {
@@ -10,7 +10,6 @@ enum SheetRoute: Identifiable {
         case let .advanced(step): step.map { "advanced-\($0.rawValue)" } ?? "advanced"
         case let .conversionPreview(url): "preview-\(url.path)"
         case .errors: "errors"
-        case .renamePreview: "renamePreview"
         }
     }
 }
@@ -26,7 +25,7 @@ struct MainView: View {
     @State private var showBrowser = false
     @State private var showOptions = true
 
-    private var canPreview: Bool { ![.upscale, .rename].contains(app.state.convert.mode) && !runner.isRunning }
+    private var canPreview: Bool { app.state.convert.mode != .upscale && !runner.isRunning }
 
     var body: some View {
         @Bindable var app = app
@@ -71,7 +70,7 @@ struct MainView: View {
         .onChange(of: app.startRequest) { startConversion() }
         .onChange(of: runner.openFolderWhenDone) { _, value in app.state.convert.openFolderWhenDone = value }
         .onAppear {
-            // AppKit focuses the first text field (the rename template) at launch; start with nothing focused.
+            // AppKit focuses the first text field at launch; start with nothing focused.
             DispatchQueue.main.async { NSApp.keyWindow?.makeFirstResponder(nil) }
             if browser == nil {
                 let model = BrowserModel(path: app.state.browserPath, filterName: app.state.filterName)
@@ -107,7 +106,7 @@ struct MainView: View {
             .pickerStyle(.segmented)
             .labelsHidden()
             .disabled(runner.isRunning)
-            .help("⌘1 Converter · ⌘2 Comprimir · ⌘3 AI Upscale · ⌘4 Renomear")
+            .help("⌘1 Converter · ⌘2 Comprimir · ⌘3 AI Upscale")
         }
         ToolbarItem(placement: .primaryAction) {
             Button("Adicionar imagens…", systemImage: "plus") { FilePanels.addFiles(to: app) }
@@ -131,13 +130,11 @@ struct MainView: View {
         case let .advanced(step): AdvancedOptionsSheet(initialStep: step)
         case let .conversionPreview(url): ConversionPreviewSheet(initial: url)
         case .errors: ErrorListSheet(failures: runner.failures)
-        case .renamePreview: RenamePreviewSheet()
         }
     }
 
     private func startConversion() {
         guard !runner.isRunning, !app.inputs.isEmpty else { return }
-        if app.state.convert.mode == .rename { app.route = .renamePreview; return }
         let settings = app.state.convert
         if settings.mode != .upscale, settings.useAdvancedOptions, let message = settings.advanced.validationError() {
             app.alert = AppAlert(title: String(localized: "Opções avançadas"), message: message)

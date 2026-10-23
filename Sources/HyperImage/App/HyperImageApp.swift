@@ -97,13 +97,13 @@ struct AppCommands: Commands {
             Divider()
             Button("Pré-visualizar") { if let url = model.previewTarget { model.route = .conversionPreview(url) } }
                 .keyboardShortcut("y")
-                .disabled(model.inputs.isEmpty || model.isBusy || [.upscale, .rename].contains(model.state.convert.mode))
+                .disabled(model.inputs.isEmpty || model.isBusy || model.state.convert.mode == .upscale)
             Button("Ajustes do formato…") { model.route = .formatSettings }
                 .keyboardShortcut(",")
                 .disabled(model.isBusy || model.state.convert.mode != .convert)
             Button("Edição avançada…") { model.route = .advanced(nil) }
                 .keyboardShortcut("a", modifiers: [.command, .shift])
-                .disabled(model.isBusy || [.upscale, .rename].contains(model.state.convert.mode))
+                .disabled(model.isBusy || model.state.convert.mode == .upscale)
             Divider()
             Button("Modo Converter") { model.state.convert.mode = .convert }
                 .keyboardShortcut("1")
@@ -113,9 +113,6 @@ struct AppCommands: Commands {
                 .disabled(model.isBusy)
             Button("Modo AI Upscale") { model.state.convert.mode = .upscale }
                 .keyboardShortcut("3")
-                .disabled(model.isBusy)
-            Button("Modo Renomear") { model.state.convert.mode = .rename }
-                .keyboardShortcut("4")
                 .disabled(model.isBusy)
         }
         CommandMenu("Aparência") {

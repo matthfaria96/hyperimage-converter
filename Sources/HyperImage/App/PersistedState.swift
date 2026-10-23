@@ -20,7 +20,6 @@ struct PersistedState: Codable, Equatable {
     var showPreview = true
     var lastAdvancedStep = AdvancedStep.resize
     var resizePresets = StandardSizes.resize
-    var rename = BatchRenameSettings()
     var renameTemplates = StandardSizes.renameTemplates
 
     private static let key = "HyperImage.state.v1"
@@ -35,12 +34,8 @@ struct PersistedState: Codable, Equatable {
         return decoded.normalized()
     }
 
-    /// Stored arrays replace the defaults wholesale, so fix up the ones views index directly.
-    func normalized() -> PersistedState {
-        var copy = self
-        copy.rename.searchReplace = rename.searchReplace.normalized()
-        return copy
-    }
+    /// Hook for fixing up values a stored state may hold; nothing needs it at the moment.
+    func normalized() -> PersistedState { self }
 
     func save() {
         guard let data = try? JSONEncoder().encode(self) else { return }

@@ -1,17 +1,5 @@
 import Foundation
 
-public enum ExtensionCase: String, Codable, CaseIterable, Sendable {
-    case noChange, lower, upper
-
-    public func apply(_ ext: String) -> String {
-        switch self {
-        case .noChange: ext
-        case .lower: ext.lowercased()
-        case .upper: ext.uppercased()
-        }
-    }
-}
-
 /// Filename templates: `#` digits of the sequence number, `*` original name, `$P` parent folder,
 /// `$Y $M $D $H $N $S` date parts.
 public enum RenameTemplate {
@@ -69,45 +57,5 @@ public enum RenameTemplate {
     /// A single file name macOS accepts: not empty, not `.`/`..`, at most 255 UTF-8 bytes.
     public static func isValidFileName(_ name: String) -> Bool {
         !name.isEmpty && name != "." && name != ".." && name.utf8.count <= 255 && !name.contains("/")
-    }
-}
-
-/// Search & replace on the base name (three pairs) and on the extension.
-public struct SearchReplaceRule: Codable, Equatable, Sendable {
-    public struct Pair: Codable, Equatable, Sendable {
-        public var search = ""
-        public var replace = ""
-        public init(search: String = "", replace: String = "") {
-            self.search = search
-            self.replace = replace
-        }
-    }
-
-    /// The panel shows exactly this many name pairs.
-    public static let pairCount = 3
-
-    public var pairs = Array(repeating: Pair(), count: SearchReplaceRule.pairCount)
-    public var extensionPair = Pair()
-    public var caseSensitive = false
-
-    public init() {}
-
-    /// Exactly `pairCount` pairs, whatever a stored state held (the panel indexes them directly,
-    /// and extra pairs would apply without being shown).
-    public func normalized() -> SearchReplaceRule {
-        var copy = self
-        let kept = Array(pairs.prefix(Self.pairCount))
-        copy.pairs = kept + Array(repeating: Pair(), count: Self.pairCount - kept.count)
-        return copy
-    }
-
-    public func apply(name: String, ext: String) -> (name: String, ext: String) {
-        let options: String.CompareOptions = caseSensitive ? [] : [.caseInsensitive]
-        let newName = pairs.filter { !$0.search.isEmpty }.reduce(name) {
-            $0.replacingOccurrences(of: $1.search, with: $1.replace, options: options)
-        }
-        let newExt = extensionPair.search.isEmpty ? ext
-            : ext.replacingOccurrences(of: extensionPair.search, with: extensionPair.replace, options: options)
-        return (RenameTemplate.sanitized(newName), RenameTemplate.withoutSeparators(newExt))
     }
 }

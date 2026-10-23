@@ -36,7 +36,7 @@
 
 ### Funções do FastStone (FS)
 
-- [x] **FS-01**: Aba Renomear em lote (template, nº inicial, caixa da extensão, buscar e substituir com 3 pares + extensão + diferenciar maiúsculas, pré-visualização)
+- [x] ~~**FS-01**: Aba Renomear em lote~~ — removida a pedido do usuário em 2026-10-23 ("inútil"); fica só "Renomear a saída" (FS-02)
 - [x] **FS-02**: Renomear a saída ao converter/comprimir com template e nº inicial
 - [x] **FS-03**: Pré-visualização do arquivo selecionado (miniatura, L×A, KB, data)
 - [x] **FS-04**: Detalhes do progresso (antigo/novo, proporção, economia, decorrido/restante)

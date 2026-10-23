@@ -174,85 +174,37 @@ struct PersistenceTests {
         #expect(restored.sort == InputSort())
     }
 
-    @Test(arguments: [0, 1, 5])
-    func searchReplacePairsAreNormalized(count: Int) throws {
-        var state = PersistedState()
-        state.rename.searchReplace.pairs = (0..<count).map { SearchReplaceRule.Pair(search: "s\($0)") }
-        let restored = PersistedState.decode(try JSONEncoder().encode(state))
-        #expect(restored.rename.searchReplace.pairs.count == SearchReplaceRule.pairCount)
-        #expect(restored.rename.searchReplace.pairs.prefix(min(count, 3)).map(\.search) == (0..<min(count, 3)).map { "s\($0)" })
-    }
-
     @Test func renameSettingsSurviveMissingKeys() throws {
         var state = PersistedState()
-        state.rename.template = "X###"
         state.convert.rename = true
         var json = try #require(JSONSerialization.jsonObject(with: JSONEncoder().encode(state)) as? [String: Any])
         json["renameTemplates"] = nil
         var convert = try #require(json["convert"] as? [String: Any])
         convert["renameStartNumber"] = nil
         json["convert"] = convert
-        var rename = try #require(json["rename"] as? [String: Any])
-        rename["startNumber"] = nil
-        json["rename"] = rename
         let restored = PersistedState.decode(try JSONSerialization.data(withJSONObject: json))
-        #expect(restored.rename.template == "X###")
-        #expect(restored.rename.startNumber == 1)
         #expect(restored.convert.rename == true)
         #expect(restored.convert.renameStartNumber == 1)
         #expect(restored.renameTemplates == StandardSizes.renameTemplates)
     }
 }
 
-@Suite(.serialized)
-struct RenameFlowTests {
-    @Test func applyAndUndo() throws {
-        let ws = try Workspace()
-        let app = AppModel()
-        app.add(ws.images)
-        app.state.rename.template = "Praia_#"
-        let entries = BatchRename.plan(app.inputs.map(\.url), settings: app.state.rename, dates: BatchConverter.fileDate)
-        app.applyRename(entries)
-        let dir = ws.images[0].deletingLastPathComponent()
-        let fm = FileManager.default
-        #expect(fm.fileExists(atPath: dir.appendingPathComponent("Praia_1.jpg").path))
-        #expect(fm.fileExists(atPath: dir.appendingPathComponent("Praia_2.jpg").path))
-        #expect(app.inputs.allSatisfy { $0.url.lastPathComponent.hasPrefix("Praia_") })
-        #expect(app.lastRename.count == 2)
-        app.undoLastRename()
-        #expect(fm.fileExists(atPath: ws.images[0].path))
-        #expect(fm.fileExists(atPath: ws.images[1].path))
-        #expect(Set(app.inputs.map(\.url)) == Set(ws.images))
-        #expect(app.lastRename.isEmpty)
-    }
-
-    @Test func partialUndoKeepsTheRestOfTheHistory() throws {
-        let ws = try Workspace()
-        let app = AppModel()
-        app.add(ws.images)
-        app.state.rename.template = "Praia_#"
-        app.applyRename(BatchRename.plan(app.inputs.map(\.url), settings: app.state.rename, dates: BatchConverter.fileDate))
-        #expect(app.lastRename.count == 2)
-
-        // A rename that changes nothing keeps the previous undo.
-        app.applyRename(BatchRename.plan(app.inputs.map(\.url), settings: app.state.rename, dates: BatchConverter.fileDate))
-        #expect(app.lastRename.count == 2)
-
-        try Data("blocker".utf8).write(to: ws.images[0])
-        app.undoLastRename()
-        #expect(app.alert != nil)
-        #expect(app.lastRename.map(\.from) == [ws.images[0]])
-        #expect(FileManager.default.fileExists(atPath: ws.images[1].path))
-
-        app.alert = nil
-        try FileManager.default.removeItem(at: ws.images[0])
-        app.undoLastRename()
-        #expect(app.alert == nil)
-        #expect(app.lastRename.isEmpty)
-        #expect(Set(app.inputs.map(\.url)) == Set(ws.images))
+@Suite
+struct RemovedRenameModeTests {
+    /// Settings saved while the Renomear tab existed open in Converter and keep everything else.
+    @Test func storedRenameModeFallsBackToConvert() throws {
+        var state = PersistedState()
+        state.convert.formatSettings.jpeg.quality = 37
+        var json = try #require(JSONSerialization.jsonObject(with: JSONEncoder().encode(state)) as? [String: Any])
+        var convert = try #require(json["convert"] as? [String: Any])
+        convert["mode"] = "rename"
+        json["convert"] = convert
+        json["rename"] = ["template": "Image#####", "startNumber": 1]
+        let restored = PersistedState.decode(try JSONSerialization.data(withJSONObject: json))
+        #expect(restored.convert.mode == .convert)
+        #expect(restored.convert.formatSettings.jpeg.quality == 37)
     }
 }
-
 
 @Suite(.serialized)
 struct BackgroundAddTests {

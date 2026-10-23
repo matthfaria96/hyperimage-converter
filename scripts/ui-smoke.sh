@@ -51,10 +51,8 @@ done
 EXPECT=2 shot preview HYPERIMAGE_SHEET=preview
 # Single window since a381703: progress shows inside the summary card, not in a sheet.
 EXPECT=1 shot progress HYPERIMAGE_SHEET=progress HYPERIMAGE_SNAPSHOT_DELAY=4
-EXPECT=1 shot rename-tab HYPERIMAGE_MODE=rename
-EXPECT=2 shot rename HYPERIMAGE_SHEET=rename HYPERIMAGE_MODE=rename
 # Narrowest window (minWidth 1080) with one file selected: header tabs, preview card and cards must not clip.
-for MODE in convert compress rename; do
+for MODE in convert compress upscale; do
   EXPECT=1 shot "narrow-$MODE" HYPERIMAGE_MODE=$MODE HYPERIMAGE_SELECT=1 HYPERIMAGE_WINDOW_SIZE=1080x640
 done
 

@@ -1,7 +1,12 @@
 import Foundation
 
 public enum ConvertMode: String, Codable, CaseIterable, Sendable {
-    case convert, compress, upscale, rename
+    case convert, compress, upscale
+
+    /// A mode this build no longer has (the old "rename" tab) opens in Converter instead of resetting every setting.
+    public init(from decoder: Decoder) throws {
+        self = ConvertMode(rawValue: try decoder.singleValueContainer().decode(String.self)) ?? .convert
+    }
 }
 
 extension OutputFormat {
@@ -63,7 +68,6 @@ extension ConvertSettings {
         case .convert: format
         case .compress: OutputFormat.matching(url) ?? .jpeg
         case .upscale: upscale.format.outputFormat
-        case .rename: format
         }
     }
 

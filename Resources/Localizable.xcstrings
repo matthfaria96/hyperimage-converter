@@ -31,16 +31,6 @@
         }
       }
     },
-    "# número · * nome original · $P pasta · $Y $M $D data · $H $N $S hora": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "# number · * original name · $P folder · $Y $M $D date · $H $N $S time"
-          }
-        }
-      }
-    },
     "%@  %@": {
       "localizations": {
         "en": {
@@ -119,52 +109,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "%lld DPI"
-          }
-        }
-      }
-    },
-    "%lld a renomear": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld to rename"
-          }
-        }
-      }
-    },
-    "%lld a renomear · %lld em conflito": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld to rename · %lld in conflict"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "new",
-            "value": "%1$lld a renomear · %2$lld em conflito"
-          }
-        }
-      }
-    },
-    "%lld arquivo(s) não renomeado(s)": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld file(s) not renamed"
-          }
-        }
-      }
-    },
-    "%lld arquivo(s) não voltaram ao nome anterior: o nome está em uso ou o arquivo não existe mais.": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld file(s) could not go back to their previous name: the name is in use or the file no longer exists."
           }
         }
       }
@@ -297,16 +241,6 @@
         }
       }
     },
-    "%lld pastas, %lld arquivos": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld folders, %lld files"
-          }
-        }
-      }
-    },
     "%lld px": {
       "localizations": {
         "en": {
@@ -383,16 +317,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "-converted"
-          }
-        }
-      }
-    },
-    "1 arquivo": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "1 file"
           }
         }
       }
@@ -557,16 +481,6 @@
         }
       }
     },
-    "A ordem da lista define a numeração. Use o menu Ordenar da barra de ferramentas.": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "The list order sets the numbering. Use the Sort menu in the toolbar."
-          }
-        }
-      }
-    },
     "A ordem de aplicação segue a lista ao lado.": {
       "localizations": {
         "en": {
@@ -717,16 +631,6 @@
         }
       }
     },
-    "Adicionar todas": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Add All"
-          }
-        }
-      }
-    },
     "Adicionar todas as imagens desta pasta": {
       "localizations": {
         "en": {
@@ -743,26 +647,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Add to List"
-          }
-        }
-      }
-    },
-    "Adicionar…": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Add…"
-          }
-        }
-      }
-    },
-    "Adicione arquivos para ver o novo nome.": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Add files to see the new name."
           }
         }
       }
@@ -1107,16 +991,6 @@
         }
       }
     },
-    "Arraste mais imagens para cá": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Drag more images here"
-          }
-        }
-      }
-    },
     "Arraste suas imagens para cá": {
       "localizations": {
         "en": {
@@ -1313,26 +1187,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Brightness"
-          }
-        }
-      }
-    },
-    "Buscar": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Search for"
-          }
-        }
-      }
-    },
-    "Buscar e substituir": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Search and replace"
           }
         }
       }
@@ -1837,26 +1691,6 @@
         }
       }
     },
-    "Desfazer renomeação": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Undo rename"
-          }
-        }
-      }
-    },
-    "Desfazer renomeação (%lld)": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Undo Rename (%lld)"
-          }
-        }
-      }
-    },
     "Deslocamento X": {
       "localizations": {
         "en": {
@@ -1903,16 +1737,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "File day"
-          }
-        }
-      }
-    },
-    "Diferenciar maiúsculas": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Case sensitive"
           }
         }
       }
@@ -2267,16 +2091,6 @@
         }
       }
     },
-    "Exemplo": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Example"
-          }
-        }
-      }
-    },
     "Exemplos": {
       "localizations": {
         "en": {
@@ -2293,16 +2107,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Expand (add space)"
-          }
-        }
-      }
-    },
-    "Extensão": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Extension"
           }
         }
       }
@@ -2737,16 +2541,6 @@
         }
       }
     },
-    "JPG, PNG, WebP, HEIC, TIFF, RAW e pastas": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "JPG, PNG, WebP, HEIC, TIFF, RAW and folders"
-          }
-        }
-      }
-    },
     "LZW": {
       "localizations": {
         "en": {
@@ -2943,16 +2737,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Lightness"
-          }
-        }
-      }
-    },
-    "MAIÚSCULAS": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "UPPERCASE"
           }
         }
       }
@@ -3257,16 +3041,6 @@
         }
       }
     },
-    "Modo Renomear": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Rename Mode"
-          }
-        }
-      }
-    },
     "Modo de medição": {
       "localizations": {
         "en": {
@@ -3403,16 +3177,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Medium"
-          }
-        }
-      }
-    },
-    "Método": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Method"
           }
         }
       }
@@ -3557,16 +3321,6 @@
         }
       }
     },
-    "Nome atual": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Current name"
-          }
-        }
-      }
-    },
     "Nome da subpasta": {
       "localizations": {
         "en": {
@@ -3593,36 +3347,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "File name (without extension)"
-          }
-        }
-      }
-    },
-    "Nome em conflito — será ignorado": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Name in conflict — will be skipped"
-          }
-        }
-      }
-    },
-    "Novo nome": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "New name"
-          }
-        }
-      }
-    },
-    "Nº": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No."
           }
         }
       }
@@ -4091,16 +3815,6 @@
         }
       }
     },
-    "Os arquivos originais serão renomeados.": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "The original files will be renamed."
-          }
-        }
-      }
-    },
     "Otimizar tabela de Huffman": {
       "localizations": {
         "en": {
@@ -4503,16 +4217,6 @@
         }
       }
     },
-    "Pré-visualização da renomeação": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Rename Preview"
-          }
-        }
-      }
-    },
     "Próxima": {
       "localizations": {
         "en": {
@@ -4743,32 +4447,12 @@
         }
       }
     },
-    "Renomear": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Rename"
-          }
-        }
-      }
-    },
     "Renomear a saída": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Rename output"
-          }
-        }
-      }
-    },
-    "Renomear arquivos": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Rename files"
           }
         }
       }
@@ -4953,16 +4637,6 @@
         }
       }
     },
-    "Sem mudança": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No change"
-          }
-        }
-      }
-    },
     "Sem perdas": {
       "localizations": {
         "en": {
@@ -5133,16 +4807,6 @@
         }
       }
     },
-    "Substituir por": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Replace with"
-          }
-        }
-      }
-    },
     "Sépia": {
       "localizations": {
         "en": {
@@ -5269,36 +4933,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Text"
-          }
-        }
-      }
-    },
-    "Texto 1": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Text 1"
-          }
-        }
-      }
-    },
-    "Texto 2": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Text 2"
-          }
-        }
-      }
-    },
-    "Texto 3": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Text 3"
           }
         }
       }
@@ -5439,16 +5073,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Use as Output"
-          }
-        }
-      }
-    },
-    "Use modelos, numeração ou buscar e substituir. Os originais são renomeados.": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Use templates, numbering or search and replace. The originals are renamed."
           }
         }
       }
@@ -5643,16 +5267,6 @@
         }
       }
     },
-    "minúsculas": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "lowercase"
-          }
-        }
-      }
-    },
     "nenhum arquivo gerado": {
       "localizations": {
         "en": {
@@ -5793,12 +5407,12 @@
         }
       }
     },
-    "⌘1 Converter · ⌘2 Comprimir · ⌘3 AI Upscale · ⌘4 Renomear": {
+    "⌘1 Converter · ⌘2 Comprimir · ⌘3 AI Upscale": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "⌘1 Convert · ⌘2 Compress · ⌘3 AI Upscale · ⌘4 Rename"
+            "value": "⌘1 Convert · ⌘2 Compress · ⌘3 AI Upscale"
           }
         }
       }
@@ -5809,16 +5423,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "⌘↩"
-          }
-        }
-      }
-    },
-    "⌘↩ · mostra a pré-visualização antes de renomear": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "⌘↩ · shows the preview before renaming"
           }
         }
       }

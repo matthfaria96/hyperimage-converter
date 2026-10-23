@@ -23,8 +23,6 @@ struct SettingsPanel: View {
             case .upscale:
                 UpscaleSections(settings: settings.upscale)
                 SaveSection(settings: settings)
-            case .rename:
-                RenamePanel(settings: $app.state.rename)
             }
         }
         .formStyle(.grouped)
@@ -36,9 +34,7 @@ struct SettingsPanel: View {
         .scrollEdgeEffectStyle(.soft, for: .bottom)
         // Floating, so the form scrolls underneath instead of being covered.
         .safeAreaInset(edge: .bottom, spacing: 0) {
-            Group {
-                if app.state.convert.mode == .rename { RenameSummary(start: start) } else { SummaryBox(runner: runner, start: start) }
-            }
+            SummaryBox(runner: runner, start: start)
             .padding(14)
             .glassEffect(.regular, in: .rect(cornerRadius: 20))
             .padding(.horizontal, 14).padding(.bottom, 12).padding(.top, 4)
