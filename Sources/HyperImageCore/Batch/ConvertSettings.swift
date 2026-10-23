@@ -70,13 +70,17 @@ public struct InputItem: Hashable, Identifiable, Sendable {
 
 public enum OutputPlanner {
     /// Destination for each item, in order. Names produced twice within the batch get a numeric suffix.
+    /// With template names written next to the originals, files already on disk are skipped too: a template
+    /// such as `Image#####` easily matches originals renamed earlier, and "Substituir" would overwrite them.
     public static func destinations(for items: [InputItem], settings: ConvertSettings,
-                                    dates: (URL) -> Date = BatchConverter.fileDate) -> [URL] {
+                                    dates: (URL) -> Date = BatchConverter.fileDate,
+                                    exists: (URL) -> Bool = { FileManager.default.fileExists(atPath: $0.path) }) -> [URL] {
         // Every input (including the item's own file) is reserved, so an output never equals any input path:
         // same-format in-place runs get the next free "-N" name instead of overwriting the original.
         let inputPaths = items.map { $0.url.standardizedFileURL.path.lowercased() }
         var used = Set(inputPaths)
-        let needsDate = settings.rename && RenameTemplate.usesDate(settings.renameTemplate)
+        let templated = settings.rename && settings.mode != .upscale
+        let needsDate = templated && RenameTemplate.usesDate(settings.renameTemplate)
         return items.enumerated().map { offset, item in
             let format = settings.outputFormat(for: item.url)
             let ext = settings.uppercaseExtension ? format.fileExtension.uppercased() : format.fileExtension
@@ -87,16 +91,18 @@ public enum OutputPlanner {
                 folder = folder.appendingPathComponent(relative, isDirectory: true)
             }
             let base: String
-            if settings.rename, settings.mode != .upscale {
+            if templated {
                 base = RenameTemplate.render(settings.renameTemplate, originalURL: item.url,
                                              number: settings.renameStartNumber + offset,
                                              date: needsDate ? dates(item.url) : .distantPast)
             } else {
                 base = item.url.deletingPathExtension().lastPathComponent + settings.nameSuffix
             }
+            let inPlace = folder.standardizedFileURL.path == item.url.deletingLastPathComponent().standardizedFileURL.path
+            let avoidDisk = templated && inPlace
             var candidate = folder.appendingPathComponent(base).appendingPathExtension(ext)
             var counter = 2
-            while used.contains(candidate.standardizedFileURL.path.lowercased()) {
+            while used.contains(candidate.standardizedFileURL.path.lowercased()) || (avoidDisk && exists(candidate)) {
                 candidate = folder.appendingPathComponent("\(base)-\(counter)").appendingPathExtension(ext)
                 counter += 1
             }

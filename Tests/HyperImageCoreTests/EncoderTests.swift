@@ -219,6 +219,20 @@ struct OutputSafetyTests {
         #expect(out.map(\.path) == ["/f/x-2.jpg", "/f/x-3.jpg"])
     }
 
+    @Test func inPlaceTemplateSkipsUnrelatedFilesOnDisk() {
+        var s = renameSettings("Image#")
+        s.useOutputFolder = false
+        let onDisk: Set<String> = ["/f/Image1.jpg", "/f/Image1-2.jpg"]
+        let out = OutputPlanner.destinations(for: [InputItem(url: URL(fileURLWithPath: "/f/a.png"))], settings: s,
+                                             exists: { onDisk.contains($0.path) })
+        #expect(out.map(\.path) == ["/f/Image1-3.jpg"])
+    }
+
+    @Test func outputFolderTemplateStillAsksAboutExistingFiles() {
+        let out = OutputPlanner.destinations(for: pair, settings: renameSettings("Foto#"), exists: { _ in true })
+        #expect(out.map(\.path) == ["/out/Foto1.jpg", "/out/Foto2.jpg"])
+    }
+
     @Test func renameOffKeepsOldNames() {
         var s = renameSettings("Foto###")
         s.rename = false
