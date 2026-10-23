@@ -75,6 +75,7 @@ enum DebugLaunch {
             app.state.convert.advanced = options
             app.state.convert.useAdvancedOptions = true
         }
+        if let format = env["HYPERIMAGE_FORMAT"].flatMap(OutputFormat.init(rawValue:)) { app.state.convert.format = format }
         if let mode = env["HYPERIMAGE_MODE"].flatMap(ConvertMode.init(rawValue:)) { app.state.convert.mode = mode }
         if let step = env["HYPERIMAGE_STEP"].flatMap(AdvancedStep.init(rawValue:)) { app.state.lastAdvancedStep = step }
         if let out = env["HYPERIMAGE_OUT"] {

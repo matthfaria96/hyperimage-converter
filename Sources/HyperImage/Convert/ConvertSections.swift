@@ -9,6 +9,7 @@ struct ConvertSections: View {
     var body: some View {
         Section {
             FormatGrid(format: $settings.format)
+            OtherFormatsRow(format: $settings.format)
             if let hint = HEICHint(inputs: app.inputs, format: settings.format) {
                 hint.view { withAnimation(.snappy) { settings.format = .jpeg } }
                     .transition(.blurReplace)

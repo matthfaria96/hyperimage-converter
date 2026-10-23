@@ -1,34 +1,15 @@
 import HyperImageCore
 import SwiftUI
 
-/// The four formats people convert to most, as large tiles; the rest sit in a menu (Permute-style).
+/// The four formats people convert to most, as large tiles (Permute-style); the rest are in `OtherFormatsRow`.
 struct FormatGrid: View {
     @Binding var format: OutputFormat
     @Namespace private var selection
 
-    private static let main: [OutputFormat] = [.jpeg, .heic, .png, .webp]
-    private static let others: [OutputFormat] = OutputFormat.allCases.filter { !main.contains($0) }
-
     var body: some View {
-        VStack(spacing: 8) {
-            Grid(horizontalSpacing: 8, verticalSpacing: 8) {
-                GridRow { tile(.jpeg); tile(.heic) }
-                GridRow { tile(.png); tile(.webp) }
-            }
-            Menu {
-                ForEach(Self.others, id: \.self) { other in
-                    Button { pick(other) } label: {
-                        if other == format { Label(other.menuTitle, systemImage: "checkmark") } else { Text(other.menuTitle) }
-                    }
-                }
-            } label: {
-                Label(Self.others.contains(format) ? format.menuTitle : String(localized: "Outros formatos"),
-                      systemImage: Self.others.contains(format) ? "checkmark.circle.fill" : "ellipsis.circle")
-                    .frame(maxWidth: .infinity)
-            }
-            .menuIndicator(.visible)
-            .buttonStyle(.glass)
-            .tint(Self.others.contains(format) ? Color.accentColor : nil)
+        Grid(horizontalSpacing: 8, verticalSpacing: 8) {
+            GridRow { tile(.jpeg); tile(.heic) }
+            GridRow { tile(.png); tile(.webp) }
         }
         .padding(.vertical, 4)
     }
@@ -67,6 +48,24 @@ struct FormatGrid: View {
 
     private func pick(_ option: OutputFormat) {
         withAnimation(.snappy) { format = option }
+    }
+}
+
+/// The less common formats, as a standard pop-up row like the panel's other choices.
+struct OtherFormatsRow: View {
+    @Binding var format: OutputFormat
+
+    private static let others: [OutputFormat] = OutputFormat.allCases.filter { ![.jpeg, .heic, .png, .webp].contains($0) }
+
+    var body: some View {
+        Picker("Outros formatos", selection: Binding<OutputFormat?>(
+            get: { Self.others.contains(format) ? format : nil },
+            set: { if let picked = $0 { withAnimation(.snappy) { format = picked } } }
+        )) {
+            Text("Nenhum").tag(OutputFormat?.none)
+            Divider()
+            ForEach(Self.others, id: \.self) { Text($0.menuTitle).tag(OutputFormat?.some($0)) }
+        }
     }
 }
 
