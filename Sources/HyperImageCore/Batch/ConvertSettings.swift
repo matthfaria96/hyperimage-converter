@@ -70,8 +70,9 @@ public struct InputItem: Hashable, Identifiable, Sendable {
 
 public enum OutputPlanner {
     /// Destination for each item, in order. Names produced twice within the batch get a numeric suffix.
-    /// With template names written next to the originals, files already on disk are skipped too: a template
-    /// such as `Image#####` easily matches originals renamed earlier, and "Substituir" would overwrite them.
+    /// With template names written next to the originals under "Substituir", files already on disk are skipped
+    /// too: a template such as `Image#####` easily matches originals renamed earlier, and would overwrite them.
+    /// "Pular" and "Perguntar" keep the plain name so the converter can skip it or ask about it.
     public static func destinations(for items: [InputItem], settings: ConvertSettings,
                                     dates: (URL) -> Date = BatchConverter.fileDate,
                                     exists: (URL) -> Bool = { FileManager.default.fileExists(atPath: $0.path) }) -> [URL] {
@@ -99,7 +100,8 @@ public enum OutputPlanner {
                 base = item.url.deletingPathExtension().lastPathComponent + settings.nameSuffix
             }
             let inPlace = folder.standardizedFileURL.path == item.url.deletingLastPathComponent().standardizedFileURL.path
-            let avoidDisk = templated && inPlace
+            let overwritesSilently = !settings.askBeforeOverwrite && !settings.skipExisting
+            let avoidDisk = templated && inPlace && overwritesSilently
             var candidate = folder.appendingPathComponent(base).appendingPathExtension(ext)
             var counter = 2
             while used.contains(candidate.standardizedFileURL.path.lowercased()) || (avoidDisk && exists(candidate)) {

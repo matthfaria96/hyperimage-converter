@@ -222,10 +222,30 @@ struct OutputSafetyTests {
     @Test func inPlaceTemplateSkipsUnrelatedFilesOnDisk() {
         var s = renameSettings("Image#")
         s.useOutputFolder = false
+        s.askBeforeOverwrite = false
+        s.skipExisting = false
         let onDisk: Set<String> = ["/f/Image1.jpg", "/f/Image1-2.jpg"]
         let out = OutputPlanner.destinations(for: [InputItem(url: URL(fileURLWithPath: "/f/a.png"))], settings: s,
                                              exists: { onDisk.contains($0.path) })
         #expect(out.map(\.path) == ["/f/Image1-3.jpg"])
+    }
+
+    @Test func inPlaceTemplateKeepsPlainNameWhenSkipping() {
+        var s = renameSettings("Image#####")
+        s.useOutputFolder = false
+        s.skipExisting = true
+        s.askBeforeOverwrite = false
+        let out = OutputPlanner.destinations(for: pair, settings: s, exists: { _ in true })
+        #expect(out.map(\.path) == ["/f/Image00001.jpg", "/f/Image00002.jpg"])
+    }
+
+    @Test func inPlaceTemplateKeepsPlainNameWhenAsking() {
+        var s = renameSettings("Image#####")
+        s.useOutputFolder = false
+        s.skipExisting = false
+        s.askBeforeOverwrite = true
+        let out = OutputPlanner.destinations(for: pair, settings: s, exists: { _ in true })
+        #expect(out.map(\.path) == ["/f/Image00001.jpg", "/f/Image00002.jpg"])
     }
 
     @Test func outputFolderTemplateStillAsksAboutExistingFiles() {
