@@ -23,8 +23,7 @@ struct RenamePreviewSheet: View {
             }
             .overlay { if entries.isEmpty && !app.inputs.isEmpty { ProgressView() } }
             HStack {
-                let conflicts = entries.filter(\.conflict).count
-                let changes = entries.filter { !$0.unchanged && !$0.conflict }.count
+                let (changes, conflicts) = BatchRename.counts(entries)
                 (conflicts > 0 ? Text("\(changes) a renomear · \(conflicts) em conflito") : Text("\(changes) a renomear")).foregroundStyle(.secondary)
                 Spacer()
                 Button("Fechar", role: .cancel) { dismiss() }.keyboardShortcut(.cancelAction)

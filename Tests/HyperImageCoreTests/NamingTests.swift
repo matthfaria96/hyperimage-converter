@@ -190,6 +190,7 @@ struct BatchRenameSafetyTests {
         let entries = BatchRename.plan(listed, settings: settings, dates: { _ in Date() })
         #expect(entries.map(\.destination.lastPathComponent) == ["IMG_0001.jpg", "IMG_0002.jpg", "IMG_0003.jpg"])
         #expect(entries.map(\.conflict) == [true, true, true])
+        #expect(BatchRename.counts(entries) == (changes: 0, conflicts: 3))
         let outcome = BatchRename.execute(entries)
         #expect(outcome.renamed == 0)
         #expect(outcome.failures.isEmpty)

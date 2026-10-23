@@ -72,6 +72,11 @@ public enum BatchRename {
         return blockingChains(entries)
     }
 
+    /// What the preview reports: entries that will be renamed, and entries flagged and skipped.
+    public static func counts(_ entries: [RenameEntry]) -> (changes: Int, conflicts: Int) {
+        (entries.filter { !$0.unchanged && !$0.conflict }.count, entries.filter(\.conflict).count)
+    }
+
     /// Case-insensitive path key (APFS default), so `a.JPG` and `a.jpg` are the same name.
     static func key(_ url: URL) -> String { url.standardizedFileURL.path.lowercased() }
 
