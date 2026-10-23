@@ -18,13 +18,13 @@ struct EmptyDropZone: View {
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
             }
-            VStack(spacing: 8) {
+            VStack(spacing: 10) {
                 Button("Adicionar imagens…", systemImage: "plus", action: addFiles)
-                    .buttonStyle(.borderedProminent)
+                    .buttonStyle(.glassProminent)
                     .controlSize(.large)
                 if let browse {
-                    Button("ou navegue pelas pastas do Mac", action: browse)
-                        .buttonStyle(.link).font(.callout)
+                    Button("Navegar pelas pastas do Mac", systemImage: "sidebar.leading", action: browse)
+                        .buttonStyle(.glass)
                 }
             }
             .opacity(targeted ? 0 : 1)
@@ -110,42 +110,36 @@ private struct DropZoneFrame: View {
     }
 }
 
-/// Slim drop area above a non-empty list, as in the simplified layout.
+/// Slim glass bar above a non-empty list: a drop target and the Add button.
 struct CompactDropZone: View {
     let targeted: Bool
     let addFiles: () -> Void
 
     var body: some View {
-        HStack(spacing: 14) {
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(Color.accentColor.opacity(targeted ? 0.35 : 0.18))
-                .frame(width: 44, height: 44)
-                .overlay {
-                    Image(systemName: targeted ? "arrow.down" : "square.and.arrow.down")
-                        .font(.system(size: 19, weight: .semibold))
-                        .foregroundStyle(.tint)
-                        .contentTransition(.symbolEffect(.replace))
-                        .symbolEffect(.bounce, value: targeted)
-                }
-            VStack(alignment: .leading, spacing: 2) {
+        HStack(spacing: 12) {
+            Image(systemName: targeted ? "arrow.down.circle.fill" : "square.and.arrow.down")
+                .font(.title2)
+                .foregroundStyle(.tint)
+                .contentTransition(.symbolEffect(.replace))
+                .symbolEffect(.bounce, value: targeted)
+                .frame(width: 28)
+            VStack(alignment: .leading, spacing: 1) {
                 Text(targeted ? "Solte para adicionar" : "Arraste mais imagens para cá").font(.headline)
                     .contentTransition(.opacity)
-                Text("JPG, PNG, WebP, HEIC, TIFF, RAW e outros formatos").font(.caption).foregroundStyle(.secondary)
+                Text("JPG, PNG, WebP, HEIC, TIFF, RAW e pastas").font(.callout).foregroundStyle(.secondary)
             }
             Spacer()
-            Button("Adicionar imagens…", action: addFiles)
-                .buttonStyle(.borderedProminent)
+            Button("Adicionar…", systemImage: "plus", action: addFiles)
+                .buttonStyle(.glass)
         }
-        .padding(14)
-        .background {
-            RoundedRectangle(cornerRadius: 13, style: .continuous)
-                .fill(RadialGradient(colors: [Color.accentColor.opacity(targeted ? 0.25 : 0.1), .clear],
-                                     center: .top, startRadius: 0, endRadius: 260))
-        }
+        .padding(.horizontal, 14).padding(.vertical, 10)
+        .glassEffect(.regular.tint(targeted ? Color.accentColor.opacity(0.25) : nil), in: .rect(cornerRadius: 16))
         .overlay {
-            RoundedRectangle(cornerRadius: 13, style: .continuous)
-                .strokeBorder(targeted ? Color.accentColor : Color.secondary.opacity(0.35),
-                              style: StrokeStyle(lineWidth: targeted ? 2 : 1, dash: [6, 5]))
+            if targeted {
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .strokeBorder(Color.accentColor, style: StrokeStyle(lineWidth: 2, dash: [6, 5]))
+                    .transition(.opacity)
+            }
         }
         .animation(.spring(response: 0.35, dampingFraction: 0.75), value: targeted)
     }

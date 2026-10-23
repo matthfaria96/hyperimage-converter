@@ -14,7 +14,7 @@ enum DebugLaunch {
     static var env: [String: String] { ProcessInfo.processInfo.environment }
 
     static func scheduleSnapshot() {
-        guard let dir = env["HYPERIMAGE_SNAPSHOT"] else { return }
+        guard let dir = env["HYPERIMAGE_SNAPSHOT"], !dir.isEmpty else { return }
         let delay = Double(env["HYPERIMAGE_SNAPSHOT_DELAY"] ?? "") ?? 3
         DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
             let folder = URL(fileURLWithPath: dir)
@@ -41,9 +41,29 @@ enum DebugLaunch {
         }
     }
 
+    /// HYPERIMAGE_APPEARANCE=light|dark forces the appearance for this launch only (nothing is persisted).
+    static func applyAppearance() {
+        switch env["HYPERIMAGE_APPEARANCE"] {
+        case "light": NSApp.appearance = NSAppearance(named: .aqua)
+        case "dark": NSApp.appearance = NSAppearance(named: .darkAqua)
+        default: break
+        }
+    }
+
     static func apply(to app: AppModel) -> SheetRoute? {
         scheduleSnapshot()
         scheduleResize()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { applyAppearance() }
+        // Real screenshots need the window key, or every control is drawn dimmed; a second try covers a slow launch.
+        if env["HYPERIMAGE_ACTIVATE"] != nil {
+            for delay in [0.3, 1.5] {
+                DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+                    NSApp.setActivationPolicy(.regular)
+                    NSApp.activate(ignoringOtherApps: true)
+                    NSApp.windows.first { $0.isVisible && $0.sheetParent == nil }?.makeKeyAndOrderFront(nil)
+                }
+            }
+        }
         if let files = env["HYPERIMAGE_FILES"] {
             app.add(files.split(separator: ":").map { URL(fileURLWithPath: String($0)) })
         }

@@ -15,42 +15,48 @@ enum SheetRoute: Identifiable {
     }
 }
 
+/// Window layout: optional folder browser (sidebar), the file list, and the options panel on the right.
+/// The mode switch and every list action live in the toolbar, as in Apple's own apps.
 struct MainView: View {
     @Environment(AppModel.self) private var app
     @Environment(\.openWindow) private var openWindow
     @State private var browser: BrowserModel?
     @State private var runner = ConversionRunner()
-    /// The file browser is optional in the simplified layout: hidden until the sidebar button shows it.
-    @State private var columns = NavigationSplitViewVisibility.detailOnly
+    /// The file browser is optional: hidden until the sidebar button shows it.
+    @State private var showBrowser = false
+    @State private var showOptions = true
+
+    private var canPreview: Bool { ![.upscale, .rename].contains(app.state.convert.mode) && !runner.isRunning }
 
     var body: some View {
         @Bindable var app = app
-        NavigationSplitView(columnVisibility: $columns) {
-            if let browser {
+        // Plain columns instead of NavigationSplitView/.inspector: a collapsed split-view sidebar leaves an empty
+        // "»" overflow button in the macOS 26 toolbar, and the system inspector re-laid the toolbar out until
+        // AppKit aborted the launch on narrow windows.
+        HStack(spacing: 0) {
+            if showBrowser, let browser {
                 BrowserView(browser: browser)
-                    .navigationSplitViewColumnWidth(min: 260, ideal: 300, max: 480)
-            }
-        } detail: {
-            // A plain trailing column instead of `.inspector`: on narrow windows the system inspector and the
-            // toolbar kept re-laying each other out until AppKit aborted the launch.
-            HStack(spacing: 0) {
-                WorkspaceView(runner: runner, browserVisible: columns != .detailOnly,
-                              toggleBrowser: { withAnimation { columns = columns == .detailOnly ? .all : .detailOnly } })
-                    .frame(minWidth: 460)
+                    .frame(width: 290)
+                    .background(.background.secondary)
+                    .transition(.move(edge: .leading).combined(with: .opacity))
                 Divider()
-                SettingsPanel(runner: runner, start: startConversion)
             }
-        }
-        .navigationTitle("HyperImage Converter")
-        .toolbar(removing: .sidebarToggle)
-        .toolbar {
-            ToolbarItem(placement: .navigation) {
-                Button("Navegador de pastas", systemImage: "sidebar.leading") {
-                    withAnimation { columns = columns == .detailOnly ? .all : .detailOnly }
+            HStack(spacing: 0) {
+                WorkspaceView(runner: runner, canPreview: canPreview,
+                              browse: { withAnimation(.snappy) { showBrowser = true } })
+                    .frame(minWidth: 460)
+                if showOptions {
+                    Divider()
+                    SettingsPanel(runner: runner, start: startConversion)
+                        .transition(.move(edge: .trailing).combined(with: .opacity))
                 }
-                .help("Mostrar ou ocultar o navegador de pastas (⌃⌘S)")
             }
+            .animation(.snappy, value: showOptions)
         }
+        .animation(.snappy, value: showBrowser)
+        .navigationTitle(Text(app.state.convert.mode.title))
+        .toolbar(removing: .title)
+        .toolbar { toolbarContent }
         .sheet(item: $app.route) { route in sheetView(route) }
         .overlay {
             if let prompt = runner.prompt { OverwritePanel(url: prompt.url, answer: runner.answer) }
@@ -73,9 +79,47 @@ struct MainView: View {
             if let route = DebugLaunch.apply(to: app) { app.route = route }
             if DebugLaunch.env["HYPERIMAGE_SHEET"] == "progress", !app.inputs.isEmpty { startConversion() }
             if DebugLaunch.env["HYPERIMAGE_WINDOW"] == "about" { openWindow(id: "about") }
+            if DebugLaunch.env["HYPERIMAGE_BROWSER"] != nil { showBrowser = true }
             #endif
         }
     }
+
+    // MARK: Toolbar
+
+    /// Separate items, not a group: grouped menus made the toolbar overflow into "»" on macOS 26.
+    /// The mode picker leads the toolbar (Finder style); the title is left out, since it collided with the picker.
+    @ToolbarContentBuilder
+    private var toolbarContent: some ToolbarContent {
+        @Bindable var app = app
+        ToolbarItem(placement: .navigation) {
+            Button("Navegador de pastas", systemImage: "sidebar.leading") { showBrowser.toggle() }
+                .help("Mostrar ou ocultar o navegador de pastas")
+        }
+        ToolbarItem(placement: .navigation) {
+            Picker("Modo", selection: $app.state.convert.mode.animation(.snappy)) {
+                ForEach(ConvertMode.allCases, id: \.self) { mode in
+                    Text(mode.tabTitle).tag(mode)
+                }
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+            .disabled(runner.isRunning)
+            .help("⌘1 Converter · ⌘2 Comprimir · ⌘3 AI Upscale · ⌘4 Renomear")
+        }
+        ToolbarItem(placement: .primaryAction) {
+            Button("Adicionar imagens…", systemImage: "plus") { FilePanels.addFiles(to: app) }
+                .disabled(runner.isRunning)
+                .help("Adicionar imagens ou pastas (⌘O)")
+        }
+        ToolbarItem(placement: .primaryAction) { SortMenu() }
+        ToolbarItem(placement: .primaryAction) { ListActionsMenu(runner: runner, canPreview: canPreview) }
+        ToolbarItem(placement: .primaryAction) {
+            Button("Opções", systemImage: "sidebar.trailing") { showOptions.toggle() }
+                .help(showOptions ? "Ocultar o painel de opções" : "Mostrar o painel de opções")
+        }
+    }
+
+    // MARK: Sheets and actions
 
     @ViewBuilder
     private func sheetView(_ route: SheetRoute) -> some View {
@@ -103,7 +147,7 @@ struct MainView: View {
         runner.start(items: app.inputs, settings: app.state.convert)
     }
 
-    /// Errors are listed in the cards and in "Ver erros"; an alert only interrupts for a batch-wide failure.
+    /// Errors are listed in the rows and in "Ver erros"; an alert only interrupts for a batch-wide failure.
     private func batchFinished() {
         guard !runner.isRunning else { return }
         DockProgress.show(nil)
@@ -115,5 +159,38 @@ struct MainView: View {
         guard runner.hasResults, !runner.wasCancelled else { return }
         CompletionNotifier.notify(done: runner.doneCount, failed: runner.failures.count,
                                   saved: runner.oldTotal - runner.newTotal, mode: runner.settings.mode)
+    }
+}
+
+/// "…" toolbar menu with the actions that apply to the list or the selection.
+private struct ListActionsMenu: View {
+    @Environment(AppModel.self) private var app
+    @Environment(\.undoManager) private var undoManager
+    let runner: ConversionRunner
+    let canPreview: Bool
+
+    var body: some View {
+        Menu {
+            Button("Pré-visualizar", systemImage: "eye") {
+                if let url = app.previewTarget { app.route = .conversionPreview(url) }
+            }
+            .disabled(!canPreview || app.inputs.isEmpty)
+            Button("Selecionar tudo") { app.selectAll() }
+                .disabled(app.inputs.isEmpty)
+            Toggle("Mostrar pré-visualização", isOn: Binding(get: { app.state.showPreview }, set: { app.state.showPreview = $0 }))
+            Divider()
+            Button("Mostrar no Finder") { FilePanels.reveal(Array(app.selection)) }
+                .disabled(app.selection.isEmpty)
+            Button("Remover da lista") { ListEdits.remove(app.selection, from: app, undo: undoManager, running: runner.isRunning) }
+                .disabled(app.selection.isEmpty || runner.isRunning)
+            Divider()
+            Button("Limpar lista", role: .destructive) {
+                ListEdits.remove(Set(app.inputs.map(\.url)), from: app, undo: undoManager, running: runner.isRunning)
+            }
+            .disabled(app.inputs.isEmpty || runner.isRunning)
+        } label: {
+            Label("Mais ações", systemImage: "ellipsis.circle")
+        }
+        .help("Mais ações para a lista")
     }
 }

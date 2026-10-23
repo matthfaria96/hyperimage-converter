@@ -1,60 +1,61 @@
 import HyperImageCore
 import SwiftUI
 
-/// Estimated (or actual) result, progress, the main action button and a status line.
+/// Floating glass summary: estimated (or actual) result, progress, the main action and a status line.
 struct SummaryBox: View {
     @Environment(AppModel.self) private var app
     let runner: ConversionRunner
     let start: () -> Void
     @State private var estimate: Estimate?
 
+    private var finished: Bool { runner.hasResults && !runner.isRunning }
+
     var body: some View {
         let mode = app.state.convert.mode
-        let showsProgress = runner.isRunning || runner.hasResults
-        VStack(spacing: 10) {
-            VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 3) {
                 HStack {
-                    Text(runner.hasResults && !runner.isRunning ? "Resultado" : "Resumo estimado").font(.callout.weight(.semibold))
+                    Text(finished ? "Resultado" : "Estimativa").font(.subheadline.weight(.semibold)).foregroundStyle(.secondary)
                     Spacer()
-                    Text(countText).font(.caption).foregroundStyle(.secondary)
+                    Text(countText).font(.subheadline).foregroundStyle(.secondary)
+                        .contentTransition(.numericText())
                 }
-                Text(headline).font(.title2.weight(.bold)).monospacedDigit()
+                Text(headline).font(.title.weight(.semibold)).monospacedDigit()
                     .contentTransition(.numericText())
                     .animation(.snappy, value: headline)
-                Text(detail).font(.caption).foregroundStyle(.secondary).lineLimit(2)
-                if showsProgress {
-                    ProgressView(value: runner.progress)
-                        .tint(runner.failures.isEmpty ? .green : .orange)
-                        .animation(.easeInOut(duration: 0.3), value: runner.progress)
-                        .padding(.top, 4)
-                        .transition(.opacity)
-                    ProgressStats(runner: runner).transition(.opacity).padding(.top, 2)
-                }
+                Text(detail).font(.callout).foregroundStyle(.secondary).lineLimit(2)
+                    .contentTransition(.opacity)
+                    .animation(.snappy, value: detail)
             }
-            .padding(12)
-            .background(.background, in: .rect(cornerRadius: 10))
-            .overlay { RoundedRectangle(cornerRadius: 10).strokeBorder(Color.primary.opacity(0.08)) }
             .accessibilityElement(children: .combine)
+
+            if runner.isRunning || runner.hasResults {
+                ProgressStats(runner: runner)
+                    .transition(.blurReplace)
+            }
 
             if runner.isRunning {
                 Button(role: .cancel) { runner.cancel() } label: {
                     Label("Cancelar", systemImage: "stop.fill").frame(maxWidth: .infinity)
                 }
+                .buttonStyle(.glass)
                 .controlSize(.large)
                 .keyboardShortcut(.cancelAction)
+                .transition(.blurReplace)
             } else {
                 Button(action: start) {
                     Label(mode.actionTitle, systemImage: mode.symbol)
                         .font(.body.weight(.semibold))
                         .frame(maxWidth: .infinity)
                 }
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(.glassProminent)
                 .controlSize(.large)
                 .keyboardShortcut(.return, modifiers: .command)
                 .disabled(app.inputs.isEmpty)
                 .help("⌘↩")
-                if runner.hasResults && !runner.wasCancelled {
-                    HStack {
+                .transition(.blurReplace)
+                if finished && !runner.wasCancelled {
+                    HStack(spacing: 8) {
                         if runner.doneCount > 0 {
                             Button("Mostrar no Finder", systemImage: "folder") {
                                 FilePanels.reveal(runner.records.filter { $0.status == .done }.map(\.output))
@@ -64,23 +65,20 @@ struct SummaryBox: View {
                             Button("Ver erros (\(runner.failures.count))", systemImage: "exclamationmark.triangle") {
                                 app.route = .errors
                             }
-                            .foregroundStyle(.orange)
+                            .tint(.orange)
                         }
                     }
-                    .buttonStyle(.borderless)
-                    .font(.callout)
-                    .transition(.opacity.combined(with: .move(edge: .bottom)))
+                    .buttonStyle(.glass)
+                    .controlSize(.small)
+                    .frame(maxWidth: .infinity)
+                    .transition(.blurReplace)
                 }
             }
-            TimelineView(.periodic(from: .now, by: 1)) { context in
-                Text(statusText(now: context.date))
-                    .font(.caption).foregroundStyle(statusColor)
-                    .multilineTextAlignment(.center)
-                    .frame(maxWidth: .infinity)
-            }
+            StatusLine(runner: runner, hasInputs: !app.inputs.isEmpty)
         }
-        .animation(.snappy, value: showsProgress)
         .animation(.snappy, value: runner.isRunning)
+        .animation(.snappy, value: runner.hasResults)
+        .sensoryFeedback(.success, trigger: runner.completionID) { _, _ in finished && runner.failures.isEmpty && !runner.wasCancelled }
         .task(id: EstimateKey(app.state.convert, revision: app.inputsRevision)) {
             try? await Task.sleep(for: .milliseconds(450))
             guard !Task.isCancelled else { return }
@@ -95,7 +93,7 @@ struct SummaryBox: View {
     }
 
     private var countText: String {
-        if runner.hasResults && !runner.isRunning {
+        if finished {
             let done = runner.doneCount
             return done == 1 ? String(localized: "1 imagem pronta") : String(localized: "\(done) imagens prontas")
         }
@@ -105,18 +103,18 @@ struct SummaryBox: View {
     // MARK: Text
 
     private var headline: String {
-        if runner.hasResults && !runner.isRunning && runner.newTotal > 0 { return formatBytes(runner.newTotal) }
+        if finished && runner.newTotal > 0 { return formatBytes(runner.newTotal) }
         guard !app.inputs.isEmpty, let estimate else { return "—" }
         if let size = estimate.upscaledSize { return "\(String(size.width)) × \(String(size.height))" }
         return estimate.bytes.map { "≈ " + formatBytes($0) } ?? "—"
     }
 
     private var detail: String {
-        if runner.hasResults && !runner.isRunning && runner.oldTotal > 0 {
+        if finished && runner.oldTotal > 0 {
             let saved = runner.oldTotal - runner.newTotal
             return saved >= 0
-                ? String(localized: "Original: \(formatBytes(runner.oldTotal)) · Economia de \(percent(saved, of: runner.oldTotal)) %")
-                : String(localized: "Original: \(formatBytes(runner.oldTotal)) · \(percent(-saved, of: runner.oldTotal)) % maior")
+                ? String(localized: "Original \(formatBytes(runner.oldTotal)) · economia de \(formatBytes(saved)) (\(percent(saved, of: runner.oldTotal)) %)")
+                : String(localized: "Original \(formatBytes(runner.oldTotal)) · \(percent(-saved, of: runner.oldTotal)) % maior")
         }
         guard !app.inputs.isEmpty, let estimate else { return String(localized: "Adicione imagens para estimar o resultado.") }
         if let original = estimate.originalSize, estimate.upscaledSize != nil {
@@ -126,39 +124,12 @@ struct SummaryBox: View {
         guard let bytes = estimate.bytes else { return String(localized: "Não foi possível estimar.") }
         let saved = estimate.originalBytes - bytes
         return saved >= 0
-            ? String(localized: "Original: \(formatBytes(estimate.originalBytes)) · Economia estimada de \(percent(saved, of: estimate.originalBytes)) %")
-            : String(localized: "Original: \(formatBytes(estimate.originalBytes)) · cerca de \(percent(-saved, of: estimate.originalBytes)) % maior")
+            ? String(localized: "Original \(formatBytes(estimate.originalBytes)) · economia estimada de \(percent(saved, of: estimate.originalBytes)) %")
+            : String(localized: "Original \(formatBytes(estimate.originalBytes)) · cerca de \(percent(-saved, of: estimate.originalBytes)) % maior")
     }
 
     private func percent(_ part: Int64, of total: Int64) -> Int {
         total > 0 ? Int((Double(part) / Double(total) * 100).rounded()) : 0
-    }
-
-    private func statusText(now: Date) -> String {
-        if runner.isRunning {
-            // Outputs are still being planned: there is no count to show yet.
-            if runner.records.isEmpty { return String(localized: "Preparando arquivos…") }
-            let step = String(localized: "Processando \(min(runner.finishedCount + 1, runner.records.count)) de \(runner.records.count)")
-            guard let left = runner.remaining(now: now) else { return step + "…" }
-            return step + " · " + String(localized: "≈ \(Self.duration(left)) restantes")
-        }
-        if let failure = runner.failure { return failure }
-        // Checked before `hasResults`: a run cancelled while planning ends with no records.
-        if runner.wasCancelled { return String(localized: "Cancelado.") }
-        if runner.hasResults {
-            let done = runner.doneCount
-            if !runner.failures.isEmpty { return String(localized: "\(done) concluídas · \(runner.failures.count) com erro.") }
-            return done == 1 ? String(localized: "1 imagem processada.") : String(localized: "\(done) imagens processadas.")
-        }
-        return app.inputs.isEmpty ? String(localized: "Adicione imagens para começar.") : String(localized: "Pronto para processar.")
-    }
-
-    private var statusColor: Color {
-        if runner.isRunning { return .secondary }
-        if runner.failure != nil { return .red }
-        if runner.wasCancelled { return .orange }
-        if runner.hasResults { return runner.failures.isEmpty ? .green : .orange }
-        return .secondary
     }
 
     static func duration(_ seconds: TimeInterval) -> String {
@@ -166,6 +137,52 @@ struct SummaryBox: View {
         if s < 60 { return String(localized: "\(max(s, 1)) s") }
         if s < 3600 { return String(localized: "\(s / 60) min \(s % 60) s") }
         return String(localized: "\(s / 3600) h \(s % 3600 / 60) min")
+    }
+}
+
+/// One line with a symbol: what the batch is doing or how it ended.
+private struct StatusLine: View {
+    let runner: ConversionRunner
+    let hasInputs: Bool
+
+    var body: some View {
+        TimelineView(.periodic(from: .now, by: 1)) { context in
+            let (symbol, text, color) = status(now: context.date)
+            Label {
+                Text(text).contentTransition(.opacity)
+            } icon: {
+                Image(systemName: symbol)
+                    .contentTransition(.symbolEffect(.replace))
+                    .symbolEffect(.bounce, value: symbol)
+            }
+            .font(.callout)
+            .foregroundStyle(color)
+            .frame(maxWidth: .infinity)
+            .animation(.snappy, value: text)
+        }
+    }
+
+    private func status(now: Date) -> (String, String, Color) {
+        if runner.isRunning {
+            // Outputs are still being planned: there is no count to show yet.
+            if runner.records.isEmpty { return ("hourglass", String(localized: "Preparando arquivos…"), .secondary) }
+            let step = String(localized: "Processando \(min(runner.finishedCount + 1, runner.records.count)) de \(runner.records.count)")
+            guard let left = runner.remaining(now: now) else { return ("hourglass", step + "…", .secondary) }
+            return ("hourglass", step + " · " + String(localized: "≈ \(SummaryBox.duration(left)) restantes"), .secondary)
+        }
+        if let failure = runner.failure { return ("xmark.octagon.fill", failure, .red) }
+        // Checked before `hasResults`: a run cancelled while planning ends with no records.
+        if runner.wasCancelled { return ("stop.circle.fill", String(localized: "Cancelado."), .orange) }
+        if runner.hasResults {
+            let done = runner.doneCount
+            if !runner.failures.isEmpty {
+                return ("exclamationmark.triangle.fill", String(localized: "\(done) concluídas · \(runner.failures.count) com erro."), .orange)
+            }
+            let text = done == 1 ? String(localized: "1 imagem processada.") : String(localized: "\(done) imagens processadas.")
+            return ("checkmark.circle.fill", text, .green)
+        }
+        return hasInputs ? ("circle.dotted", String(localized: "Pronto para processar."), .secondary)
+                         : ("photo.badge.plus", String(localized: "Adicione imagens para começar."), .secondary)
     }
 }
 

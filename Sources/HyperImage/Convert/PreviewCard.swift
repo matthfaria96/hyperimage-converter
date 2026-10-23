@@ -13,31 +13,46 @@ struct PreviewInfo: Equatable, Sendable {
 }
 
 /// Thumbnail, dimensions, size and date of the single selected file (FastStone style).
-struct PreviewCard: View {
+struct PreviewSection: View {
     @Environment(AppModel.self) private var app
     let item: InputItem
     @State private var info: PreviewInfo?
 
     var body: some View {
-        PanelSection(title: "Pré-visualização") {
-            ThumbnailView(url: item.url, maxPixels: 512)
-                .frame(maxWidth: .infinity)
-                .frame(height: 150)
-                .clipShape(.rect(cornerRadius: 6))
-            Text(item.url.lastPathComponent).font(.callout.weight(.medium)).lineLimit(1).truncationMode(.middle)
-            if let info {
-                let dims = info.size.map { "\(String($0.width)) × \(String($0.height))" } ?? "—"
+        Section {
+            VStack(alignment: .leading, spacing: 10) {
+                ThumbnailView(url: item.url, maxPixels: 512)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 160)
+                    .clipShape(.rect(cornerRadius: 10))
+                    .shadow(color: .black.opacity(0.18), radius: 8, y: 3)
+                    .id(item.url)
+                    .transition(.blurReplace)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(dims)
-                    Text("\(formatBytes(info.bytes)) · \(info.date.formatted(date: .abbreviated, time: .shortened))")
+                    Text(item.url.lastPathComponent).lineLimit(1).truncationMode(.middle)
+                    HStack(spacing: 6) {
+                        if let info {
+                            Text(info.size.map { "\(String($0.width)) × \(String($0.height))" } ?? "—")
+                            Text("·")
+                            Text(formatBytes(info.bytes))
+                            Text("·")
+                            Text(info.date.formatted(date: .abbreviated, time: .shortened))
+                        } else {
+                            Text("Lendo…")
+                        }
+                    }
+                    .font(.callout).foregroundStyle(.secondary).monospacedDigit()
+                    .contentTransition(.opacity)
                 }
-                .font(.caption).foregroundStyle(.secondary).monospacedDigit()
             }
+            .padding(.vertical, 4)
+        } header: {
             HStack {
+                Text("Pré-visualização")
                 Spacer()
                 Button("Ocultar", systemImage: "eye.slash") { app.state.showPreview = false }
-                    .buttonStyle(.borderless).font(.caption)
-                    .help("Ocultar a pré-visualização (volte a mostrar no menu … da lista)")
+                    .buttonStyle(.borderless).labelStyle(.iconOnly)
+                    .help("Ocultar a pré-visualização (volte a mostrar no menu … da barra)")
             }
         }
         .task(id: item.url) {
@@ -46,7 +61,7 @@ struct PreviewCard: View {
             let loaded = await Task.detached(priority: .utility) { PreviewInfo.load(url) }.value
             // A slower read of the previous selection must not overwrite the new file's details.
             guard !Task.isCancelled else { return }
-            info = loaded
+            withAnimation(.snappy) { info = loaded }
         }
     }
 }

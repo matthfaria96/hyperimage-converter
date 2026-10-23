@@ -1,12 +1,11 @@
 import HyperImageCore
 import SwiftUI
 
-/// One queued file as a card: thumbnail, name, details, result and the actions that appear on hover.
-struct FileCard: View {
+/// One queued file as a list row: thumbnail, name, details, result and the actions that appear on hover.
+struct FileRow: View {
     let item: InputItem
     let record: ConversionRecord?
     let isRunning: Bool
-    let isSelected: Bool
     var showsRatio = true
     var canPreview = true
     /// 0…1 while this file is being upscaled.
@@ -16,30 +15,30 @@ struct FileCard: View {
     @State private var dimensions = ""
     @State private var fileSize: Int64 = 0
     @State private var hovering = false
-    @State private var removeHover = false
 
     var body: some View {
-        HStack(spacing: 11) {
+        HStack(spacing: 12) {
             ThumbnailView(url: item.url, maxPixels: 120)
                 .frame(width: 44, height: 44)
-                .clipShape(.rect(cornerRadius: 7))
-                .background(.quaternary, in: .rect(cornerRadius: 7))
-            VStack(alignment: .leading, spacing: 3) {
+                .background(.quaternary, in: .rect(cornerRadius: 6))
+                .clipShape(.rect(cornerRadius: 6))
+            VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 6) {
-                    Text(item.url.lastPathComponent).font(.callout.weight(.semibold)).lineLimit(1).truncationMode(.middle)
+                    Text(item.url.lastPathComponent).font(.body).lineLimit(1).truncationMode(.middle)
                     if let folder = item.virtualFolder {
                         Label(folder, systemImage: "folder.badge.plus")
-                            .font(.caption2).foregroundStyle(.tint).lineLimit(1)
+                            .font(.caption).foregroundStyle(.tint).lineLimit(1)
                             .help("Será salvo na subpasta \"\(folder)\" da saída")
                     }
                 }
-                Text(details).font(.caption).foregroundStyle(detailsColor).lineLimit(1).truncationMode(.tail).monospacedDigit()
+                Text(details).font(.callout).foregroundStyle(detailsColor).lineLimit(1).truncationMode(.tail).monospacedDigit()
+                    .contentTransition(.numericText())
             }
             Spacer(minLength: 8)
             result
             if canPreview, hovering, !isRunning {
                 Button(action: preview) {
-                    Image(systemName: "eye").frame(width: 28, height: 28)
+                    Image(systemName: "eye").frame(width: 24, height: 24)
                 }
                 .buttonStyle(.plain)
                 .foregroundStyle(.secondary)
@@ -47,32 +46,25 @@ struct FileCard: View {
                 .accessibilityLabel("Pré-visualizar \(item.url.lastPathComponent)")
                 .transition(.opacity)
             }
-            Button(action: remove) {
-                Image(systemName: "xmark").font(.system(size: 11, weight: .semibold))
-                    .frame(width: 28, height: 28)
-                    .background(removeHover ? Color.red.opacity(0.18) : .clear, in: .rect(cornerRadius: 7))
-                    .foregroundStyle(removeHover ? .red : .secondary)
-                    .contentShape(.rect)
+            if hovering, !isRunning {
+                Button(action: remove) {
+                    Image(systemName: "xmark.circle.fill").frame(width: 24, height: 24)
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(.secondary)
+                .help("Remover da lista")
+                .accessibilityLabel("Remover \(item.url.lastPathComponent)")
+                .transition(.opacity)
             }
-            .buttonStyle(.plain)
-            .onHover { removeHover = $0 }
-            .help("Remover da lista")
-            .accessibilityLabel("Remover \(item.url.lastPathComponent)")
         }
-        .padding(.horizontal, 10).padding(.vertical, 8)
-        .background(isSelected ? AnyShapeStyle(Color.accentColor.opacity(0.16)) : AnyShapeStyle(.background.secondary),
-                    in: .rect(cornerRadius: 10))
-        .overlay {
-            RoundedRectangle(cornerRadius: 10)
-                .strokeBorder(isSelected ? Color.accentColor.opacity(0.7) : Color.primary.opacity(0.08))
-        }
+        .padding(.vertical, 4)
         .contentShape(.rect)
         .onHover { hovering = $0 }
         .animation(.easeOut(duration: 0.12), value: hovering)
+        .animation(.snappy, value: record?.status)
         // One VoiceOver element per file instead of five loose labels.
         .accessibilityElement(children: .contain)
         .accessibilityLabel(Text("\(item.url.lastPathComponent), \(details)"))
-        .accessibilityAddTraits(isSelected ? .isSelected : [])
         .accessibilityAction(named: Text("Pré-visualizar")) { if canPreview { preview() } }
         .accessibilityAction(named: Text("Remover")) { remove() }
         .task(id: item.url) {
@@ -92,7 +84,7 @@ struct FileCard: View {
         case .working?: parts.append(String(localized: "Processando…"))
         case .pending?, nil:
             if let working { parts.append(String(localized: "Processando… \(Int(working * 100)) %")) }
-            else { parts.append(isRunning ? String(localized: "Na fila") : String(localized: "Pronto")) }
+            else if isRunning { parts.append(String(localized: "Na fila")) }
         }
         return parts.compactMap { $0 }.joined(separator: " · ")
     }
@@ -110,24 +102,37 @@ struct FileCard: View {
         switch record?.status {
         case .done?:
             if let record {
-                VStack(alignment: .trailing, spacing: 2) {
-                    // Upscale grows the file on purpose, so the result is the new pixel size, not a percentage.
-                    Text(formatBytes(record.newSize)).font(.callout.weight(.semibold)).monospacedDigit()
-                    if showsRatio, let ratio = record.ratio {
-                        let change = Int(((ratio - 1) * 100).rounded())
-                        Text(change <= 0 ? "\(change) %" : "+\(change) %")
-                            .font(.caption2.weight(.semibold)).monospacedDigit()
-                            .foregroundStyle(change <= 0 ? .green : .orange)
+                HStack(spacing: 8) {
+                    VStack(alignment: .trailing, spacing: 1) {
+                        // Upscale grows the file on purpose, so the result is the new pixel size, not a percentage.
+                        Text(formatBytes(record.newSize)).font(.body.weight(.medium)).monospacedDigit()
+                        if showsRatio, let ratio = record.ratio {
+                            let change = Int(((ratio - 1) * 100).rounded())
+                            Text(change <= 0 ? "\(change) %" : "+\(change) %")
+                                .font(.caption.weight(.medium)).monospacedDigit()
+                                .foregroundStyle(change <= 0 ? .green : .orange)
+                        }
                     }
+                    Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
+                        .symbolEffect(.bounce, value: record.status == .done)
+                        .accessibilityHidden(true)
                 }
                 .transition(.scale(scale: 0.8).combined(with: .opacity))
             }
         case .failed?:
             Image(systemName: "xmark.octagon.fill").foregroundStyle(.red).accessibilityLabel("Erro")
+                .transition(.scale.combined(with: .opacity))
         case .skipped?:
             Image(systemName: "forward.fill").foregroundStyle(.orange).accessibilityLabel("Pulado")
-        case .pending?, .working?, nil:
-            if isRunning { ProgressView().controlSize(.small) }
+                .transition(.scale.combined(with: .opacity))
+        case .working?:
+            ProgressView().controlSize(.small).transition(.opacity)
+        case .pending?, nil:
+            if let working {
+                ProgressView(value: working).progressViewStyle(.circular).controlSize(.small).transition(.opacity)
+            } else if isRunning {
+                Image(systemName: "clock").foregroundStyle(.tertiary).transition(.opacity)
+            }
         }
     }
 }

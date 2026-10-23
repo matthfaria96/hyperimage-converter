@@ -2,35 +2,32 @@ import AppKit
 import HyperImageCore
 import SwiftUI
 
-/// Left side of the window: mode tabs, drop area and the queued files as cards.
+/// Centre of the window: the drop bar, the queued files as a native list and a status footer.
 struct WorkspaceView: View {
     @Environment(AppModel.self) private var app
     @Environment(\.undoManager) private var undoManager
     let runner: ConversionRunner
-    let browserVisible: Bool
-    let toggleBrowser: () -> Void
+    let canPreview: Bool
+    let browse: () -> Void
     @State private var dropTargeted = false
     @State private var folderTargets: Set<URL> = []
     @State private var folderName = ""
     @State private var askingFolderName = false
-    /// Anchor for ⇧-click range selection.
-    @State private var anchor: URL?
-    @FocusState private var listFocused: Bool
-
-    private var canPreview: Bool { ![.upscale, .rename].contains(app.state.convert.mode) && !runner.isRunning }
 
     var body: some View {
+        @Bindable var app = app
         VStack(spacing: 0) {
-            header
-            Divider()
             Group {
                 if app.inputs.isEmpty {
-                    EmptyDropZone(targeted: dropTargeted, addFiles: { FilePanels.addFiles(to: app) }, browse: { if !browserVisible { toggleBrowser() } })
+                    EmptyDropZone(targeted: dropTargeted, addFiles: { FilePanels.addFiles(to: app) }, browse: browse)
+                        .transition(.blurReplace)
                 } else {
                     fileList
+                        .transition(.blurReplace)
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .animation(.snappy, value: app.inputs.isEmpty)
             Divider()
             statusBar
         }
@@ -38,13 +35,13 @@ struct WorkspaceView: View {
         .dropDestination(for: URL.self) { urls, _ in
             // The list is frozen while a batch runs, so results always match what is shown.
             guard !runner.isRunning else { return false }
-            return withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) { app.addInBackground(urls); return true }
+            return withAnimation(.snappy) { app.addInBackground(urls); return true }
         } isTargeted: { dropTargeted = $0 && !runner.isRunning }
         .overlay {
             if dropTargeted && !app.inputs.isEmpty { DropOverlay() }
         }
         .animation(.easeOut(duration: 0.2), value: dropTargeted)
-        .onDeleteCommand { removeWithUndo(app.selection) }
+        .onDeleteCommand { remove(app.selection) }
         .alert("Agrupar em subpasta de saída", isPresented: $askingFolderName) {
             TextField("Nome da subpasta", text: $folderName)
             Button("Cancelar", role: .cancel) {}
@@ -58,163 +55,45 @@ struct WorkspaceView: View {
         #endif
     }
 
-    // MARK: Header
-
-    private var header: some View {
-        @Bindable var app = app
-        let picker = Picker("Modo", selection: $app.state.convert.mode.animation(.snappy)) {
-            ForEach(ConvertMode.allCases, id: \.self) { mode in
-                Label(mode.tabTitle, systemImage: mode.symbol).tag(mode)
-            }
-        }
-        .pickerStyle(.segmented)
-        .labelsHidden()
-        .fixedSize()
-        .disabled(runner.isRunning)
-        .help("⌘1 Converter · ⌘2 Comprimir · ⌘3 AI Upscale · ⌘4 Renomear")
-
-        let titleBlock = VStack(alignment: .leading, spacing: 2) {
-            Text(app.state.convert.mode.title).font(.title2.weight(.bold))
-            Text(app.state.convert.mode.subtitle).font(.callout).foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        return ViewThatFits(in: .horizontal) {
-            HStack(alignment: .center, spacing: 12) {
-                titleBlock
-                Spacer(minLength: 12)
-                picker
-            }
-            VStack(alignment: .leading, spacing: 10) {
-                titleBlock
-                picker
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-        }
-        .padding(.horizontal, 24).padding(.vertical, 14)
-    }
-
     // MARK: Files
 
     private var fileList: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 14) {
-                CompactDropZone(targeted: dropTargeted) { FilePanels.addFiles(to: app) }
-                listHeader
-                LazyVStack(spacing: 7) {
-                    ForEach(app.inputs) { item in
-                        FileCard(item: item, record: runner.record(for: item.url), isRunning: runner.isRunning,
-                                 isSelected: app.selection.contains(item.url),
-                                 showsRatio: app.state.convert.mode == .convert || app.state.convert.mode == .compress,
-                                 canPreview: canPreview,
-                                 working: runner.currentUpscale == item.url ? runner.partial : nil,
-                                 preview: { app.route = .conversionPreview(item.url) }) {
-                            removeWithUndo([item.url])
-                        }
-                        .onTapGesture { select(item.url) }
-                        .simultaneousGesture(TapGesture(count: 2).onEnded {
-                            if canPreview { app.route = .conversionPreview(item.url) }
-                        })
-                        .contextMenu { contextMenu(for: item.url) }
-                        .transition(.asymmetric(insertion: .move(edge: .top).combined(with: .opacity),
-                                                removal: .opacity.combined(with: .scale(scale: 0.96))))
-                    }
+        @Bindable var app = app
+        return VStack(spacing: 0) {
+            CompactDropZone(targeted: dropTargeted) { FilePanels.addFiles(to: app) }
+                .padding(.horizontal, 16).padding(.top, 12).padding(.bottom, 6)
+            List(selection: $app.selection) {
+                ForEach(app.inputs) { item in
+                    FileRow(item: item, record: runner.record(for: item.url), isRunning: runner.isRunning,
+                            showsRatio: app.state.convert.mode == .convert || app.state.convert.mode == .compress,
+                            canPreview: canPreview,
+                            working: runner.currentUpscale == item.url ? runner.partial : nil,
+                            preview: { app.route = .conversionPreview(item.url) },
+                            remove: { remove([item.url]) })
+                        .tag(item.url)
                 }
             }
-            .padding(.horizontal, 24).padding(.vertical, 18)
-        }
-        .focusable()
-        .focused($listFocused)
-        .focusEffectDisabled()
-        .onKeyPress(.space) {
-            guard canPreview, let url = app.previewTarget else { return .ignored }
-            app.route = .conversionPreview(url)
-            return .handled
-        }
-        .onKeyPress(characters: ["a"], phases: .down) { press in
-            guard press.modifiers.contains(.command), !runner.isRunning else { return .ignored }
-            app.selectAll()
-            return .handled
-        }
-        .onKeyPress(.upArrow) { moveSelection(-1) }
-        .onKeyPress(.downArrow) { moveSelection(1) }
-    }
-
-    private var listHeader: some View {
-        HStack(spacing: 9) {
-            Text("Imagens adicionadas").font(.headline)
-            Text(countText(app.inputs.count))
-                .font(.caption).padding(.horizontal, 7).padding(.vertical, 2)
-                .background(.quaternary, in: .capsule)
-            Spacer()
-            Button("Pré-visualizar", systemImage: "eye") {
-                if let url = app.previewTarget { app.route = .conversionPreview(url) }
+            .listStyle(.inset)
+            .scrollEdgeEffectStyle(.soft, for: .top)
+            .animation(.snappy, value: app.inputsRevision)
+            .contextMenu(forSelectionType: URL.self) { urls in
+                contextMenu(for: urls)
+            } primaryAction: { urls in
+                guard canPreview, let url = urls.first else { return }
+                app.route = .conversionPreview(url)
             }
-            .disabled(!canPreview)
-            .help([.upscale, .rename].contains(app.state.convert.mode) ? "Indisponível neste modo" : "Comparar antes e depois (barra de espaço, ⌘Y)")
-            Menu {
-                Button("Agrupar em subpasta de saída…") { startGrouping(app.selection) }
-                    .disabled(app.selection.isEmpty)
-                Button("Selecionar tudo") { app.selectAll() }
-                Toggle("Mostrar pré-visualização", isOn: Binding(get: { app.state.showPreview }, set: { app.state.showPreview = $0 }))
-                Divider()
-                Button("Mostrar na pasta") { FilePanels.reveal(Array(app.selection)) }
-                    .disabled(app.selection.isEmpty)
-            } label: {
-                Image(systemName: "ellipsis.circle")
+            .onKeyPress(.space) {
+                guard canPreview, let url = app.previewTarget else { return .ignored }
+                app.route = .conversionPreview(url)
+                return .handled
             }
-            .menuStyle(.borderlessButton)
-            .menuIndicator(.hidden)
-            .fixedSize()
-            .help("Mais ações para as imagens selecionadas")
-            Button("Adicionar imagens…", systemImage: "plus") { FilePanels.addFiles(to: app) }
-                .disabled(runner.isRunning)
-            Button("Limpar lista") { removeWithUndo(Set(app.inputs.map(\.url))) }
-                .disabled(runner.isRunning)
-        }
-        .buttonStyle(.borderless)
-        // Icon-only when the column gets narrow.
-        .labelStyle(AdaptiveLabelStyle())
-    }
-
-    // MARK: Selection
-
-    private func select(_ url: URL) {
-        listFocused = true
-        let flags = NSEvent.modifierFlags
-        let urls = app.inputs.map(\.url)
-        if flags.contains(.shift), let anchor, let a = urls.firstIndex(of: anchor), let b = urls.firstIndex(of: url) {
-            app.selection = Set(urls[min(a, b)...max(a, b)])
-        } else if flags.contains(.command) {
-            if app.selection.contains(url) { app.selection.remove(url) } else { app.selection.insert(url) }
-            anchor = url
-        } else {
-            app.selection = [url]
-            anchor = url
         }
     }
 
-    private func moveSelection(_ delta: Int) -> KeyPress.Result {
-        let urls = app.inputs.map(\.url)
-        guard !urls.isEmpty else { return .ignored }
-        let current = app.selection.compactMap { urls.firstIndex(of: $0) }
-        let next = min(max((delta > 0 ? current.max() : current.min()).map { $0 + delta } ?? 0, 0), urls.count - 1)
-        app.selection = [urls[next]]
-        anchor = urls[next]
-        return .handled
-    }
+    // MARK: Actions
 
-    // MARK: Removal with Undo
-
-    private func removeWithUndo(_ urls: Set<URL>) {
-        guard !urls.isEmpty, !runner.isRunning else { return }
-        let before = app.inputs
-        let selection = app.selection
-        undoManager?.registerUndo(withTarget: app) { model in
-            model.restore(before)
-            model.selection = selection
-        }
-        undoManager?.setActionName(urls.count == before.count ? String(localized: "Limpar lista") : String(localized: "Remover imagens"))
-        withAnimation(.snappy) { app.remove(urls) }
+    private func remove(_ urls: Set<URL>) {
+        ListEdits.remove(urls, from: app, undo: undoManager, running: runner.isRunning)
     }
 
     private func startGrouping(_ urls: Set<URL>) {
@@ -224,63 +103,76 @@ struct WorkspaceView: View {
     }
 
     @ViewBuilder
-    private func contextMenu(for url: URL) -> some View {
-        let urls = app.selection.contains(url) ? app.selection : [url]
-        Button("Pré-visualizar") { app.route = .conversionPreview(url) }
-            .disabled(!canPreview)
-        Button("Mostrar no Finder") { FilePanels.reveal(Array(urls)) }
-        if let output = runner.record(for: url), output.status == .done {
-            Button("Mostrar resultado no Finder") { FilePanels.reveal([output.output]) }
-        }
-        Divider()
-        Button("Agrupar em subpasta de saída…") { startGrouping(urls) }
-        let folders = Set(app.inputs.compactMap(\.virtualFolder)).sorted()
-        if !folders.isEmpty {
-            Menu("Mover para subpasta") {
-                ForEach(folders, id: \.self) { name in Button(name) { app.move(urls, toFolder: name) } }
+    private func contextMenu(for urls: Set<URL>) -> some View {
+        if urls.isEmpty {
+            Button("Adicionar imagens…") { FilePanels.addFiles(to: app) }
+        } else {
+            Button("Pré-visualizar") { if let url = urls.first { app.route = .conversionPreview(url) } }
+                .disabled(!canPreview)
+            Button("Mostrar no Finder") { FilePanels.reveal(Array(urls)) }
+            let done = urls.compactMap { runner.record(for: $0) }.filter { $0.status == .done }
+            if !done.isEmpty {
+                Button("Mostrar resultado no Finder") { FilePanels.reveal(done.map(\.output)) }
             }
+            Divider()
+            Button("Agrupar em subpasta de saída…") { startGrouping(urls) }
+            let folders = Set(app.inputs.compactMap(\.virtualFolder)).sorted()
+            if !folders.isEmpty {
+                Menu("Mover para subpasta") {
+                    ForEach(folders, id: \.self) { name in Button(name) { app.move(urls, toFolder: name) } }
+                }
+            }
+            if app.inputs.contains(where: { urls.contains($0.url) && $0.virtualFolder != nil }) {
+                Button("Tirar da subpasta") { app.move(urls, toFolder: nil) }
+            }
+            Divider()
+            Button("Remover", role: .destructive) { remove(urls) }
+                .disabled(runner.isRunning)
         }
-        if app.inputs.contains(where: { urls.contains($0.url) && $0.virtualFolder != nil }) {
-            Button("Tirar da subpasta") { app.move(urls, toFolder: nil) }
-        }
-        Divider()
-        Button("Remover") { removeWithUndo(urls) }
-            .disabled(runner.isRunning)
     }
 
     // MARK: Status bar
 
     private var statusBar: some View {
-        let total = app.totalBytes
-        return HStack(spacing: 8) {
+        HStack(spacing: 6) {
             Text(countText(app.inputs.count))
-            Text("•")
-            Text(app.inputs.isEmpty ? String(localized: "Pronto para começar") : String(localized: "\(formatBytes(total)) no total"))
-            if !app.selection.isEmpty { Text("· \(app.selection.count) selecionada(s)") }
+            if app.totalBytes > 0 { Text("·"); Text("\(formatBytes(app.totalBytes)) no total") }
+            if !app.selection.isEmpty { Text("·"); Text("\(app.selection.count) selecionada(s)") }
             if app.isScanning {
-                ProgressView().controlSize(.small)
+                ProgressView().controlSize(.mini)
                 Text("Lendo imagens…")
             }
             Spacer()
-            SortMenu()
         }
-        .font(.caption)
+        .font(.callout)
         .foregroundStyle(.secondary)
-        .padding(.horizontal, 24).padding(.vertical, 8)
+        .monospacedDigit()
+        .contentTransition(.numericText())
+        .animation(.snappy, value: app.inputs.count)
+        .padding(.horizontal, 16).padding(.vertical, 7)
     }
 
     private func countText(_ n: Int) -> String {
-        n == 1 ? String(localized: "1 imagem") : String(localized: "\(n) imagens")
+        switch n {
+        case 0: String(localized: "Nenhuma imagem")
+        case 1: String(localized: "1 imagem")
+        default: String(localized: "\(n) imagens")
+        }
     }
 }
 
-/// Icon + title when there is room; the icon alone otherwise.
-private struct AdaptiveLabelStyle: LabelStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        ViewThatFits(in: .horizontal) {
-            Label(configuration).labelStyle(.titleAndIcon)
-            configuration.icon
+/// List edits shared by the toolbar menu, the context menu and ⌫, all undoable.
+enum ListEdits {
+    static func remove(_ urls: Set<URL>, from app: AppModel, undo: UndoManager?, running: Bool) {
+        guard !urls.isEmpty, !running else { return }
+        let before = app.inputs
+        let selection = app.selection
+        undo?.registerUndo(withTarget: app) { model in
+            model.restore(before)
+            model.selection = selection
         }
+        undo?.setActionName(urls.count == before.count ? String(localized: "Limpar lista") : String(localized: "Remover imagens"))
+        withAnimation(.snappy) { app.remove(urls) }
     }
 }
 
@@ -306,9 +198,9 @@ extension ConvertMode {
     var title: LocalizedStringKey {
         switch self {
         case .convert: "Converter imagens"
-        case .compress: "Reduza o tamanho das imagens"
-        case .upscale: "Amplie com inteligência artificial"
-        case .rename: "Renomeie arquivos em lote"
+        case .compress: "Comprimir imagens"
+        case .upscale: "AI Upscale"
+        case .rename: "Renomear arquivos"
         }
     }
 
@@ -347,12 +239,9 @@ struct SortMenu: View {
             Toggle("Ordem decrescente", isOn: Binding(get: { app.state.sort.descending }, set: { app.setSort(InputSort(key: app.state.sort.key, descending: $0)) }))
                 .disabled(app.state.sort.key == .none)
         } label: {
-            Label(sortTitle, systemImage: "arrow.up.arrow.down")
+            Label("Ordenar", systemImage: "arrow.up.arrow.down")
         }
-        .menuStyle(.button)
-        .buttonStyle(.borderless)
-        .fixedSize()
-        .help("A ordem define a numeração sequencial ao renomear")
+        .help("Ordenar a lista: \(sortTitle). A ordem define a numeração sequencial ao renomear")
     }
 
     private var sortTitle: String {
@@ -366,4 +255,3 @@ struct SortMenu: View {
         return app.state.sort.descending && app.state.sort.key != .none ? "\(name) ↓" : name
     }
 }
-

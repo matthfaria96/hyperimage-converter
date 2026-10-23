@@ -10,12 +10,12 @@ struct TemplateField: View {
 
     var body: some View {
         @Bindable var app = app
-        VStack(alignment: .leading, spacing: 4) {
-            Text("Modelo").font(.callout.weight(.medium))
+        LabeledContent("Modelo") {
             HStack(spacing: 4) {
                 TextField("Modelo", text: $template)
                     .font(.body.monospaced())
                     .textFieldStyle(.roundedBorder)
+                    .labelsHidden()
                     .frame(maxWidth: .infinity)
                 Menu {
                     ForEach(app.state.renameTemplates, id: \.self) { t in Button(t) { template = t } }

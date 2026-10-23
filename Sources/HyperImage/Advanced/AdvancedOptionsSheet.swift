@@ -36,6 +36,7 @@ struct AdvancedOptionsSheet: View {
             footer
         }
         .frame(minWidth: 1080, minHeight: 680)
+        .animation(.snappy, value: step)
         .onAppear {
             draft = app.state.convert.advanced
             step = initialStep ?? app.state.lastAdvancedStep
@@ -47,17 +48,15 @@ struct AdvancedOptionsSheet: View {
 
     private var sidebar: some View {
         List(AdvancedStep.allCases, selection: Binding(get: { step }, set: { if let s = $0 { step = s } })) { item in
-            HStack {
+            Toggle(isOn: Binding(get: { item.isEnabled(in: draft) }, set: { draft = item.setting($0, in: draft) })) {
                 Label(item.title, systemImage: item.symbol)
-                Spacer()
-                if item.isEnabled(in: draft) {
-                    Circle().fill(.green).frame(width: 8, height: 8).help("Ativada")
-                }
             }
+            .toggleStyle(.switch)
+            .controlSize(.mini)
             .tag(item)
         }
         .listStyle(.sidebar)
-        .frame(width: 220)
+        .frame(width: 250)
     }
 
     private var enabledBinding: Binding<Bool> {

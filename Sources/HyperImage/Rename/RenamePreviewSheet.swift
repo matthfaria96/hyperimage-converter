@@ -8,8 +8,11 @@ struct RenamePreviewSheet: View {
     @State private var entries: [RenameEntry] = []
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Pré-visualização da renomeação").font(.title3.weight(.semibold))
+        let (changes, conflicts) = BatchRename.counts(entries)
+        VStack(spacing: 0) {
+            Text("Pré-visualização da renomeação").font(.headline)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 16).padding(.vertical, 12)
             Table(entries) {
                 TableColumn("Nº") { e in Text("\(e.number)").monospacedDigit().foregroundStyle(.secondary) }.width(40)
                 TableColumn("Pasta") { e in Text(e.source.deletingLastPathComponent().lastPathComponent).foregroundStyle(.secondary) }
@@ -21,12 +24,22 @@ struct RenamePreviewSheet: View {
                     }
                 }
             }
-            .overlay { if entries.isEmpty && !app.inputs.isEmpty { ProgressView() } }
+            .alternatingRowBackgrounds(.disabled)
+            .overlay {
+                if entries.isEmpty && !app.inputs.isEmpty { ProgressView() }
+            }
+            Divider()
             HStack {
-                let (changes, conflicts) = BatchRename.counts(entries)
-                (conflicts > 0 ? Text("\(changes) a renomear · \(conflicts) em conflito") : Text("\(changes) a renomear")).foregroundStyle(.secondary)
+                Label {
+                    conflicts > 0 ? Text("\(changes) a renomear · \(conflicts) em conflito") : Text("\(changes) a renomear")
+                } icon: {
+                    Image(systemName: conflicts > 0 ? "exclamationmark.triangle.fill" : "character.cursor.ibeam")
+                        .foregroundStyle(conflicts > 0 ? .orange : .secondary)
+                }
+                .foregroundStyle(.secondary)
+                .contentTransition(.numericText())
                 Spacer()
-                Button("Fechar", role: .cancel) { dismiss() }.keyboardShortcut(.cancelAction)
+                Button("Cancelar", role: .cancel) { dismiss() }.keyboardShortcut(.cancelAction)
                 Button("Renomear") {
                     app.applyRename(entries)
                     dismiss()
@@ -35,9 +48,11 @@ struct RenamePreviewSheet: View {
                 .buttonStyle(.borderedProminent)
                 .disabled(changes == 0)
             }
+            .padding(14)
+            .background(.bar)
         }
-        .padding(20)
-        .frame(minWidth: 760, minHeight: 480)
+        .frame(minWidth: 760, minHeight: 420)
+        .animation(.snappy, value: entries.count)
         .task {
             let files = app.inputs.map(\.url), settings = app.state.rename
             let work = Task.detached(priority: .userInitiated) {
