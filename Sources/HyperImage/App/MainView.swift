@@ -71,6 +71,8 @@ struct MainView: View {
         .onChange(of: app.startRequest) { startConversion() }
         .onChange(of: runner.openFolderWhenDone) { _, value in app.state.convert.openFolderWhenDone = value }
         .onAppear {
+            // AppKit focuses the first text field (the rename template) at launch; start with nothing focused.
+            DispatchQueue.main.async { NSApp.keyWindow?.makeFirstResponder(nil) }
             if browser == nil {
                 let model = BrowserModel(path: app.state.browserPath, filterName: app.state.filterName)
                 model.reload()
