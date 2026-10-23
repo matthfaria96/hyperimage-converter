@@ -34,6 +34,14 @@
 - [ ] **UX-04**: Pasta do navegador ausente mostra mensagem; ajustes que falham ao carregar avisam
 - [ ] **UX-05**: Smoke de UI (`scripts/ui-smoke.sh`) passa em todas as abas e folhas
 
+### Funções do FastStone (FS)
+
+- [ ] **FS-01**: Aba Renomear em lote (template, nº inicial, caixa da extensão, buscar e substituir com 3 pares + extensão + diferenciar maiúsculas, pré-visualização)
+- [ ] **FS-02**: Renomear a saída ao converter/comprimir com template e nº inicial
+- [ ] **FS-03**: Pré-visualização do arquivo selecionado (miniatura, L×A, KB, data)
+- [ ] **FS-04**: Detalhes do progresso (antigo/novo, proporção, economia, decorrido/restante)
+- [ ] **FS-05**: Etapas da edição avançada visíveis e ativáveis direto no painel
+
 ### Testes (TEST)
 
 - [ ] **TEST-01**: Testes cobrem parser com entradas hostis, saída in-place, limites de tamanho, desfazer e cancelamento do upscale
@@ -73,10 +81,15 @@
 | UX-04 | Phase 4 | Pending |
 | UX-05 | Phase 4 | Pending |
 | TEST-01 | Phase 4 | Pending |
+| FS-01 | Phase 02.1 | Pending |
+| FS-02 | Phase 02.1 | Pending |
+| FS-03 | Phase 02.1 | Pending |
+| FS-04 | Phase 02.1 | Pending |
+| FS-05 | Phase 02.1 | Pending |
 
 **Coverage:**
-- v1 requirements: 18 total
-- Mapped to phases: 18
+- v1 requirements: 23 total
+- Mapped to phases: 23
 - Unmapped: 0
 
 ---

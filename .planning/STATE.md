@@ -1,4 +1,18 @@
-
+---
+gsd_state_version: 1.0
+milestone: v1.0
+milestone_name: milestone
+status: planning
+stopped_at: Roadmap criado, pronto para `/gsd-plan-phase 1`
+last_updated: "2026-10-23T02:17:50.679Z"
+last_activity: 2026-10-20
+progress:
+  total_phases: 5
+  completed_phases: 1
+  total_plans: 4
+  completed_plans: 2
+  percent: 50
+---
 
 # Project State
 
@@ -21,9 +35,14 @@ Progress: [░░░░░░░░░░] 0%
 ## Performance Metrics
 
 **Velocity:**
+
 - Total plans completed: 2
 
 ## Accumulated Context
+
+### Roadmap Evolution
+
+- Phase 02.1 inserted after Phase 2: Usuário pediu de volta as funções do FastStone que sumiram com o layout simplificado (URGENT)
 
 ### Decisions
 

@@ -37,6 +37,23 @@ Milestone v1.0 "Polir e caçar bugs": tornar o app confiável em lote, sem perda
   4. `HYPERIMAGE_UPSCAYL` é ignorada em build release e só vale em debug
 **Plans**: TBD
 
+### Phase 02.1: Restaurar funções do FastStone no layout novo (INSERTED)
+
+**Goal:** Todas as funções do FastStone Photo Resizer (spec em `../Clones/FSResizer-spec/SPEC.md`) voltam a ser alcançáveis no layout novo de janela única, com o mesmo visual de cards
+**Requirements**: FS-01, FS-02, FS-03, FS-04, FS-05
+**Success Criteria** (what must be TRUE):
+  1. A aba "Renomear" no cabeçalho renomeia os originais por template (`#`, `*`, `$P`, `$Y $M $D $H $N $S`, nº inicial, caixa da extensão) ou por buscar e substituir, com pré-visualização Antigo → Novo antes de executar
+  2. Converter e Comprimir têm "Renomear a saída" com template e nº inicial; a ordem da lista define a numeração
+  3. O arquivo selecionado mostra miniatura, L×A, tamanho e data, com chave para ocultar
+  4. Durante e depois do lote aparecem tamanho antigo/novo, proporção, economia e tempo decorrido/restante
+  5. As 10 etapas da edição avançada aparecem no painel com chave individual, e o botão abre a etapa clicada
+  6. Textos novos em pt e en, testes do motor de renomeação e do fluxo passam, smoke de UI passa
+**Depends on:** Phase 2
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 02.1 to break down)
+
 ### Phase 3: Correção dos resultados
 **Goal**: O arquivo gerado corresponde ao que a interface prometeu, e falhas dizem o motivo real
 **Depends on**: Phase 2
