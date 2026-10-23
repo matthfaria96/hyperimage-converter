@@ -70,6 +70,21 @@ public struct BatchConverter: Sendable {
         }
     }
 
+    /// Same as `records(for:)`, but stops early and throws `CancellationError` when the current task is cancelled,
+    /// so a long list (every file is stat'ed, maybe date-read) does not hold up Cancel.
+    public func cancellableRecords(for items: [InputItem]) throws -> [ConversionRecord] {
+        let outputs = OutputPlanner.destinations(for: items, settings: settings, isCancelled: { Task.isCancelled })
+        var records: [ConversionRecord] = []
+        records.reserveCapacity(outputs.count)
+        for (index, pair) in zip(items, outputs).enumerated() {
+            try Task.checkCancellation()
+            records.append(ConversionRecord(id: index, input: pair.0.url, output: pair.1, status: .pending,
+                                            oldSize: Self.fileSize(pair.0.url), newSize: 0))
+        }
+        try Task.checkCancellation()
+        return records
+    }
+
     public func run(
         _ records: [ConversionRecord],
         askOverwrite: @escaping @Sendable (URL) async -> OverwriteDecision,

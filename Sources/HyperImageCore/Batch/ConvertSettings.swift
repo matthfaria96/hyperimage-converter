@@ -73,16 +73,21 @@ public enum OutputPlanner {
     /// With template names written next to the originals under "Substituir", files already on disk are skipped
     /// too: a template such as `Image#####` easily matches originals renamed earlier, and would overwrite them.
     /// "Pular" and "Perguntar" keep the plain name so the converter can skip it or ask about it.
+    /// When `isCancelled` returns true, planning stops and only the destinations planned so far are returned.
     public static func destinations(for items: [InputItem], settings: ConvertSettings,
                                     dates: (URL) -> Date = BatchConverter.fileDate,
-                                    exists: (URL) -> Bool = { FileManager.default.fileExists(atPath: $0.path) }) -> [URL] {
+                                    exists: (URL) -> Bool = { FileManager.default.fileExists(atPath: $0.path) },
+                                    isCancelled: () -> Bool = { false }) -> [URL] {
         // Every input (including the item's own file) is reserved, so an output never equals any input path:
         // same-format in-place runs get the next free "-N" name instead of overwriting the original.
         let inputPaths = items.map { $0.url.standardizedFileURL.path.lowercased() }
         var used = Set(inputPaths)
         let templated = settings.rename && settings.mode != .upscale
         let needsDate = templated && RenameTemplate.usesDate(settings.renameTemplate)
-        return items.enumerated().map { offset, item in
+        var planned: [URL] = []
+        planned.reserveCapacity(items.count)
+        for (offset, item) in items.enumerated() {
+            if isCancelled() { break }
             let format = settings.outputFormat(for: item.url)
             let ext = settings.uppercaseExtension ? format.fileExtension.uppercased() : format.fileExtension
             var folder = settings.outputFolderURL ?? item.url.deletingLastPathComponent()
@@ -109,7 +114,8 @@ public enum OutputPlanner {
                 counter += 1
             }
             used.insert(candidate.standardizedFileURL.path.lowercased())
-            return candidate
+            planned.append(candidate)
         }
+        return planned
     }
 }

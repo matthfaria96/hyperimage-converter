@@ -136,13 +136,16 @@ struct SummaryBox: View {
 
     private func statusText(now: Date) -> String {
         if runner.isRunning {
+            // Outputs are still being planned: there is no count to show yet.
+            if runner.records.isEmpty { return String(localized: "Preparando arquivos…") }
             let step = String(localized: "Processando \(min(runner.finishedCount + 1, runner.records.count)) de \(runner.records.count)")
             guard let left = runner.remaining(now: now) else { return step + "…" }
             return step + " · " + String(localized: "≈ \(Self.duration(left)) restantes")
         }
         if let failure = runner.failure { return failure }
+        // Checked before `hasResults`: a run cancelled while planning ends with no records.
+        if runner.wasCancelled { return String(localized: "Cancelado.") }
         if runner.hasResults {
-            if runner.wasCancelled { return String(localized: "Cancelado.") }
             let done = runner.doneCount
             if !runner.failures.isEmpty { return String(localized: "\(done) concluídas · \(runner.failures.count) com erro.") }
             return done == 1 ? String(localized: "1 imagem processada.") : String(localized: "\(done) imagens processadas.")
@@ -153,7 +156,8 @@ struct SummaryBox: View {
     private var statusColor: Color {
         if runner.isRunning { return .secondary }
         if runner.failure != nil { return .red }
-        if runner.hasResults { return runner.wasCancelled || !runner.failures.isEmpty ? .orange : .green }
+        if runner.wasCancelled { return .orange }
+        if runner.hasResults { return runner.failures.isEmpty ? .green : .orange }
         return .secondary
     }
 

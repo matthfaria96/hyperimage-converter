@@ -4211,6 +4211,16 @@
         }
       }
     },
+    "Preparando arquivos…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preparing files…"
+          }
+        }
+      }
+    },
     "Preserva detalhes e transparência, mas gera arquivos maiores." : {
       "localizations" : {
         "en" : {

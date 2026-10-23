@@ -60,12 +60,15 @@ final class ConversionRunner {
         endDate = nil
         task = Task {
             // Planning the outputs reads every file (size, maybe date): keep it off the main actor.
-            let queued = await Task.detached(priority: .userInitiated) { converter.records(for: items) }.value
+            // The detached task is not a child of this one, so forward Cancel to it explicitly.
+            let planning = Task.detached(priority: .userInitiated) { try converter.cancellableRecords(for: items) }
+            let planned = await withTaskCancellationHandler { await planning.result } onCancel: { planning.cancel() }
             guard run == generation else { return }
-            records = queued
-            indexByURL = Dictionary(queued.enumerated().map { ($1.input, $0) }, uniquingKeysWith: { _, last in last })
-            recount()
             do {
+                let queued = try planned.get()
+                records = queued
+                indexByURL = Dictionary(queued.enumerated().map { ($1.input, $0) }, uniquingKeysWith: { _, last in last })
+                recount()
                 try Task.checkCancellation()
                 try await converter.run(queued,
                                         askOverwrite: { url in await self.ask(url) },

@@ -248,6 +248,23 @@ struct OutputSafetyTests {
         #expect(out.map(\.path) == ["/f/Image00001.jpg", "/f/Image00002.jpg"])
     }
 
+    @Test func plannerStopsWhenCancelled() {
+        var checks = 0
+        let out = OutputPlanner.destinations(for: pair, settings: renameSettings("Foto#"),
+                                             isCancelled: { checks += 1; return checks > 1 })
+        #expect(out.map(\.path) == ["/out/Foto1.jpg"])
+    }
+
+    @Test func cancellableRecordsThrowWhenCancelled() async {
+        let converter = BatchConverter(settings: renameSettings("Foto#"))
+        let items = pair
+        let task = Task.detached {
+            withUnsafeCurrentTask { $0?.cancel() }
+            return try converter.cancellableRecords(for: items)
+        }
+        await #expect(throws: CancellationError.self) { try await task.value }
+    }
+
     @Test func outputFolderTemplateStillAsksAboutExistingFiles() {
         let out = OutputPlanner.destinations(for: pair, settings: renameSettings("Foto#"), exists: { _ in true })
         #expect(out.map(\.path) == ["/out/Foto1.jpg", "/out/Foto2.jpg"])
