@@ -17,7 +17,7 @@ struct SettingsPanel: View {
                 case .convert, .compress:
                     OutputSection(settings: settings)
                     ReductionSection(settings: settings)
-                    AdvancedEditSection(settings: settings)
+                    AdvancedStepsCard(settings: settings)
                 case .upscale:
                     UpscaleSection(settings: settings.upscale)
                 case .rename:
@@ -227,30 +227,6 @@ private struct ReductionSection: View {
     }
 }
 
-/// Advanced Options get their own card: what is set, whether it applies, and one button to edit.
-private struct AdvancedEditSection: View {
-    @Environment(AppModel.self) private var app
-    @Binding var settings: ConvertSettings
-
-    var body: some View {
-        PanelSection(title: "Edição avançada") {
-            if settings.advanced.hasEnabledStep {
-                ActiveStepsSummary(options: settings.advanced)
-                ToggleRow(title: "Aplicar estas etapas", isOn: $settings.useAdvancedOptions)
-                if !settings.useAdvancedOptions {
-                    Label("Desativado — as etapas não serão aplicadas.", systemImage: "pause.circle")
-                        .font(.caption).foregroundStyle(.orange)
-                }
-            } else {
-                Text("Redimensionar, cortar, girar, ajustar cores, texto, marca d'água e bordas.")
-                    .font(.caption).foregroundStyle(.secondary)
-            }
-            Button(settings.advanced.hasEnabledStep ? "Editar etapas…" : "Configurar…") { app.route = .advanced }
-                .help("⌘⇧A")
-        }
-    }
-}
-
 // MARK: - AI Upscale
 
 private struct UpscaleSection: View {
@@ -430,27 +406,6 @@ private struct OutputFolderRow: View {
             }
             .labelStyle(.iconOnly)
             .disabled(path.isEmpty)
-        }
-    }
-}
-
-/// Small capsules naming the enabled Advanced Options steps.
-struct ActiveStepsSummary: View {
-    let options: AdvancedOptions
-
-    var body: some View {
-        let steps = AdvancedStep.allCases.filter { $0.isEnabled(in: options) }
-        if steps.isEmpty {
-            Text("Nenhuma etapa ativada").font(.caption).foregroundStyle(.secondary)
-        } else {
-            FlowLayout(spacing: 6) {
-                ForEach(steps) { step in
-                    Label(step.title, systemImage: step.symbol)
-                        .font(.caption)
-                        .padding(.horizontal, 8).padding(.vertical, 3)
-                        .background(.tint.opacity(0.15), in: .capsule)
-                }
-            }
         }
     }
 }
