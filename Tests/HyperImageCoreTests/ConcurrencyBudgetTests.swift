@@ -140,7 +140,7 @@ final class ConcurrencyBudgetTests: XCTestCase {
         var s = settings(.convert)
         let plain = BatchConverter(settings: s, upscaler: nil, physicalMemory: 256 << 20)
         try XCTSkipIf(plain.maxConcurrency < 2, "needs at least two CPU workers to observe a shrink")
-        XCTAssertEqual(plain.workerLimit(for: records([small, small])), plain.maxConcurrency)
+        XCTAssertEqual(try plain.workerLimit(for: records([small, small])), plain.maxConcurrency)
 
         s.useAdvancedOptions = true
         s.advanced.resize.enabled = true
@@ -148,7 +148,7 @@ final class ConcurrencyBudgetTests: XCTestCase {
         s.advanced.resize.percentage = 1000
         // 6 MP outputs × 16 B = 96 MB per worker against a 64 MB budget: serial.
         let enlarged = BatchConverter(settings: s, upscaler: nil, physicalMemory: 256 << 20)
-        XCTAssertEqual(enlarged.workerLimit(for: records([small, small])), 1)
+        XCTAssertEqual(try enlarged.workerLimit(for: records([small, small])), 1)
     }
 
     // MARK: BatchConverter wiring (small image + injected tiny memory instead of a 50 MP file)
@@ -169,18 +169,45 @@ final class ConcurrencyBudgetTests: XCTestCase {
         let big = try writePNG(width: 2000, height: 1500, name: "big.png")
         let small = try writePNG(width: 30, height: 20, name: "small.png")
         let converter = BatchConverter(settings: settings(.convert), upscaler: nil, physicalMemory: 64 << 20)
-        XCTAssertEqual(converter.workerLimit(for: records([small, big, small])), 1)
+        XCTAssertEqual(try converter.workerLimit(for: records([small, big, small])), 1)
     }
 
     func testWorkerLimitKeepsCPUCapForSmallImages() throws {
         let small = try writePNG(width: 30, height: 20, name: "small.png")
         let converter = BatchConverter(settings: settings(.convert), upscaler: nil, physicalMemory: 16 * gib)
-        XCTAssertEqual(converter.workerLimit(for: records([small, small])), converter.maxConcurrency)
+        XCTAssertEqual(try converter.workerLimit(for: records([small, small])), converter.maxConcurrency)
+    }
+
+    func testWorkerLimitScanStopsWhenCancelled() async throws {
+        let small = try writePNG(width: 30, height: 20, name: "small.png")
+        let converter = BatchConverter(settings: settings(.convert), upscaler: nil, physicalMemory: 16 * gib)
+        try XCTSkipIf(converter.maxConcurrency < 2, "the scan only runs with more than one CPU worker")
+        let list = records(Array(repeating: small, count: 40))
+        let task = Task.detached { () throws -> Int in
+            withUnsafeCurrentTask { $0?.cancel() }
+            return try converter.workerLimit(for: list)
+        }
+        let result = await task.result
+        XCTAssertThrowsError(try result.get()) { XCTAssertTrue($0 is CancellationError) }
+    }
+
+    func testWorkerLimitIgnoresOutputsSkipExistingWillSkip() throws {
+        let big = try writePNG(width: 2000, height: 1500, name: "big.png")
+        let small = try writePNG(width: 30, height: 20, name: "small.png")
+        var s = settings(.convert)
+        s.skipExisting = true
+        let converter = BatchConverter(settings: s, upscaler: nil, physicalMemory: 64 << 20)
+        try XCTSkipIf(converter.maxConcurrency < 2, "needs at least two CPU workers to observe a shrink")
+        let list = records([small, big])
+        XCTAssertEqual(try converter.workerLimit(for: list), 1)
+        // The big file already has its output, so it will be skipped and must not shrink the budget.
+        try Data().write(to: list[1].output)
+        XCTAssertEqual(try converter.workerLimit(for: list), converter.maxConcurrency)
     }
 
     func testUpscaleAlwaysOneWorker() throws {
         let small = try writePNG(width: 30, height: 20, name: "small.png")
         let converter = BatchConverter(settings: settings(.upscale), upscaler: nil, physicalMemory: 1024 * gib)
-        XCTAssertEqual(converter.workerLimit(for: records([small])), 1)
+        XCTAssertEqual(try converter.workerLimit(for: records([small])), 1)
     }
 }

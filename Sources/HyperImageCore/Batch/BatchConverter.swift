@@ -46,12 +46,22 @@ public struct BatchConverter: Sendable {
 
     /// CPU cap (maxConcurrency) narrowed by the memory each file will need: decoded source, or the
     /// resized / enlarged output when the Advanced Options make it bigger, at the source's bit depth.
-    func workerLimit(for records: [ConversionRecord]) -> Int {
+    /// Reads one header per file, so it honours cancellation while it scans a long or slow list.
+    func workerLimit(for records: [ConversionRecord]) throws -> Int {
         guard maxConcurrency > 1 else { return 1 }
         let options = settings.effectiveAdvancedOptions
-        return ConcurrencyBudget.workers(footprints: records.map { ConcurrencyBudget.peakFootprint(of: $0.input, options: options) },
-                                         base: maxConcurrency, physicalMemory: physicalMemory)
+        // With "skip existing" these are skipped without a prompt and never take a worker.
+        let pending = settings.skipExisting
+            ? records.filter { !FileManager.default.fileExists(atPath: $0.output.path) } : records
+        let footprints = try pending.enumerated().map { index, record in
+            if index % Self.scanCancellationStride == 0 { try Task.checkCancellation() }
+            return ConcurrencyBudget.peakFootprint(of: record.input, options: options)
+        }
+        return ConcurrencyBudget.workers(footprints: footprints, base: maxConcurrency, physicalMemory: physicalMemory)
     }
+
+    /// Headers read between cancellation checks in `workerLimit(for:)`.
+    static let scanCancellationStride = 16
 
     public func records(for items: [InputItem]) -> [ConversionRecord] {
         let outputs = OutputPlanner.destinations(for: items, settings: settings)
@@ -67,7 +77,7 @@ public struct BatchConverter: Sendable {
     ) async throws {
         let pipeline = try ImagePipeline(options: settings.effectiveAdvancedOptions)
         var standing: OverwriteDecision? = settings.skipExisting ? .noToAll : nil
-        let limit = workerLimit(for: records)
+        let limit = try workerLimit(for: records)
         try await withThrowingTaskGroup(of: Void.self) { group in
             var running = 0
             for record in records {
