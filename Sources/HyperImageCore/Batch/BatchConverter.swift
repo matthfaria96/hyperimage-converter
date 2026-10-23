@@ -45,11 +45,11 @@ public struct BatchConverter: Sendable {
     }
 
     /// CPU cap (maxConcurrency) narrowed by the memory each file will need: decoded source, or the
-    /// resized / enlarged output when the Advanced Options make it bigger.
+    /// resized / enlarged output when the Advanced Options make it bigger, at the source's bit depth.
     func workerLimit(for records: [ConversionRecord]) -> Int {
         guard maxConcurrency > 1 else { return 1 }
         let options = settings.effectiveAdvancedOptions
-        return ConcurrencyBudget.workers(pixelCounts: records.map { ConcurrencyBudget.peakPixelCount(of: $0.input, options: options) },
+        return ConcurrencyBudget.workers(footprints: records.map { ConcurrencyBudget.peakFootprint(of: $0.input, options: options) },
                                          base: maxConcurrency, physicalMemory: physicalMemory)
     }
 

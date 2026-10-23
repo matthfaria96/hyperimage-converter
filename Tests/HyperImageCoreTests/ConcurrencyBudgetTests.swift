@@ -17,8 +17,8 @@ final class ConcurrencyBudgetTests: XCTestCase {
         try? FileManager.default.removeItem(at: dir)
     }
 
-    private func writePNG(width: Int, height: Int, name: String) throws -> URL {
-        let ctx = try XCTUnwrap(CGContext(data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 0,
+    private func writePNG(width: Int, height: Int, name: String, bitsPerComponent: Int = 8) throws -> URL {
+        let ctx = try XCTUnwrap(CGContext(data: nil, width: width, height: height, bitsPerComponent: bitsPerComponent, bytesPerRow: 0,
                                           space: CGColorSpaceCreateDeviceGray(), bitmapInfo: CGImageAlphaInfo.none.rawValue))
         let image = try XCTUnwrap(ctx.makeImage())
         let url = dir.appendingPathComponent(name)
@@ -67,6 +67,36 @@ final class ConcurrencyBudgetTests: XCTestCase {
         try Data("not an image".utf8).write(to: url)
         XCTAssertNil(ConcurrencyBudget.pixelCount(of: url))
         XCTAssertNil(ConcurrencyBudget.pixelCount(of: dir.appendingPathComponent("missing.png")))
+    }
+
+    // MARK: bit depth (16-bit and float sources decode 2-4x wider than 8-bit)
+
+    func testBytesPerPixelFollowsDepth() {
+        XCTAssertEqual(ConcurrencyBudget.bytesPerPixel(depth: 8, isFloat: false), 4)
+        XCTAssertEqual(ConcurrencyBudget.bytesPerPixel(depth: nil, isFloat: false), 4)
+        XCTAssertEqual(ConcurrencyBudget.bytesPerPixel(depth: 1, isFloat: false), 4)
+        XCTAssertEqual(ConcurrencyBudget.bytesPerPixel(depth: 14, isFloat: false), 8)
+        XCTAssertEqual(ConcurrencyBudget.bytesPerPixel(depth: 16, isFloat: false), 8)
+        XCTAssertEqual(ConcurrencyBudget.bytesPerPixel(depth: 16, isFloat: true), 8)
+        XCTAssertEqual(ConcurrencyBudget.bytesPerPixel(depth: 32, isFloat: true), 16)
+        XCTAssertEqual(ConcurrencyBudget.bytesPerPixel(depth: nil, isFloat: true), 16)
+        XCTAssertEqual(ConcurrencyBudget.bytesPerPixel(depth: 64, isFloat: true), 16)
+    }
+
+    func testWiderPixelsShrinkWorkers() {
+        let eight = ConcurrencyBudget.Footprint(pixels: 24_000_000)
+        let sixteen = ConcurrencyBudget.Footprint(pixels: 24_000_000, bytesPerPixel: 8)
+        XCTAssertEqual(ConcurrencyBudget.workers(footprints: [eight], base: 6, physicalMemory: 8 * gib), 5)
+        XCTAssertEqual(ConcurrencyBudget.workers(footprints: [eight, sixteen], base: 6, physicalMemory: 8 * gib), 2)
+    }
+
+    func testHeaderReadsSixteenBitDepth() throws {
+        let eight = try writePNG(width: 300, height: 200, name: "eight.png")
+        let sixteen = try writePNG(width: 300, height: 200, name: "sixteen.png", bitsPerComponent: 16)
+        XCTAssertEqual(ConcurrencyBudget.peakFootprint(of: eight, options: AdvancedOptions()),
+                       ConcurrencyBudget.Footprint(pixels: 60_000, bytesPerPixel: 4))
+        XCTAssertEqual(ConcurrencyBudget.peakFootprint(of: sixteen, options: AdvancedOptions()),
+                       ConcurrencyBudget.Footprint(pixels: 60_000, bytesPerPixel: 8))
     }
 
     // MARK: planned output size (resize / canvas / border can make the output much bigger than the source)
