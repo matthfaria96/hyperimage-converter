@@ -7,7 +7,7 @@ Milestone v1.0 "Polir e caçar bugs": tornar o app confiável em lote, sem perda
 ## Phases
 
 - [x] **Phase 1: Segurança de dados e entradas hostis** - Originais nunca sobrescritos por engano; arquivos de opções malformados não derrubam o app (completed 2026-10-20)
-- [ ] **Phase 2: Recursos e ciclo de vida** - Lotes grandes sem estourar memória, sair do app encerra o upscale, build limpo
+- [x] **Phase 2: Recursos e ciclo de vida** - Lotes grandes sem estourar memória, sair do app encerra o upscale, build limpo (completed 2026-10-23)
 - [ ] **Phase 3: Correção dos resultados** - O resultado corresponde ao que a interface promete (limite de tamanho, modo Comprimir, erros claros)
 - [ ] **Phase 4: UX, estado e testes finais** - Resultados e desfazer coerentes, folhas sem conflito, smoke de UI e cobertura de testes
 
@@ -83,7 +83,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Segurança de dados e entradas hostis | 2/2 | Complete    | 2026-10-20 |
-| 2. Recursos e ciclo de vida | 0/0 | Not started | - |
+| 2. Recursos e ciclo de vida | 2/2 | Complete    | 2026-10-23 |
 | 3. Correção dos resultados | 0/0 | Not started | - |
 | 4. UX, estado e testes finais | 0/0 | Not started | - |
 

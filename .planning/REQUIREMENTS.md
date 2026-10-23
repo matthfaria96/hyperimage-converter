@@ -15,16 +15,16 @@
 
 - [x] **ROB-01**: Arquivos `.ccf`/`.hyperoptions` malformados (NaN, Inf, valores enormes) nunca derrubam o app; mostram erro
 - [x] **ROB-02**: Dimensões vindas de opções são limitadas a valores seguros
-- [ ] **ROB-03**: Lotes grandes de imagens de alta resolução não estouram memória (orçamento de concorrência por tamanho)
-- [ ] **ROB-04**: Sair do app durante o AI Upscale encerra o `upscayl-bin`
-- [ ] **ROB-05**: Build sem warnings (incluindo ConversionRunner.swift:49)
+- [x] **ROB-03**: Lotes grandes de imagens de alta resolução não estouram memória (orçamento de concorrência por tamanho)
+- [x] **ROB-04**: Sair do app durante o AI Upscale encerra o `upscayl-bin`
+- [x] **ROB-05**: Build sem warnings (incluindo ConversionRunner.swift:49)
 
 ### Correção (CORR)
 
 - [ ] **CORR-01**: "Limitar tamanho do arquivo" é respeitado ou o usuário é avisado quando não dá (formatos sem perdas, crop sem perdas, qualidade mínima)
 - [ ] **CORR-02**: Modo Comprimir não troca o formato silenciosamente; o texto da UI corresponde ao comportamento
 - [ ] **CORR-03**: Mensagens de erro específicas (crop, WebP, backend do upscale ausente uma vez só)
-- [ ] **CORR-04**: Variável de ambiente `HYPERIMAGE_UPSCAYL` só vale em build de debug
+- [x] **CORR-04**: Variável de ambiente `HYPERIMAGE_UPSCAYL` só vale em build de debug
 
 ### UX e estado (UX)
 
@@ -68,10 +68,10 @@
 | SAFE-03 | Phase 1 | Complete |
 | ROB-01 | Phase 1 | Complete |
 | ROB-02 | Phase 1 | Complete |
-| ROB-03 | Phase 2 | Pending |
-| ROB-04 | Phase 2 | Pending |
-| ROB-05 | Phase 2 | Pending |
-| CORR-04 | Phase 2 | Pending |
+| ROB-03 | Phase 2 | Complete |
+| ROB-04 | Phase 2 | Complete |
+| ROB-05 | Phase 2 | Complete |
+| CORR-04 | Phase 2 | Complete |
 | CORR-01 | Phase 3 | Pending |
 | CORR-02 | Phase 3 | Pending |
 | CORR-03 | Phase 3 | Pending |

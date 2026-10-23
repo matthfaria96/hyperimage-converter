@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: planning
+status: ready_to_plan
 stopped_at: Roadmap criado, pronto para `/gsd-plan-phase 1`
 last_updated: "2026-10-23T02:17:50.679Z"
 last_activity: 2026-10-20
 progress:
   total_phases: 5
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 4
   completed_plans: 2
-  percent: 50
+  percent: 40
 ---
 
 # Project State
@@ -25,10 +25,10 @@ See: .planning/PROJECT.md (updated 2026-10-20)
 
 ## Current Position
 
-Phase: 2 of 4 (recursos e ciclo de vida)
+Phase: 02.1 of 4 (restaurar fun es do faststone no layout novo)
 Plan: Not started
 Status: Ready to plan
-Last activity: 2026-10-20
+Last activity: 2026-10-23
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -36,7 +36,7 @@ Progress: [░░░░░░░░░░] 0%
 
 **Velocity:**
 
-- Total plans completed: 2
+- Total plans completed: 4
 
 ## Accumulated Context
 
