@@ -31,7 +31,9 @@ struct EmptyDropZone: View {
         }
         .padding(40)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background { DropZoneFrame(targeted: targeted).padding(24) }
+        .background {
+            if targeted { DropZoneFrame(targeted: true).padding(24).transition(.opacity.combined(with: .scale(scale: 0.98))) }
+        }
         .animation(.spring(response: 0.38, dampingFraction: 0.7), value: targeted)
     }
 }
@@ -110,37 +112,40 @@ private struct DropZoneFrame: View {
     }
 }
 
-/// Slim glass bar above a non-empty list: a drop target and the Add button.
+/// Slim glass hint above a non-empty list: a drop target that also opens the file panel when clicked.
 struct CompactDropZone: View {
     let targeted: Bool
     let addFiles: () -> Void
+    @State private var hovering = false
 
     var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: targeted ? "arrow.down.circle.fill" : "square.and.arrow.down")
-                .font(.title2)
-                .foregroundStyle(.tint)
-                .contentTransition(.symbolEffect(.replace))
-                .symbolEffect(.bounce, value: targeted)
-                .frame(width: 28)
-            VStack(alignment: .leading, spacing: 1) {
-                Text(targeted ? "Solte para adicionar" : "Arraste mais imagens para cá").font(.headline)
+        Button(action: addFiles) {
+            HStack(spacing: 10) {
+                Image(systemName: targeted ? "arrow.down.circle.fill" : "plus.circle")
+                    .font(.title3)
+                    .foregroundStyle(.tint)
+                    .contentTransition(.symbolEffect(.replace))
+                    .symbolEffect(.bounce, value: targeted)
+                Text(targeted ? "Solte para adicionar" : "Arraste imagens ou pastas, ou clique para escolher")
+                    .foregroundStyle(targeted || hovering ? .primary : .secondary)
+                    .lineLimit(1)
                     .contentTransition(.opacity)
-                Text("JPG, PNG, WebP, HEIC, TIFF, RAW e pastas").font(.callout).foregroundStyle(.secondary)
+                Spacer(minLength: 0)
             }
-            Spacer()
-            Button("Adicionar…", systemImage: "plus", action: addFiles)
-                .buttonStyle(.glass)
+            .padding(.horizontal, 14).padding(.vertical, 9)
+            .contentShape(.rect)
         }
-        .padding(.horizontal, 14).padding(.vertical, 10)
-        .glassEffect(.regular.tint(targeted ? Color.accentColor.opacity(0.25) : nil), in: .rect(cornerRadius: 16))
+        .buttonStyle(.plain)
+        .glassEffect(.regular.tint(targeted ? Color.accentColor.opacity(0.25) : nil).interactive(), in: .capsule)
         .overlay {
             if targeted {
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .strokeBorder(Color.accentColor, style: StrokeStyle(lineWidth: 2, dash: [6, 5]))
+                Capsule().strokeBorder(Color.accentColor, style: StrokeStyle(lineWidth: 2, dash: [6, 5]))
                     .transition(.opacity)
             }
         }
+        .onHover { hovering = $0 }
         .animation(.spring(response: 0.35, dampingFraction: 0.75), value: targeted)
+        .animation(.easeOut(duration: 0.15), value: hovering)
+        .help("Adicionar imagens (⌘O)")
     }
 }

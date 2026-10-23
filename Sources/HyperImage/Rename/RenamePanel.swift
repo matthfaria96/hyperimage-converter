@@ -13,6 +13,7 @@ struct RenamePanel: View {
             }
             .pickerStyle(.segmented)
             .labelsHidden()
+            .frame(maxWidth: .infinity)
         } header: {
             Text("Método")
         }

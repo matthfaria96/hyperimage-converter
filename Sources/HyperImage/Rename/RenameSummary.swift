@@ -37,8 +37,7 @@ struct RenameSummary: View {
 
             if !app.lastRename.isEmpty {
                 Button("Desfazer renomeação (\(app.lastRename.count))", systemImage: "arrow.uturn.backward") { app.undoLastRename() }
-                    .buttonStyle(.glass)
-                    .controlSize(.small)
+                    .buttonStyle(.borderless)
                     .frame(maxWidth: .infinity)
                     .transition(.blurReplace)
             }

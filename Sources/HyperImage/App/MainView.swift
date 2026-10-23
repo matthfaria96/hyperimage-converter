@@ -36,7 +36,7 @@ struct MainView: View {
         HStack(spacing: 0) {
             if showBrowser, let browser {
                 BrowserView(browser: browser)
-                    .frame(width: 290)
+                    .frame(width: 260)
                     .background(.background.secondary)
                     .transition(.move(edge: .leading).combined(with: .opacity))
                 Divider()
@@ -44,7 +44,7 @@ struct MainView: View {
             HStack(spacing: 0) {
                 WorkspaceView(runner: runner, canPreview: canPreview,
                               browse: { withAnimation(.snappy) { showBrowser = true } })
-                    .frame(minWidth: 460)
+                    .frame(minWidth: 380)
                 if showOptions {
                     Divider()
                     SettingsPanel(runner: runner, start: startConversion)

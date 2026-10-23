@@ -61,7 +61,7 @@ struct WorkspaceView: View {
         @Bindable var app = app
         return VStack(spacing: 0) {
             CompactDropZone(targeted: dropTargeted) { FilePanels.addFiles(to: app) }
-                .padding(.horizontal, 16).padding(.top, 12).padding(.bottom, 6)
+                .padding(.horizontal, 16).padding(.top, 10).padding(.bottom, 4)
             List(selection: $app.selection) {
                 ForEach(app.inputs) { item in
                     FileRow(item: item, record: runner.record(for: item.url), isRunning: runner.isRunning,

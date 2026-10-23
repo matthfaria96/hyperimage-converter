@@ -13,21 +13,25 @@ struct SummaryBox: View {
     var body: some View {
         let mode = app.state.convert.mode
         VStack(alignment: .leading, spacing: 12) {
-            VStack(alignment: .leading, spacing: 3) {
-                HStack {
-                    Text(finished ? "Resultado" : "Estimativa").font(.subheadline.weight(.semibold)).foregroundStyle(.secondary)
-                    Spacer()
-                    Text(countText).font(.subheadline).foregroundStyle(.secondary)
+            if !app.inputs.isEmpty {
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack {
+                        Text(finished ? "Resultado" : "Estimativa").font(.subheadline.weight(.semibold)).foregroundStyle(.secondary)
+                        Spacer()
+                        Text(countText).font(.subheadline).foregroundStyle(.secondary)
+                            .contentTransition(.numericText())
+                    }
+                    Text(headline).font(.title.weight(.semibold)).monospacedDigit()
                         .contentTransition(.numericText())
+                        .animation(.snappy, value: headline)
+                        .redacted(reason: estimate == nil && !finished ? .placeholder : [])
+                    Text(detail).font(.callout).foregroundStyle(.secondary).lineLimit(2)
+                        .contentTransition(.opacity)
+                        .animation(.snappy, value: detail)
                 }
-                Text(headline).font(.title.weight(.semibold)).monospacedDigit()
-                    .contentTransition(.numericText())
-                    .animation(.snappy, value: headline)
-                Text(detail).font(.callout).foregroundStyle(.secondary).lineLimit(2)
-                    .contentTransition(.opacity)
-                    .animation(.snappy, value: detail)
+                .accessibilityElement(children: .combine)
+                .transition(.blurReplace)
             }
-            .accessibilityElement(children: .combine)
 
             if runner.isRunning || runner.hasResults {
                 ProgressStats(runner: runner)
@@ -55,7 +59,7 @@ struct SummaryBox: View {
                 .help("⌘↩")
                 .transition(.blurReplace)
                 if finished && !runner.wasCancelled {
-                    HStack(spacing: 8) {
+                    HStack(spacing: 16) {
                         if runner.doneCount > 0 {
                             Button("Mostrar no Finder", systemImage: "folder") {
                                 FilePanels.reveal(runner.records.filter { $0.status == .done }.map(\.output))
@@ -65,11 +69,10 @@ struct SummaryBox: View {
                             Button("Ver erros (\(runner.failures.count))", systemImage: "exclamationmark.triangle") {
                                 app.route = .errors
                             }
-                            .tint(.orange)
+                            .foregroundStyle(.orange)
                         }
                     }
-                    .buttonStyle(.glass)
-                    .controlSize(.small)
+                    .buttonStyle(.borderless)
                     .frame(maxWidth: .infinity)
                     .transition(.blurReplace)
                 }
@@ -78,6 +81,7 @@ struct SummaryBox: View {
         }
         .animation(.snappy, value: runner.isRunning)
         .animation(.snappy, value: runner.hasResults)
+        .animation(.snappy, value: app.inputs.isEmpty)
         .sensoryFeedback(.success, trigger: runner.completionID) { _, _ in finished && runner.failures.isEmpty && !runner.wasCancelled }
         .task(id: EstimateKey(app.state.convert, revision: app.inputsRevision)) {
             try? await Task.sleep(for: .milliseconds(450))
@@ -104,7 +108,7 @@ struct SummaryBox: View {
 
     private var headline: String {
         if finished && runner.newTotal > 0 { return formatBytes(runner.newTotal) }
-        guard !app.inputs.isEmpty, let estimate else { return "—" }
+        guard !app.inputs.isEmpty, let estimate else { return "≈ 000 KB" }
         if let size = estimate.upscaledSize { return "\(String(size.width)) × \(String(size.height))" }
         return estimate.bytes.map { "≈ " + formatBytes($0) } ?? "—"
     }
