@@ -1,5 +1,5 @@
 import Foundation
-import HyperImageCore
+@testable import HyperImageCore
 import Testing
 @testable import HyperImage
 
@@ -283,5 +283,45 @@ struct AdvancedStepToggleTests {
     @Test func routeIDs() {
         #expect(SheetRoute.advanced(.crop).id == "advanced-crop")
         #expect(SheetRoute.advanced(nil).id == "advanced")
+    }
+}
+
+struct HistoryStoreTests {
+    /// Records for `count` fake files, each with the given status.
+    private func records(_ statuses: [ConversionStatus]) -> [ConversionRecord] {
+        var settings = ConvertSettings()
+        settings.outputFolder = "/out"
+        let items = statuses.indices.map { InputItem(url: URL(fileURLWithPath: "/in/\($0).png")) }
+        return zip(BatchConverter(settings: settings).records(for: items), statuses).map { record, status in
+            var r = record.with(status: status)
+            r.newSize = status == .done ? 400 : 0
+            return r
+        }
+    }
+
+    @Test func keepsDoneAndFailedNewestFirstAndSurvivesRelaunch() throws {
+        let ws = try Workspace()
+        let file = ws.root.appendingPathComponent("history.json")
+        let store = HistoryStore(file: file)
+        store.record(records([.done, .skipped, .failed("x")]), mode: .compress)
+        store.record(records([.done]), mode: .convert)
+        #expect(store.entries.count == 3)
+        #expect(store.batches.count == 2)
+        #expect(store.batches[0].first?.mode == .convert)
+        #expect(store.latestBatch == store.batches[0].first?.batch)
+
+        let reopened = HistoryStore(file: file)
+        #expect(reopened.entries == store.entries)
+        reopened.remove([reopened.entries[0].id])
+        #expect(HistoryStore(file: file).entries.count == 2)
+        reopened.clear()
+        #expect(HistoryStore(file: file).entries.isEmpty)
+    }
+
+    @Test func isCapped() throws {
+        let ws = try Workspace()
+        let store = HistoryStore(file: ws.root.appendingPathComponent("h.json"))
+        store.record(records(Array(repeating: .done, count: HistoryStore.limit + 20)), mode: .convert)
+        #expect(store.entries.count == HistoryStore.limit)
     }
 }

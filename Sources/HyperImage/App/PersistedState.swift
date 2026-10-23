@@ -1,14 +1,9 @@
 import Foundation
 import HyperImageCore
 
-enum AppearanceChoice: String, Codable, CaseIterable {
-    case system, light, dark
-}
-
 /// Everything restored on the next launch.
 struct PersistedState: Codable, Equatable {
     var convert = ConvertSettings()
-    var appearance = AppearanceChoice.system
     var sort = InputSort()
     var showPreview = true
     var lastAdvancedStep = AdvancedStep.resize
@@ -27,8 +22,14 @@ struct PersistedState: Codable, Equatable {
         return decoded.normalized()
     }
 
-    /// Hook for fixing up values a stored state may hold; nothing needs it at the moment.
-    func normalized() -> PersistedState { self }
+    /// Options that no longer have a switch keep the behaviour the app now always uses.
+    func normalized() -> PersistedState {
+        var copy = self
+        copy.convert.parallel = true
+        copy.convert.showErrors = true
+        copy.convert.uppercaseExtension = false
+        return copy
+    }
 
     func save() {
         guard let data = try? JSONEncoder().encode(self) else { return }

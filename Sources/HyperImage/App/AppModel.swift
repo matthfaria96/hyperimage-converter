@@ -17,6 +17,8 @@ final class AppModel {
     private(set) var totalBytes: Int64 = 0
     @ObservationIgnored private var totalTask: Task<Void, Never>?
     var selection: Set<URL> = []
+    /// Finished batches, kept across launches.
+    let history = HistoryStore()
     var alert: AppAlert?
     /// Sheet shown over the main window; menu commands set it too.
     var route: SheetRoute?

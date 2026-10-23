@@ -1,4 +1,5 @@
 import Foundation
+import ImageIO
 
 public enum ConvertMode: String, Codable, CaseIterable, Sendable {
     case convert, compress, upscale
@@ -36,10 +37,11 @@ extension OutputFormat {
 
 /// Comprimir's three levels; the slider can still pick any quality in between.
 public enum CompressionLevel: String, CaseIterable, Sendable {
-    case light, balanced, strong
+    case lossless, light, balanced, strong
 
     public var quality: Int {
         switch self {
+        case .lossless: 100
         case .light: 85
         case .balanced: 72
         case .strong: 50
@@ -124,6 +126,10 @@ extension ConvertSettings {
             settings = settings.with(quality: Self.fullQualityLevel, for: format)
         case .compress:
             settings = OutputFormat.lossyFormats.reduce(settings) { $0.with(quality: compressQuality, for: $1) }
+            settings.jpeg.keepMetadata = !stripMetadata
+            settings.heic.keepMetadata = !stripMetadata
+            settings.avif.keepMetadata = !stripMetadata
+            settings.jpeg.optimizeHuffman = true
         default:
             break
         }
@@ -141,7 +147,51 @@ extension ConvertSettings {
 /// Encodes one loaded file with everything the settings ask for, including the file-size target.
 public enum OutputEncoder {
     public static func encode(_ loaded: LoadedImage, pipeline: ImagePipeline, settings: ConvertSettings) throws -> EncodedOutput {
+        let output = try encodeAsAsked(loaded, pipeline: pipeline, settings: settings)
+        guard settings.mode == .compress else { return output }
+        return keepOriginalIfSmaller(output, loaded: loaded, settings: settings)
+    }
+
+    /// Comprimir never hands back a bigger file than the one it was given. The original bytes win instead,
+    /// except when metadata must go: then a JPEG is rewritten losslessly without it, and other formats keep
+    /// the (larger) clean output, since handing back the original would leak the location it was asked to remove.
+    static func keepOriginalIfSmaller(_ output: EncodedOutput, loaded: LoadedImage, settings: ConvertSettings) -> EncodedOutput {
         let format = settings.outputFormat(for: loaded.url)
+        guard OutputFormat.matching(loaded.url) == format, loaded.fileSize > 0, Int64(output.data.count) >= loaded.fileSize else {
+            return output
+        }
+        if settings.stripMetadata {
+            var lossless = settings
+            lossless.compressQuality = CompressionLevel.lossless.quality
+            if format == .jpeg, let clean = losslessJPEG(loaded, settings: lossless), clean.data.count < output.data.count {
+                return clean
+            }
+            return output
+        }
+        guard let original = try? Data(contentsOf: loaded.url, options: .mappedIfSafe) else { return output }
+        return EncodedOutput(data: original, pixelSize: loaded.image.pixelSize, image: nil)
+    }
+
+    /// "Sem perdas" for JPEG: rewrite the DCT data with optimised Huffman tables, without decoding the pixels.
+    /// Markers are dropped only when the image is upright, since the orientation lives in EXIF.
+    static func losslessJPEG(_ loaded: LoadedImage, settings: ConvertSettings) -> EncodedOutput? {
+        guard settings.mode == .compress, settings.compressQuality >= CompressionLevel.lossless.quality,
+              loaded.sourceType == "public.jpeg",
+              let data = try? Data(contentsOf: loaded.url, options: .mappedIfSafe) else { return nil }
+        let upright = (loaded.properties.raw[kCGImagePropertyOrientation] as? Int ?? 1) == 1
+        let size = loaded.image.pixelSize
+        let rect = PixelRect(x: 0, y: 0, width: size.width, height: size.height)
+        guard let out = try? LibJPEG.losslessCrop(data, rect: rect, keepMarkers: !(settings.stripMetadata && upright),
+                                                  progressive: false, dpiX: 0, dpiY: 0) else { return nil }
+        return EncodedOutput(data: out, pixelSize: size, image: nil)
+    }
+
+    private static func encodeAsAsked(_ loaded: LoadedImage, pipeline: ImagePipeline, settings: ConvertSettings) throws -> EncodedOutput {
+        let format = settings.outputFormat(for: loaded.url)
+        if format == .jpeg, let lossless = losslessJPEG(loaded, settings: settings),
+           settings.maxFileSizeBytes.map({ lossless.data.count <= $0 }) ?? true {
+            return lossless
+        }
         let formatSettings = settings.effectiveFormatSettings
         let first = try pipeline.encode(loaded, format: format, settings: formatSettings)
         guard let limit = settings.maxFileSizeBytes, first.data.count > limit,

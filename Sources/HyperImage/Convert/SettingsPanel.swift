@@ -210,7 +210,6 @@ private enum ExistingFilePolicy: Hashable {
 struct SaveSection: View {
     @Environment(AppModel.self) private var app
     @Binding var settings: ConvertSettings
-    @State private var showMore = false
 
     var body: some View {
         Section("Salvar") {
@@ -237,17 +236,8 @@ struct SaveSection: View {
                 Text("Pular").tag(ExistingFilePolicy.skip)
                 Text("Substituir").tag(ExistingFilePolicy.replace)
             }
-        }
-        Section {
-            DisclosureGroup("Mais opções", isExpanded: $showMore.animation(.snappy)) {
-                Toggle("Extensão em maiúsculas (.JPG)", isOn: $settings.uppercaseExtension)
-                Toggle("Manter data e hora originais", isOn: $settings.keepDates)
-                Toggle("Abrir a lista de erros ao terminar", isOn: $settings.showErrors)
-                if settings.mode != .upscale {
-                    Toggle("Processar várias imagens ao mesmo tempo", isOn: $settings.parallel)
-                }
-                Toggle("Abrir a pasta ao concluir", isOn: $settings.openFolderWhenDone)
-            }
+            Toggle("Manter data e hora originais", isOn: $settings.keepDates)
+            Toggle("Abrir a pasta ao concluir", isOn: $settings.openFolderWhenDone)
         }
     }
 }
@@ -255,11 +245,11 @@ struct SaveSection: View {
 extension OutputFormat {
     var menuTitle: String {
         switch self {
-        case .jpeg: String(localized: "JPEG — menor tamanho")
-        case .webp: String(localized: "WebP — moderno e leve")
+        case .jpeg: String(localized: "JPEG — abre em qualquer lugar")
+        case .webp: String(localized: "WebP — ideal para sites")
         case .png: String(localized: "PNG — sem perdas")
         case .heic: String(localized: "HEIC — padrão da Apple")
-        case .avif: String(localized: "AVIF — máxima compressão")
+        case .avif: String(localized: "AVIF — o mais moderno")
         case .gif: String(localized: "GIF — animações e ícones")
         case .tiff: String(localized: "TIFF — impressão e edição")
         case .bmp: String(localized: "BMP — compatibilidade")

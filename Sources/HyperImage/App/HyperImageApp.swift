@@ -12,11 +12,7 @@ struct HyperImageApp: App {
             MainView()
                 .environment(model)
                 .frame(minWidth: 1080, minHeight: 640)
-                .onAppear {
-                    delegate.model = model
-                    applyAppearance(model.state.appearance)
-                }
-                .onChange(of: model.state.appearance) { _, choice in applyAppearance(choice) }
+                .onAppear { delegate.model = model }
         }
         .defaultSize(width: 1360, height: 820)
         .commands { AppCommands(model: model) }
@@ -26,14 +22,6 @@ struct HyperImageApp: App {
         }
         .windowResizability(.contentSize)
         .restorationBehavior(.disabled)
-    }
-
-    private func applyAppearance(_ choice: AppearanceChoice) {
-        NSApp.appearance = switch choice {
-        case .system: nil
-        case .light: NSAppearance(named: .aqua)
-        case .dark: NSAppearance(named: .darkAqua)
-        }
     }
 }
 
@@ -91,7 +79,7 @@ struct AppCommands: Commands {
                 .disabled(model.isBusy)
         }
         CommandMenu("Imagens") {
-            Button("Converter") { model.startRequest += 1 }
+            Button(model.state.convert.mode.actionTitle) { model.startRequest += 1 }
                 .keyboardShortcut(.return, modifiers: .command)
                 .disabled(model.inputs.isEmpty || model.isBusy)
             Divider()
@@ -114,14 +102,6 @@ struct AppCommands: Commands {
             Button("Modo AI Upscale") { model.state.convert.mode = .upscale }
                 .keyboardShortcut("3")
                 .disabled(model.isBusy)
-        }
-        CommandMenu("Aparência") {
-            Picker("Aparência", selection: Binding(get: { model.state.appearance }, set: { model.state.appearance = $0 })) {
-                Text("Automática").tag(AppearanceChoice.system)
-                Text("Clara").tag(AppearanceChoice.light)
-                Text("Escura").tag(AppearanceChoice.dark)
-            }
-            .pickerStyle(.inline)
         }
     }
 }

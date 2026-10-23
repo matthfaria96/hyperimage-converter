@@ -84,6 +84,7 @@ enum DebugLaunch {
         switch env["HYPERIMAGE_SHEET"] {
         case "advanced": return .advanced(env["HYPERIMAGE_STEP"].flatMap(AdvancedStep.init(rawValue:)))
         case "format": return .formatSettings
+        case "history": return .history
         case "preview": return app.inputs.first.map { .conversionPreview($0.url) }
         default: return nil
         }

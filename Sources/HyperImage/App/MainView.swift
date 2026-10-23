@@ -2,7 +2,7 @@ import HyperImageCore
 import SwiftUI
 
 enum SheetRoute: Identifiable {
-    case formatSettings, advanced(AdvancedStep?), conversionPreview(URL), errors
+    case formatSettings, advanced(AdvancedStep?), conversionPreview(URL), errors, history
 
     var id: String {
         switch self {
@@ -10,6 +10,7 @@ enum SheetRoute: Identifiable {
         case let .advanced(step): step.map { "advanced-\($0.rawValue)" } ?? "advanced"
         case let .conversionPreview(url): "preview-\(url.path)"
         case .errors: "errors"
+        case .history: "history"
         }
     }
 }
@@ -87,7 +88,6 @@ struct MainView: View {
                 .disabled(runner.isRunning)
                 .help("Adicionar imagens ou pastas (⌘O)")
         }
-        ToolbarItem(placement: .primaryAction) { SortMenu() }
         ToolbarItem(placement: .primaryAction) { ListActionsMenu(runner: runner, canPreview: canPreview) }
     }
 
@@ -100,6 +100,7 @@ struct MainView: View {
         case let .advanced(step): AdvancedOptionsSheet(initialStep: step)
         case let .conversionPreview(url): ConversionPreviewSheet(initial: url)
         case .errors: ErrorListSheet(failures: runner.failures)
+        case .history: HistorySheet()
         }
     }
 
@@ -126,6 +127,7 @@ struct MainView: View {
         } else if runner.settings.showErrors, !runner.failures.isEmpty, !runner.wasCancelled {
             app.route = .errors
         }
+        app.history.record(runner.records, mode: runner.settings.mode)
         guard runner.hasResults, !runner.wasCancelled else { return }
         CompletionNotifier.notify(done: runner.doneCount, failed: runner.failures.count,
                                   saved: runner.oldTotal - runner.newTotal, mode: runner.settings.mode)
@@ -148,6 +150,7 @@ private struct ListActionsMenu: View {
             Button("Selecionar tudo") { app.selectAll() }
                 .disabled(app.inputs.isEmpty)
             Toggle("Mostrar pré-visualização", isOn: Binding(get: { app.state.showPreview }, set: { app.state.showPreview = $0 }))
+            SortMenu()
             Divider()
             Button("Mostrar no Finder") { FilePanels.reveal(Array(app.selection)) }
                 .disabled(app.selection.isEmpty)

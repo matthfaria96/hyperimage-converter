@@ -16,6 +16,7 @@ OUT="${1:-$(mktemp -d)/ui-smoke}"
 FIX="$PWD/Tests/HyperImageCoreTests/Fixtures"
 FILES="$FIX/paisagem.jpg:$FIX/retrato.jpg"
 TMP_OUT="$(mktemp -d)"
+export HYPERIMAGE_HISTORY="$TMP_OUT/history.json"
 FAILED=0
 
 shot() {
@@ -51,6 +52,8 @@ done
 EXPECT=2 shot preview HYPERIMAGE_SHEET=preview
 # Single window since a381703: progress shows inside the summary card, not in a sheet.
 EXPECT=1 shot progress HYPERIMAGE_SHEET=progress HYPERIMAGE_SNAPSHOT_DELAY=4
+# Runs after progress, so the batch it converted is in the (temporary) history.
+EXPECT=2 shot history HYPERIMAGE_SHEET=history
 # Narrowest window (minWidth 1080) with one file selected: header tabs, preview card and cards must not clip.
 for MODE in convert compress upscale; do
   EXPECT=1 shot "narrow-$MODE" HYPERIMAGE_MODE=$MODE HYPERIMAGE_SELECT=1 HYPERIMAGE_WINDOW_SIZE=1080x640

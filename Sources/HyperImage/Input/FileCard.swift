@@ -10,11 +10,14 @@ struct FileRow: View {
     var canPreview = true
     /// 0…1 while this file is being upscaled.
     var working: Double?
+    /// Comprimir before running: estimate this file's new size with these settings.
+    var estimateSettings: ConvertSettings?
     let preview: () -> Void
     let remove: () -> Void
     @State private var dimensions = ""
     @State private var fileSize: Int64 = 0
     @State private var hovering = false
+    @State private var estimated: Int64?
 
     var body: some View {
         HStack(spacing: 12) {
@@ -67,6 +70,15 @@ struct FileRow: View {
         .accessibilityLabel(Text("\(item.url.lastPathComponent), \(details)"))
         .accessibilityAction(named: Text("Pré-visualizar")) { if canPreview { preview() } }
         .accessibilityAction(named: Text("Remover")) { remove() }
+        .task(id: RowEstimateKey(url: item.url, settings: estimateSettings)) {
+            guard let settings = estimateSettings else { estimated = nil; return }
+            try? await Task.sleep(for: .milliseconds(300))
+            guard !Task.isCancelled else { return }
+            let bytes = await RowEstimates.shared.size(of: item.url, settings: settings)
+            guard !Task.isCancelled else { return }
+            withAnimation(.snappy) { estimated = bytes }
+        }
+        .modifier(DragOutResult(url: record?.status == .done ? record?.output : nil))
         .task(id: item.url) {
             let url = item.url
             let (size, bytes) = await Task.detached(priority: .utility) { (ImageLoader.pixelSize(url), BatchConverter.fileSize(url)) }.value
@@ -132,7 +144,70 @@ struct FileRow: View {
                 ProgressView(value: working).progressViewStyle(.circular).controlSize(.small).transition(.opacity)
             } else if isRunning {
                 Image(systemName: "clock").foregroundStyle(.tertiary).transition(.opacity)
+            } else if estimateSettings != nil, let estimated, fileSize > 0 {
+                let change = Int((Double(estimated - fileSize) / Double(fileSize) * 100).rounded())
+                VStack(alignment: .trailing, spacing: 1) {
+                    Text("≈ \(formatBytes(estimated))").font(.body).foregroundStyle(.secondary).monospacedDigit()
+                        .contentTransition(.numericText())
+                    Text(change < 0 ? "\(change) %" : String(localized: "sem ganho"))
+                        .font(.caption.weight(.medium)).monospacedDigit()
+                        .foregroundStyle(change < 0 ? Color.green.opacity(0.8) : .secondary)
+                }
+                .help("Tamanho estimado depois de comprimir")
+                .transition(.blurReplace)
             }
+        }
+    }
+}
+
+private struct RowEstimateKey: Equatable {
+    let url: URL
+    let quality: Int?
+    let strip: Bool
+    let limit: Int?
+
+    init(url: URL, settings: ConvertSettings?) {
+        self.url = url
+        quality = settings?.compressQuality
+        strip = settings?.stripMetadata ?? false
+        limit = settings?.maxFileSizeBytes
+    }
+}
+
+/// Per-file compressed sizes, encoded off the main thread once per file and settings.
+actor RowEstimates {
+    static let shared = RowEstimates()
+    private var cache: [String: Int64] = [:]
+
+    func size(of url: URL, settings: ConvertSettings) async -> Int64? {
+        let key = "\(url.path)|\(settings.compressQuality)|\(settings.stripMetadata)|\(settings.maxFileSizeBytes ?? 0)"
+        if let hit = cache[key] { return hit }
+        let work = Task.detached(priority: .utility) { () -> Int64? in
+            guard !Task.isCancelled, let loaded = try? ImageLoader.load(url),
+                  let pipeline = try? ImagePipeline(options: settings.effectiveAdvancedOptions),
+                  let output = try? OutputEncoder.encode(loaded, pipeline: pipeline, settings: settings) else { return nil }
+            return Int64(output.data.count)
+        }
+        let result = await withTaskCancellationHandler { await work.value } onCancel: { work.cancel() }
+        if let result {
+            if cache.count > 2000 { cache.removeAll() }
+            cache[key] = result
+        }
+        return result
+    }
+}
+
+/// A finished row can be dragged straight into Finder, Mail or any app as the converted file.
+private struct DragOutResult: ViewModifier {
+    let url: URL?
+
+    func body(content: Content) -> some View {
+        if let url {
+            content.draggable(url) {
+                Label(url.lastPathComponent, systemImage: "photo").padding(6).glassEffect(in: .capsule)
+            }
+        } else {
+            content
         }
     }
 }

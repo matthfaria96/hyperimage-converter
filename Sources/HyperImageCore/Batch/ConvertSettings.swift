@@ -19,8 +19,10 @@ public struct ConvertSettings: Codable, Equatable, Sendable {
     public var mode = ConvertMode.convert
     /// Converter: encode lossy formats at `fullQuality` unless the user chose to reduce the quality.
     public var fullQuality = true
-    /// Comprimir: the one quality level applied to every lossy format.
+    /// Comprimir: the one quality level applied to every lossy format (100 = "Sem perdas").
     public var compressQuality = CompressionLevel.balanced.quality
+    /// Comprimir: drop EXIF, GPS and IPTC from the output (smaller files, no location leaks).
+    public var stripMetadata = true
     /// Off: shrink images whose long side exceeds `maxLongSide` (unless Advanced Options already resize).
     public var keepDimensions = true
     public var maxLongSide = 2400

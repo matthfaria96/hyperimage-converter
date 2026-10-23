@@ -51,6 +51,32 @@
         }
       }
     },
+    "%@ não pode ser comprimido no mesmo formato. Use Converter.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ can't be compressed in the same format. Use Convert."
+          }
+        }
+      }
+    },
+    "%@ · %@ economizados": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ · %2$@ saved"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ · %2$@ economizados"
+          }
+        }
+      }
+    },
     "%@ × %@": {
       "localizations": {
         "en": {
@@ -109,6 +135,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "%lld DPI"
+          }
+        }
+      }
+    },
+    "%lld arquivos": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld files"
           }
         }
       }
@@ -311,6 +347,16 @@
         }
       }
     },
+    "1 arquivo": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 file"
+          }
+        }
+      }
+    },
     "1 arquivo não foi processado": {
       "localizations": {
         "en": {
@@ -501,12 +547,12 @@
         }
       }
     },
-    "AVIF — máxima compressão": {
+    "AVIF — o mais moderno": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "AVIF — maximum compression"
+            "value": "AVIF — the newest"
           }
         }
       }
@@ -521,6 +567,16 @@
         }
       }
     },
+    "Abrir": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open"
+          }
+        }
+      }
+    },
     "Abrir %@": {
       "localizations": {
         "en": {
@@ -531,22 +587,22 @@
         }
       }
     },
-    "Abrir a lista de erros ao terminar": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Open the error list when finished"
-          }
-        }
-      }
-    },
     "Abrir a pasta ao concluir": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Open the folder when done"
+          }
+        }
+      }
+    },
+    "Abrir no Pré-Visualização": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open in Preview"
           }
         }
       }
@@ -627,36 +683,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Add images to estimate the result."
-          }
-        }
-      }
-    },
-    "Agrupar": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Group"
-          }
-        }
-      }
-    },
-    "Agrupar em subpasta de saída": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Group into output subfolder"
-          }
-        }
-      }
-    },
-    "Agrupar em subpasta de saída…": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Group into output subfolder…"
           }
         }
       }
@@ -901,16 +927,6 @@
         }
       }
     },
-    "Aparência": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Appearance"
-          }
-        }
-      }
-    },
     "Aplicar ajustes ANTES de redimensionar": {
       "localizations": {
         "en": {
@@ -927,6 +943,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Apply the enabled steps"
+          }
+        }
+      }
+    },
+    "Arquivo movido ou apagado": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "File moved or deleted"
           }
         }
       }
@@ -991,12 +1017,12 @@
         }
       }
     },
-    "As imagens escolhidas serão salvas dentro de uma subpasta com este nome, no destino que você definir. Nada é criado agora.": {
+    "As imagens convertidas, comprimidas e ampliadas aparecem aqui.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "The chosen images will be saved inside a subfolder with this name, in the destination you set. Nothing is created now."
+            "value": "Converted, compressed and upscaled images appear here."
           }
         }
       }
@@ -1027,16 +1053,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Increase resolution up to 4× by recreating details with AI, right on your Mac."
-          }
-        }
-      }
-    },
-    "Automática": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Automatic"
           }
         }
       }
@@ -1181,12 +1197,12 @@
         }
       }
     },
-    "Cada imagem mantém o próprio formato. JPEG, WebP, HEIC, AVIF e JPEG 2000 são comprimidos; PNG, GIF, BMP e TIFF são regravados sem perdas.": {
+    "Cada imagem mantém o próprio formato e nunca fica maior que o original. PSD, RAW e outros formatos que o Mac não grava são ignorados.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Each image keeps its own format. JPEG, WebP, HEIC, AVIF and JPEG 2000 are compressed; PNG, GIF, BMP and TIFF are rewritten losslessly."
+            "value": "Each image keeps its own format and never gets bigger than the original. PSD, RAW and other formats the Mac can't write are left out."
           }
         }
       }
@@ -1271,16 +1287,6 @@
         }
       }
     },
-    "Clara": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Light"
-          }
-        }
-      }
-    },
     "Com base em um lado": {
       "localizations": {
         "en": {
@@ -1327,6 +1333,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Compare Before and After…"
+          }
+        }
+      }
+    },
+    "Compatível com tudo": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Works everywhere"
           }
         }
       }
@@ -1421,6 +1437,16 @@
         }
       }
     },
+    "Conversão": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conversion"
+          }
+        }
+      }
+    },
     "Converta formatos ou reduza o tamanho em poucos cliques.": {
       "localizations": {
         "en": {
@@ -1457,16 +1483,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Convert only changes the format. To make files smaller, use Compress."
-          }
-        }
-      }
-    },
-    "Converter para": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Convert to"
           }
         }
       }
@@ -2031,16 +2047,6 @@
         }
       }
     },
-    "Escura": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Dark"
-          }
-        }
-      }
-    },
     "Espaço horizontal": {
       "localizations": {
         "en": {
@@ -2147,16 +2153,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Expand (add space)"
-          }
-        }
-      }
-    },
-    "Extensão em maiúsculas (.JPG)": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Uppercase extension (.JPG)"
           }
         }
       }
@@ -2311,6 +2307,16 @@
         }
       }
     },
+    "Fotos do iPhone (HEIC)? JPEG abre em qualquer computador e site.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPhone photos (HEIC)? JPEG opens on any computer and website."
+          }
+        }
+      }
+    },
     "Fundo": {
       "localizations": {
         "en": {
@@ -2431,6 +2437,16 @@
         }
       }
     },
+    "Histórico": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "History"
+          }
+        }
+      }
+    },
     "Hora da foto": {
       "localizations": {
         "en": {
@@ -2521,6 +2537,16 @@
         }
       }
     },
+    "Imagens convertidas antes (⌘⇧H)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Previously converted images (⌘⇧H)"
+          }
+        }
+      }
+    },
     "Imagens ou pastas do Finder — ou use ⌘O.": {
       "localizations": {
         "en": {
@@ -2591,12 +2617,12 @@
         }
       }
     },
-    "JPEG — menor tamanho": {
+    "JPEG — abre em qualquer lugar": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "JPEG — smaller size"
+            "value": "JPEG — opens anywhere"
           }
         }
       }
@@ -2771,12 +2797,32 @@
         }
       }
     },
+    "Limpar histórico": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clear History"
+          }
+        }
+      }
+    },
     "Limpar lista": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Clear List"
+          }
+        }
+      }
+    },
+    "Limpar o histórico?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clear the history?"
           }
         }
       }
@@ -2837,16 +2883,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "More actions for the list"
-          }
-        }
-      }
-    },
-    "Mais opções": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "More options"
           }
         }
       }
@@ -3181,6 +3217,16 @@
         }
       }
     },
+    "Mostrar original no Finder": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show Original in Finder"
+          }
+        }
+      }
+    },
     "Mostrar pré-visualização": {
       "localizations": {
         "en": {
@@ -3197,16 +3243,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Show result in Finder"
-          }
-        }
-      }
-    },
-    "Mover para subpasta": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Move to Subfolder"
           }
         }
       }
@@ -3267,6 +3303,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "In the folder %@. Replace it?"
+          }
+        }
+      }
+    },
+    "Nada por aqui ainda": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nothing here yet"
           }
         }
       }
@@ -3351,16 +3397,6 @@
         }
       }
     },
-    "Nome da subpasta": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Subfolder name"
-          }
-        }
-      }
-    },
     "Nome do arquivo (com extensão)": {
       "localizations": {
         "en": {
@@ -3377,6 +3413,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "File name (without extension)"
+          }
+        }
+      }
+    },
+    "Novo": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New"
           }
         }
       }
@@ -3721,32 +3767,22 @@
         }
       }
     },
-    "Ordenar": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sort"
-          }
-        }
-      }
-    },
-    "Ordenar a lista: %@. A ordem define a numeração sequencial ao renomear": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sort the list: %@. The order sets the sequence numbers when renaming"
-          }
-        }
-      }
-    },
     "Ordenar por": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Sort by"
+          }
+        }
+      }
+    },
+    "Ordenar por: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sort by: %@"
           }
         }
       }
@@ -3825,12 +3861,32 @@
         }
       }
     },
+    "Os arquivos convertidos não são apagados, só a lista.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Converted files are not deleted, only the list."
+          }
+        }
+      }
+    },
     "Otimizar tabela de Huffman": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Optimize Huffman table"
+          }
+        }
+      }
+    },
+    "Outros formatos": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Other Formats"
           }
         }
       }
@@ -3885,6 +3941,16 @@
         }
       }
     },
+    "Padrão do iPhone": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPhone default"
+          }
+        }
+      }
+    },
     "Padrões": {
       "localizations": {
         "en": {
@@ -3911,6 +3977,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Palette (256 colors)"
+          }
+        }
+      }
+    },
+    "Para sites": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "For websites"
           }
         }
       }
@@ -4083,16 +4159,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Processing… %lld %%"
-          }
-        }
-      }
-    },
-    "Processar várias imagens ao mesmo tempo": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Process several images at once"
           }
         }
       }
@@ -4437,12 +4503,32 @@
         }
       }
     },
+    "Remover do histórico": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove from History"
+          }
+        }
+      }
+    },
     "Remover imagens": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Remove images"
+          }
+        }
+      }
+    },
+    "Remover localização e dados da câmera": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove location and camera data"
           }
         }
       }
@@ -4643,6 +4729,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Lossless, accepted by print shops and editors."
+          }
+        }
+      }
+    },
+    "Sem perdas: nenhum pixel muda; o JPEG é reorganizado e os dados extras saem.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lossless: no pixel changes; the JPEG is repacked and extra data removed."
           }
         }
       }
@@ -4877,6 +4973,16 @@
         }
       }
     },
+    "Tamanho estimado depois de comprimir": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estimated size after compressing"
+          }
+        }
+      }
+    },
     "Tamanho máximo por arquivo": {
       "localizations": {
         "en": {
@@ -4947,12 +5053,12 @@
         }
       }
     },
-    "Tirar da subpasta": {
+    "Tira GPS, EXIF e IPTC: arquivos menores e sem revelar onde a foto foi feita.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Move out of Subfolder"
+            "value": "Removes GPS, EXIF and IPTC: smaller files that don’t reveal where the photo was taken."
           }
         }
       }
@@ -5033,6 +5139,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Uses the DPI stored in each image."
+          }
+        }
+      }
+    },
+    "Usar JPEG": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use JPEG"
           }
         }
       }
@@ -5147,12 +5263,12 @@
         }
       }
     },
-    "WebP — moderno e leve": {
+    "WebP — ideal para sites": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "WebP — modern and light"
+            "value": "WebP — best for websites"
           }
         }
       }
@@ -5317,6 +5433,16 @@
         }
       }
     },
+    "sem ganho": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "no gain"
+          }
+        }
+      }
+    },
     "um dígito do número sequencial (zeros à esquerda)": {
       "localizations": {
         "en": {
@@ -5383,6 +5509,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "“%@” already exists"
+          }
+        }
+      }
+    },
+    "−%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "−%@"
+          }
+        }
+      }
+    },
+    "≈ %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "≈ %@"
           }
         }
       }

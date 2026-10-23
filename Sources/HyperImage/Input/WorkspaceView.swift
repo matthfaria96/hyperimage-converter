@@ -9,9 +9,6 @@ struct WorkspaceView: View {
     let runner: ConversionRunner
     let canPreview: Bool
     @State private var dropTargeted = false
-    @State private var folderTargets: Set<URL> = []
-    @State private var folderName = ""
-    @State private var askingFolderName = false
 
     var body: some View {
         @Bindable var app = app
@@ -41,14 +38,6 @@ struct WorkspaceView: View {
         }
         .animation(.easeOut(duration: 0.2), value: dropTargeted)
         .onDeleteCommand { remove(app.selection) }
-        .alert("Agrupar em subpasta de saída", isPresented: $askingFolderName) {
-            TextField("Nome da subpasta", text: $folderName)
-            Button("Cancelar", role: .cancel) {}
-            Button("Agrupar") { app.move(folderTargets, toFolder: InputItem.folderName(folderName)) }
-                .disabled(InputItem.folderName(folderName) == nil)
-        } message: {
-            Text("As imagens escolhidas serão salvas dentro de uma subpasta com este nome, no destino que você definir. Nada é criado agora.")
-        }
         #if DEBUG
         .onAppear { if DebugLaunch.env["HYPERIMAGE_DROP"] != nil { dropTargeted = true } }
         #endif
@@ -67,6 +56,7 @@ struct WorkspaceView: View {
                             showsRatio: app.state.convert.mode == .convert || app.state.convert.mode == .compress,
                             canPreview: canPreview,
                             working: runner.currentUpscale == item.url ? runner.partial : nil,
+                            estimateSettings: app.state.convert.mode == .compress && !runner.isRunning ? app.state.convert : nil,
                             preview: { app.route = .conversionPreview(item.url) },
                             remove: { remove([item.url]) })
                         .tag(item.url)
@@ -95,12 +85,6 @@ struct WorkspaceView: View {
         ListEdits.remove(urls, from: app, undo: undoManager, running: runner.isRunning)
     }
 
-    private func startGrouping(_ urls: Set<URL>) {
-        folderTargets = urls
-        folderName = ""
-        askingFolderName = true
-    }
-
     @ViewBuilder
     private func contextMenu(for urls: Set<URL>) -> some View {
         if urls.isEmpty {
@@ -112,17 +96,6 @@ struct WorkspaceView: View {
             let done = urls.compactMap { runner.record(for: $0) }.filter { $0.status == .done }
             if !done.isEmpty {
                 Button("Mostrar resultado no Finder") { FilePanels.reveal(done.map(\.output)) }
-            }
-            Divider()
-            Button("Agrupar em subpasta de saída…") { startGrouping(urls) }
-            let folders = Set(app.inputs.compactMap(\.virtualFolder)).sorted()
-            if !folders.isEmpty {
-                Menu("Mover para subpasta") {
-                    ForEach(folders, id: \.self) { name in Button(name) { app.move(urls, toFolder: name) } }
-                }
-            }
-            if app.inputs.contains(where: { urls.contains($0.url) && $0.virtualFolder != nil }) {
-                Button("Tirar da subpasta") { app.move(urls, toFolder: nil) }
             }
             Divider()
             Button("Remover", role: .destructive) { remove(urls) }
@@ -142,6 +115,14 @@ struct WorkspaceView: View {
                 Text("Lendo imagens…")
             }
             Spacer()
+            Button { app.route = .history } label: {
+                Label("Histórico", systemImage: "clock.arrow.circlepath")
+                    .symbolEffect(.bounce, value: app.history.entries.count)
+            }
+            .buttonStyle(.borderless)
+            .foregroundStyle(.secondary)
+            .help("Imagens convertidas antes (⌘⇧H)")
+            .keyboardShortcut("h", modifiers: [.command, .shift])
         }
         .font(.callout)
         .foregroundStyle(.secondary)
@@ -233,9 +214,8 @@ struct SortMenu: View {
             Toggle("Ordem decrescente", isOn: Binding(get: { app.state.sort.descending }, set: { app.setSort(InputSort(key: app.state.sort.key, descending: $0)) }))
                 .disabled(app.state.sort.key == .none)
         } label: {
-            Label("Ordenar", systemImage: "arrow.up.arrow.down")
+            Label("Ordenar por: \(sortTitle)", systemImage: "arrow.up.arrow.down")
         }
-        .help("Ordenar a lista: \(sortTitle). A ordem define a numeração sequencial ao renomear")
     }
 
     private var sortTitle: String {

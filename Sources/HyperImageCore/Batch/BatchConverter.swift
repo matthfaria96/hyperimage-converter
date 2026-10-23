@@ -124,6 +124,11 @@ public struct BatchConverter: Sendable {
     }
 
     func convert(_ record: ConversionRecord, pipeline: ImagePipeline) -> ConversionRecord {
+        // Comprimir keeps each file's format; a format the Mac can read but not write is left alone, not turned into JPEG.
+        if settings.mode == .compress, OutputFormat.matching(record.input) == nil {
+            let ext = record.input.pathExtension.uppercased()
+            return record.with(status: .failed(String(localized: "\(ext) não pode ser comprimido no mesmo formato. Use Converter.")))
+        }
         do {
             let loaded = try ImageLoader.load(record.input)
             let data = try OutputEncoder.encode(loaded, pipeline: pipeline, settings: settings).data

@@ -8,8 +8,10 @@ struct ConvertSections: View {
 
     var body: some View {
         Section {
-            Picker("Converter para", selection: $settings.format.animation(.snappy)) {
-                ForEach(OutputFormat.allCases, id: \.self) { Text($0.menuTitle).tag($0) }
+            FormatGrid(format: $settings.format)
+            if let hint = HEICHint(inputs: app.inputs, format: settings.format) {
+                hint.view { withAnimation(.snappy) { settings.format = .jpeg } }
+                    .transition(.blurReplace)
             }
             if settings.format.supportsTransparency {
                 Toggle("Manter transparência", isOn: $settings.preserveTransparency)

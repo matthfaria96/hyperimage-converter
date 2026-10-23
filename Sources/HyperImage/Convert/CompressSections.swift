@@ -24,6 +24,7 @@ struct CompressSections: View {
         }
         Section {
             Picker("Nível", selection: levelBinding) {
+                Text("Sem perdas").tag(CompressionLevel?.some(.lossless))
                 Text("Leve").tag(CompressionLevel?.some(.light))
                 Text("Equilibrada").tag(CompressionLevel?.some(.balanced))
                 Text("Forte").tag(CompressionLevel?.some(.strong))
@@ -40,6 +41,8 @@ struct CompressSections: View {
                 .animation(.snappy, value: settings.compressQuality)
         }
         Section {
+            ToggleRow(title: "Remover localização e dados da câmera", help: "Tira GPS, EXIF e IPTC: arquivos menores e sem revelar onde a foto foi feita.",
+                      isOn: $settings.stripMetadata)
             ToggleRow(title: "Tamanho máximo por arquivo", help: "Baixa mais a qualidade só dos arquivos que passarem do limite.",
                       isOn: $settings.limitFileSize.animation(.snappy))
             if settings.limitFileSize {
@@ -49,7 +52,7 @@ struct CompressSections: View {
                     .transition(.blurReplace)
             }
         } footer: {
-            Text("Cada imagem mantém o próprio formato. JPEG, WebP, HEIC, AVIF e JPEG 2000 são comprimidos; PNG, GIF, BMP e TIFF são regravados sem perdas.")
+            Text("Cada imagem mantém o próprio formato e nunca fica maior que o original. PSD, RAW e outros formatos que o Mac não grava são ignorados.")
         }
     }
 
@@ -60,6 +63,7 @@ struct CompressSections: View {
 
     private var levelHelp: LocalizedStringKey {
         switch CompressionLevel.matching(settings.compressQuality) {
+        case .lossless?: "Sem perdas: nenhum pixel muda; o JPEG é reorganizado e os dados extras saem."
         case .light?: "Leve: quase sem diferença visível, arquivos um pouco menores."
         case .balanced?: "Equilibrada: boa economia sem perda perceptível na maioria das fotos."
         case .strong?: "Forte: arquivos bem menores; detalhes finos podem suavizar."
