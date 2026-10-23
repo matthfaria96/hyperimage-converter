@@ -37,7 +37,7 @@ atualizar o catálogo e traduza as entradas novas (no Xcode ou editando o JSON).
 - `Sources/HyperImageCore`: motor sem UI. Modelos de opções, geometria (resize/crop/canvas), reamostrador
   separável com os 12 filtros, ajustes via Core Image, texto/marca d'água/bordas, quantizador median-cut,
   encoders (ImageIO, WebP via libwebp, PDF), lote concorrente e modelos de nome para a saída.
-- `Sources/HyperImage`: app SwiftUI (navegador lateral, lista de entrada, inspetor, folhas).
+- `Sources/HyperImage`: app SwiftUI (lista de entrada, painel de opções fixo, folhas).
 - `Sources/CWebP`: libwebp 1.6.0 (BSD), só o encoder. O ImageIO lê WebP, mas não grava.
 - `Sources/CJPEG`: IJG libjpeg 9f (licença IJG, ver `README-libjpeg.txt`) com uma ponte em C (`shim/hij.c`) para gravar
   JPEG e fazer o recorte sem perdas (`transupp`).

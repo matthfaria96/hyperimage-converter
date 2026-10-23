@@ -1,6 +1,6 @@
 import Foundation
 
-/// A "files of type" filter entry for the browser.
+/// A "files of type" filter entry (image types the app reads).
 public struct FileTypeFilter: Hashable, Identifiable, Sendable {
     public var id: String { name }
     public let name: String

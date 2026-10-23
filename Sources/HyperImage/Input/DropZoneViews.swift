@@ -4,7 +4,6 @@ import SwiftUI
 struct EmptyDropZone: View {
     let targeted: Bool
     let addFiles: () -> Void
-    var browse: (() -> Void)?
 
     var body: some View {
         VStack(spacing: 22) {
@@ -18,16 +17,10 @@ struct EmptyDropZone: View {
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
             }
-            VStack(spacing: 10) {
-                Button("Adicionar imagens…", systemImage: "plus", action: addFiles)
-                    .buttonStyle(.glassProminent)
-                    .controlSize(.large)
-                if let browse {
-                    Button("Navegar pelas pastas do Mac", systemImage: "sidebar.leading", action: browse)
-                        .buttonStyle(.glass)
-                }
-            }
-            .opacity(targeted ? 0 : 1)
+            Button("Adicionar imagens…", systemImage: "plus", action: addFiles)
+                .buttonStyle(.glassProminent)
+                .controlSize(.large)
+                .opacity(targeted ? 0 : 1)
         }
         .padding(40)
         .frame(maxWidth: .infinity, maxHeight: .infinity)

@@ -42,7 +42,6 @@ shot() {
 EXPECT=1 shot main
 EXPECT=1 shot empty HYPERIMAGE_FILES=
 EXPECT=1 shot upscale HYPERIMAGE_MODE=upscale
-EXPECT=1 shot browser HYPERIMAGE_BROWSER=1
 EXPECT=2 shot format HYPERIMAGE_SHEET=format
 EXPECT=2 shot about HYPERIMAGE_WINDOW=about
 for STEP in resize rotate crop canvas colorDepth adjustments dpi text watermark border; do

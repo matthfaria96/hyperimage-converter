@@ -5,17 +5,10 @@ enum AppearanceChoice: String, Codable, CaseIterable {
     case system, light, dark
 }
 
-enum BrowserLayout: String, Codable, CaseIterable {
-    case list, thumbnails
-}
-
 /// Everything restored on the next launch.
 struct PersistedState: Codable, Equatable {
     var convert = ConvertSettings()
     var appearance = AppearanceChoice.system
-    var browserPath = FileManager.default.urls(for: .picturesDirectory, in: .userDomainMask).first?.path ?? NSHomeDirectory()
-    var browserLayout = BrowserLayout.list
-    var filterName = ImageFileTypes.filters[0].name
     var sort = InputSort()
     var showPreview = true
     var lastAdvancedStep = AdvancedStep.resize

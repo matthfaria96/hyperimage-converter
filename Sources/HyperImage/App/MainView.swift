@@ -14,16 +14,11 @@ enum SheetRoute: Identifiable {
     }
 }
 
-/// Window layout: optional folder browser (sidebar), the file list, and the options panel on the right.
-/// The mode switch and every list action live in the toolbar, as in Apple's own apps.
+/// Window layout: the file list and, always beside it, the options panel. Mode switch and list actions live in the toolbar.
 struct MainView: View {
     @Environment(AppModel.self) private var app
     @Environment(\.openWindow) private var openWindow
-    @State private var browser: BrowserModel?
     @State private var runner = ConversionRunner()
-    /// The file browser is optional: hidden until the sidebar button shows it.
-    @State private var showBrowser = false
-    @State private var showOptions = true
 
     private var canPreview: Bool { app.state.convert.mode != .upscale && !runner.isRunning }
 
@@ -32,29 +27,18 @@ struct MainView: View {
         // Plain columns instead of NavigationSplitView/.inspector: a collapsed split-view sidebar leaves an empty
         // "»" overflow button in the macOS 26 toolbar, and the system inspector re-laid the toolbar out until
         // AppKit aborted the launch on narrow windows.
+        // Plain columns instead of NavigationSplitView/.inspector: those leave an empty "»" overflow button in the
+        // macOS 26 toolbar, and the system inspector re-laid the toolbar out until AppKit aborted on narrow windows.
         HStack(spacing: 0) {
-            if showBrowser, let browser {
-                BrowserView(browser: browser)
-                    .frame(width: 260)
-                    .background(.background.secondary)
-                    .transition(.move(edge: .leading).combined(with: .opacity))
-                Divider()
-            }
-            HStack(spacing: 0) {
-                WorkspaceView(runner: runner, canPreview: canPreview,
-                              browse: { withAnimation(.snappy) { showBrowser = true } })
-                    .frame(minWidth: 380)
-                if showOptions {
-                    Divider()
-                    SettingsPanel(runner: runner, start: startConversion)
-                        .transition(.move(edge: .trailing).combined(with: .opacity))
-                }
-            }
-            .animation(.snappy, value: showOptions)
+            WorkspaceView(runner: runner, canPreview: canPreview)
+                .frame(minWidth: 460)
+            Divider().ignoresSafeArea()
+            SettingsPanel(runner: runner, start: startConversion)
         }
-        .animation(.snappy, value: showBrowser)
         .navigationTitle(Text(app.state.convert.mode.title))
         .toolbar(removing: .title)
+        // No toolbar backdrop: both columns run up under the floating glass controls, so nothing leaves a band on top.
+        .toolbarBackgroundVisibility(.hidden, for: .windowToolbar)
         .toolbar { toolbarContent }
         .sheet(item: $app.route) { route in sheetView(route) }
         .overlay {
@@ -72,16 +56,10 @@ struct MainView: View {
         .onAppear {
             // AppKit focuses the first text field at launch; start with nothing focused.
             DispatchQueue.main.async { NSApp.keyWindow?.makeFirstResponder(nil) }
-            if browser == nil {
-                let model = BrowserModel(path: app.state.browserPath, filterName: app.state.filterName)
-                model.reload()
-                browser = model
-            }
             #if DEBUG
             if let route = DebugLaunch.apply(to: app) { app.route = route }
             if DebugLaunch.env["HYPERIMAGE_SHEET"] == "progress", !app.inputs.isEmpty { startConversion() }
             if DebugLaunch.env["HYPERIMAGE_WINDOW"] == "about" { openWindow(id: "about") }
-            if DebugLaunch.env["HYPERIMAGE_BROWSER"] != nil { showBrowser = true }
             #endif
         }
     }
@@ -93,10 +71,6 @@ struct MainView: View {
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
         @Bindable var app = app
-        ToolbarItem(placement: .navigation) {
-            Button("Navegador de pastas", systemImage: "sidebar.leading") { showBrowser.toggle() }
-                .help("Mostrar ou ocultar o navegador de pastas")
-        }
         ToolbarItem(placement: .navigation) {
             Picker("Modo", selection: $app.state.convert.mode.animation(.snappy)) {
                 ForEach(ConvertMode.allCases, id: \.self) { mode in
@@ -115,10 +89,6 @@ struct MainView: View {
         }
         ToolbarItem(placement: .primaryAction) { SortMenu() }
         ToolbarItem(placement: .primaryAction) { ListActionsMenu(runner: runner, canPreview: canPreview) }
-        ToolbarItem(placement: .primaryAction) {
-            Button("Opções", systemImage: "sidebar.trailing") { showOptions.toggle() }
-                .help(showOptions ? "Ocultar o painel de opções" : "Mostrar o painel de opções")
-        }
     }
 
     // MARK: Sheets and actions

@@ -113,16 +113,6 @@
         }
       }
     },
-    "%lld arquivos": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld files"
-          }
-        }
-      }
-    },
     "%lld arquivos não foram processados": {
       "localizations": {
         "en": {
@@ -561,16 +551,6 @@
         }
       }
     },
-    "Abrir no Visualizador": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Open in Preview"
-          }
-        }
-      }
-    },
     "Adicionar": {
       "localizations": {
         "en": {
@@ -611,42 +591,12 @@
         }
       }
     },
-    "Adicionar os itens selecionados à lista": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Add the selected items to the list"
-          }
-        }
-      }
-    },
     "Adicionar sufixo (%@)": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Add suffix (%@)"
-          }
-        }
-      }
-    },
-    "Adicionar todas as imagens desta pasta": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Add every image in this folder"
-          }
-        }
-      }
-    },
-    "Adicionar à lista": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Add to List"
           }
         }
       }
@@ -1027,16 +977,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "The chosen images will be saved inside a subfolder with this name, in the destination you set. Nothing is created now."
-          }
-        }
-      }
-    },
-    "Atualizar": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Refresh"
           }
         }
       }
@@ -1977,16 +1917,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Choose"
-          }
-        }
-      }
-    },
-    "Escolher Pasta": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Choose Folder"
           }
         }
       }
@@ -3111,26 +3041,6 @@
         }
       }
     },
-    "Mostrar o painel de opções": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Show the options panel"
-          }
-        }
-      }
-    },
-    "Mostrar ou ocultar o navegador de pastas": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Show or hide the folder browser"
-          }
-        }
-      }
-    },
     "Mostrar pré-visualização": {
       "localizations": {
         "en": {
@@ -3217,26 +3127,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "In the folder %@. Replace it?"
-          }
-        }
-      }
-    },
-    "Navegador de pastas": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Folder browser"
-          }
-        }
-      }
-    },
-    "Navegar pelas pastas do Mac": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Browse Folders on This Mac"
           }
         }
       }
@@ -3631,16 +3521,6 @@
         }
       }
     },
-    "Ocultar o painel de opções": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Hide the options panel"
-          }
-        }
-      }
-    },
     "Opacidade": {
       "localizations": {
         "en": {
@@ -3657,16 +3537,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Fill opacity"
-          }
-        }
-      }
-    },
-    "Opções": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Options"
           }
         }
       }
@@ -4967,16 +4837,6 @@
         }
       }
     },
-    "Todas": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "All"
-          }
-        }
-      }
-    },
     "Todos os formatos de imagem": {
       "localizations": {
         "en": {
@@ -5133,16 +4993,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Version %1$@ (%2$@)"
-          }
-        }
-      }
-    },
-    "Visualização": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "View"
           }
         }
       }

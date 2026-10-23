@@ -26,12 +26,17 @@ struct SettingsPanel: View {
             }
         }
         .formStyle(.grouped)
+        // The panel runs up under the toolbar (like Finder's inspector), so its background fills the whole column;
+        // no toolbar items sit above it, so the first section starts at the top.
+        .contentMargins(.top, 6, for: .scrollContent)
+        .scrollEdgeEffectHidden(true, for: .top)
+        .ignoresSafeArea(.container, edges: .top)
         .toggleStyle(.switch)
         .animation(.snappy, value: app.state.convert.mode)
         .animation(.snappy, value: app.state.showPreview)
         .animation(.snappy, value: app.selectedItem?.url)
         .disabled(runner.isRunning)
-        .scrollEdgeEffectStyle(.soft, for: .bottom)
+        .scrollEdgeEffectHidden(true, for: .bottom)
         // Floating, so the form scrolls underneath instead of being covered.
         .safeAreaInset(edge: .bottom, spacing: 0) {
             SummaryBox(runner: runner, start: start)

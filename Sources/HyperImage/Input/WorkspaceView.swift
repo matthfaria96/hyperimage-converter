@@ -8,7 +8,6 @@ struct WorkspaceView: View {
     @Environment(\.undoManager) private var undoManager
     let runner: ConversionRunner
     let canPreview: Bool
-    let browse: () -> Void
     @State private var dropTargeted = false
     @State private var folderTargets: Set<URL> = []
     @State private var folderName = ""
@@ -19,7 +18,7 @@ struct WorkspaceView: View {
         VStack(spacing: 0) {
             Group {
                 if app.inputs.isEmpty {
-                    EmptyDropZone(targeted: dropTargeted, addFiles: { FilePanels.addFiles(to: app) }, browse: browse)
+                    EmptyDropZone(targeted: dropTargeted, addFiles: { FilePanels.addFiles(to: app) })
                         .transition(.blurReplace)
                 } else {
                     fileList
