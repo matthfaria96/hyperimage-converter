@@ -29,6 +29,10 @@ public struct ConvertSettings: Codable, Equatable, Sendable {
     /// Existing outputs are left alone without asking.
     public var skipExisting = false
     public var upscale = UpscaleSettings()
+    /// Output names from a template (# number, * name, $P folder, $Y$M$D$H$N$S date); wins over the suffix.
+    public var rename = false
+    public var renameTemplate = "Image#####"
+    public var renameStartNumber = 1
 
     public init() {}
 
@@ -66,12 +70,13 @@ public struct InputItem: Hashable, Identifiable, Sendable {
 
 public enum OutputPlanner {
     /// Destination for each item, in order. Names produced twice within the batch get a numeric suffix.
-    public static func destinations(for items: [InputItem], settings: ConvertSettings) -> [URL] {
+    public static func destinations(for items: [InputItem], settings: ConvertSettings,
+                                    dates: (URL) -> Date = BatchConverter.fileDate) -> [URL] {
         // Every input (including the item's own file) is reserved, so an output never equals any input path:
         // same-format in-place runs get the next free "-N" name instead of overwriting the original.
         let inputPaths = items.map { $0.url.standardizedFileURL.path.lowercased() }
         var used = Set(inputPaths)
-        return items.map { item in
+        return items.enumerated().map { offset, item in
             let format = settings.outputFormat(for: item.url)
             let ext = settings.uppercaseExtension ? format.fileExtension.uppercased() : format.fileExtension
             var folder = settings.outputFolderURL ?? item.url.deletingLastPathComponent()
@@ -80,7 +85,13 @@ public enum OutputPlanner {
             } else if settings.outputFolderURL != nil, settings.keepFolderStructure, let relative = item.relativeDirectory, !relative.isEmpty {
                 folder = folder.appendingPathComponent(relative, isDirectory: true)
             }
-            let base = item.url.deletingPathExtension().lastPathComponent + settings.nameSuffix
+            let base: String
+            if settings.rename, settings.mode != .upscale {
+                base = RenameTemplate.render(settings.renameTemplate, originalURL: item.url,
+                                             number: settings.renameStartNumber + offset, date: dates(item.url))
+            } else {
+                base = item.url.deletingPathExtension().lastPathComponent + settings.nameSuffix
+            }
             var candidate = folder.appendingPathComponent(base).appendingPathExtension(ext)
             var counter = 2
             while used.contains(candidate.standardizedFileURL.path.lowercased()) {

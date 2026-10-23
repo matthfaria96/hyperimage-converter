@@ -95,6 +95,25 @@ struct ConversionFlowTests {
         }
     }
 
+    @Test func renamesOutputsByTemplate() async throws {
+        let ws = try Workspace()
+        var s = settings(output: ws.output)
+        s.format = .jpeg
+        s.rename = true
+        s.renameTemplate = "Praia_##"
+        s.renameStartNumber = 1
+        let sizes = try ws.images.map { try #require(FileManager.default.attributesOfItem(atPath: $0.path)[.size] as? Int) }
+        let runner = ConversionRunner()
+        runner.start(items: ws.images.map { InputItem(url: $0) }, settings: s)
+        try await waitUntilDone(runner)
+
+        for name in ["Praia_01.jpg", "Praia_02.jpg"] {
+            #expect(FileManager.default.fileExists(atPath: ws.output.appendingPathComponent(name).path))
+        }
+        let after = ws.images.map { try? FileManager.default.attributesOfItem(atPath: $0.path)[.size] as? Int }
+        #expect(after == sizes.map { Optional($0) })
+    }
+
     @Test(arguments: [(OverwriteDecision.yesToAll, ConversionStatus.done), (.noToAll, .skipped)])
     func existingOutputsAskBeforeOverwriting(decision: OverwriteDecision, expected: ConversionStatus) async throws {
         let ws = try Workspace()

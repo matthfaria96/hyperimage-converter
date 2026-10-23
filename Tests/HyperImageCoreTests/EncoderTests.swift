@@ -183,6 +183,49 @@ actor ResultBox {
 }
 
 struct OutputSafetyTests {
+    private func renameSettings(_ template: String, start: Int = 1) -> ConvertSettings {
+        var s = ConvertSettings()
+        s.outputFolder = "/out"
+        s.rename = true
+        s.renameTemplate = template
+        s.renameStartNumber = start
+        return s
+    }
+
+    private let pair = [InputItem(url: URL(fileURLWithPath: "/f/a.png")), InputItem(url: URL(fileURLWithPath: "/f/b.png"))]
+
+    @Test func templateNamesOutputs() {
+        let out = OutputPlanner.destinations(for: pair, settings: renameSettings("Foto###", start: 5))
+        #expect(out.map(\.path) == ["/out/Foto005.jpg", "/out/Foto006.jpg"])
+    }
+
+    @Test func templateWinsOverSuffix() {
+        var s = renameSettings("Foto###", start: 5)
+        s.addSuffix = true
+        let out = OutputPlanner.destinations(for: pair, settings: s)
+        #expect(out.map(\.path) == ["/out/Foto005.jpg", "/out/Foto006.jpg"])
+    }
+
+    @Test func templateCollisionGetsCounter() {
+        let out = OutputPlanner.destinations(for: pair, settings: renameSettings("x"))
+        #expect(out.map(\.path) == ["/out/x.jpg", "/out/x-2.jpg"])
+    }
+
+    @Test func templateNeverOverwritesInput() {
+        var s = renameSettings("x")
+        s.useOutputFolder = false
+        let items = [InputItem(url: URL(fileURLWithPath: "/f/x.jpg")), InputItem(url: URL(fileURLWithPath: "/f/y.jpg"))]
+        let out = OutputPlanner.destinations(for: items, settings: s)
+        #expect(out.map(\.path) == ["/f/x-2.jpg", "/f/x-3.jpg"])
+    }
+
+    @Test func renameOffKeepsOldNames() {
+        var s = renameSettings("Foto###")
+        s.rename = false
+        let out = OutputPlanner.destinations(for: pair, settings: s)
+        #expect(out.map(\.path) == ["/out/a.jpg", "/out/b.jpg"])
+    }
+
     @Test func outputNeverLandsOnAnotherInput() {
         var settings = ConvertSettings()
         settings.useOutputFolder = false
