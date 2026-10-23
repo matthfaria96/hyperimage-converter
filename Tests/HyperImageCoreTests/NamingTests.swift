@@ -43,7 +43,7 @@ struct RenameTemplateTests {
 }
 
 struct BatchRenameTests {
-    @Test func swapsNamesWithoutLosingFiles() throws {
+    @Test func renamesOneOfTwoFiles() throws {
         let dir = try TemporaryDirectory()
         let a = dir.url.appendingPathComponent("a.txt"), b = dir.url.appendingPathComponent("b.txt")
         try Data("A".utf8).write(to: a)
@@ -127,5 +127,107 @@ struct RenameUndoTests {
         let fm = FileManager.default
         #expect(fm.fileExists(atPath: dir.url.appendingPathComponent("N1.txt").path))
         #expect(try String(contentsOf: files[0], encoding: .utf8) == "new")
+    }
+}
+
+/// Regression tests for CR-01: renames onto a name that stays put, real swaps, case-only renames.
+struct BatchRenameSafetyTests {
+    private func write(_ dir: TemporaryDirectory, _ files: [(String, String)]) throws -> [URL] {
+        try files.map { name, content in
+            let u = dir.url.appendingPathComponent(name)
+            try Data(content.utf8).write(to: u)
+            return u
+        }
+    }
+
+    private func contents(_ dir: TemporaryDirectory) throws -> [String: String] {
+        let names = try FileManager.default.contentsOfDirectory(atPath: dir.url.path)
+        return try Dictionary(uniqueKeysWithValues: names.map { name in
+            (name, try String(contentsOf: dir.url.appendingPathComponent(name), encoding: .utf8))
+        })
+    }
+
+    @Test func chainOntoConflictIsFlaggedAndLosesNothing() throws {
+        let dir = try TemporaryDirectory()
+        let listed = try write(dir, [("photo.jpg", "PHOTO"), ("IMG_0001.jpg", "ONE"), ("IMG_0002.jpg", "TWO")])
+        _ = try write(dir, [("IMG_0003.jpg", "THREE")])
+        var settings = BatchRenameSettings()
+        settings.template = "IMG_####"
+        let entries = BatchRename.plan(listed, settings: settings, dates: { _ in Date() })
+        #expect(entries.map(\.destination.lastPathComponent) == ["IMG_0001.jpg", "IMG_0002.jpg", "IMG_0003.jpg"])
+        #expect(entries.map(\.conflict) == [true, true, true])
+        let outcome = BatchRename.execute(entries)
+        #expect(outcome.renamed == 0)
+        #expect(outcome.failures.isEmpty)
+        #expect(try contents(dir) == ["photo.jpg": "PHOTO", "IMG_0001.jpg": "ONE", "IMG_0002.jpg": "TWO", "IMG_0003.jpg": "THREE"])
+    }
+
+    @Test func swapsTwoNames() throws {
+        let dir = try TemporaryDirectory()
+        let files = try write(dir, [("a.txt", "A"), ("b.txt", "B")])
+        var settings = BatchRenameSettings()
+        settings.method = .searchReplace
+        settings.searchReplace.pairs = [.init(search: "a", replace: "x"), .init(search: "b", replace: "a"), .init(search: "x", replace: "b")]
+        let entries = BatchRename.plan(files, settings: settings, dates: { _ in Date() })
+        #expect(entries.map(\.destination.lastPathComponent) == ["b.txt", "a.txt"])
+        #expect(!entries.contains { $0.conflict })
+        let outcome = BatchRename.execute(entries)
+        #expect(outcome.renamed == 2)
+        #expect(try contents(dir) == ["a.txt": "B", "b.txt": "A"])
+        let undo = BatchRename.execute(BatchRename.undoPlan(outcome.moved))
+        #expect(undo.renamed == 2)
+        #expect(try contents(dir) == ["a.txt": "A", "b.txt": "B"])
+    }
+
+    @Test func caseOnlyRename() throws {
+        let dir = try TemporaryDirectory()
+        let files = try write(dir, [("a.JPG", "A")])
+        var settings = BatchRenameSettings()
+        settings.template = "*"
+        settings.extensionCase = .lower
+        let entries = BatchRename.plan(files, settings: settings, dates: { _ in Date() })
+        #expect(entries.map(\.conflict) == [false])
+        let outcome = BatchRename.execute(entries)
+        #expect(outcome.renamed == 1)
+        #expect(try contents(dir) == ["a.jpg": "A"])
+        let undo = BatchRename.execute(BatchRename.undoPlan(outcome.moved))
+        #expect(undo.renamed == 1)
+        #expect(try contents(dir) == ["a.JPG": "A"])
+    }
+
+    @Test func undoChainOntoTakenNameIsFlagged() throws {
+        let dir = try TemporaryDirectory()
+        let url = { (name: String) in dir.url.appendingPathComponent(name) }
+        // State after the forward rename IMG_0002→IMG_0001, IMG_0003→IMG_0002, photo→IMG_0003…
+        _ = try write(dir, [("IMG_0001.jpg", "TWO"), ("IMG_0002.jpg", "THREE"), ("IMG_0003.jpg", "PHOTO")])
+        let moves = [
+            RenameMove(from: url("IMG_0002.jpg"), to: url("IMG_0001.jpg")),
+            RenameMove(from: url("IMG_0003.jpg"), to: url("IMG_0002.jpg")),
+            RenameMove(from: url("photo.jpg"), to: url("IMG_0003.jpg")),
+        ]
+        // …then the user creates a new photo.jpg.
+        _ = try write(dir, [("photo.jpg", "NEW")])
+        let plan = BatchRename.undoPlan(moves)
+        #expect(plan.map(\.conflict) == [true, true, true])
+        let outcome = BatchRename.execute(plan)
+        #expect(outcome.renamed == 0)
+        #expect(try contents(dir) == ["IMG_0001.jpg": "TWO", "IMG_0002.jpg": "THREE", "IMG_0003.jpg": "PHOTO", "photo.jpg": "NEW"])
+    }
+
+    @Test func failedRollbackLeavesAVisibleFileAndRecordsIt() throws {
+        let dir = try TemporaryDirectory()
+        let url = { (name: String) in dir.url.appendingPathComponent(name) }
+        _ = try write(dir, [("photo.jpg", "PHOTO"), ("IMG_0001.jpg", "ONE"), ("IMG_0002.jpg", "TWO")])
+        // Hand-made plan (bypassing `plan`) so phase 2 fails and the old name is already taken.
+        let entries = [
+            RenameEntry(number: 1, source: url("photo.jpg"), destination: url("IMG_0001.jpg"), conflict: false),
+            RenameEntry(number: 2, source: url("IMG_0001.jpg"), destination: url("IMG_0002.jpg"), conflict: false),
+        ]
+        let outcome = BatchRename.execute(entries)
+        #expect(outcome.renamed == 1)
+        #expect(outcome.failures.count == 1)
+        let rescued = url("IMG_0001 (HyperImage 1).jpg")
+        #expect(outcome.moved.last == RenameMove(from: url("IMG_0001.jpg"), to: rescued))
+        #expect(try contents(dir) == ["IMG_0001.jpg": "PHOTO", "IMG_0001 (HyperImage 1).jpg": "ONE", "IMG_0002.jpg": "TWO"])
     }
 }
