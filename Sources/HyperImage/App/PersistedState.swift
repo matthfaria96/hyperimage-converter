@@ -20,6 +20,8 @@ struct PersistedState: Codable, Equatable {
     var showPreview = true
     var lastAdvancedStep = AdvancedStep.resize
     var resizePresets = StandardSizes.resize
+    var rename = BatchRenameSettings()
+    var renameTemplates = StandardSizes.renameTemplates
 
     private static let key = "HyperImage.state.v1"
 

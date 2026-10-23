@@ -173,6 +173,49 @@ struct PersistenceTests {
         #expect(restored.showPreview == false)
         #expect(restored.sort == InputSort())
     }
+
+    @Test func renameSettingsSurviveMissingKeys() throws {
+        var state = PersistedState()
+        state.rename.template = "X###"
+        state.convert.rename = true
+        var json = try #require(JSONSerialization.jsonObject(with: JSONEncoder().encode(state)) as? [String: Any])
+        json["renameTemplates"] = nil
+        var convert = try #require(json["convert"] as? [String: Any])
+        convert["renameStartNumber"] = nil
+        json["convert"] = convert
+        var rename = try #require(json["rename"] as? [String: Any])
+        rename["startNumber"] = nil
+        json["rename"] = rename
+        let restored = PersistedState.decode(try JSONSerialization.data(withJSONObject: json))
+        #expect(restored.rename.template == "X###")
+        #expect(restored.rename.startNumber == 1)
+        #expect(restored.convert.rename == true)
+        #expect(restored.convert.renameStartNumber == 1)
+        #expect(restored.renameTemplates == StandardSizes.renameTemplates)
+    }
+}
+
+@Suite(.serialized)
+struct RenameFlowTests {
+    @Test func applyAndUndo() throws {
+        let ws = try Workspace()
+        let app = AppModel()
+        app.add(ws.images)
+        app.state.rename.template = "Praia_#"
+        let entries = BatchRename.plan(app.inputs.map(\.url), settings: app.state.rename, dates: BatchConverter.fileDate)
+        app.applyRename(entries)
+        let dir = ws.images[0].deletingLastPathComponent()
+        let fm = FileManager.default
+        #expect(fm.fileExists(atPath: dir.appendingPathComponent("Praia_1.jpg").path))
+        #expect(fm.fileExists(atPath: dir.appendingPathComponent("Praia_2.jpg").path))
+        #expect(app.inputs.allSatisfy { $0.url.lastPathComponent.hasPrefix("Praia_") })
+        #expect(app.lastRename.count == 2)
+        app.undoLastRename()
+        #expect(fm.fileExists(atPath: ws.images[0].path))
+        #expect(fm.fileExists(atPath: ws.images[1].path))
+        #expect(Set(app.inputs.map(\.url)) == Set(ws.images))
+        #expect(app.lastRename.isEmpty)
+    }
 }
 
 

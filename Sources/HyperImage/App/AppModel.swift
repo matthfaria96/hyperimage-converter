@@ -20,6 +20,8 @@ final class AppModel {
     var alert: AppAlert?
     /// Sheet shown over the main window; menu commands set it too.
     var route: SheetRoute?
+    /// Moves of the last rename, kept so it can be undone. Not persisted.
+    var lastRename: [RenameMove] = []
     /// Bumped by the "Converter" menu command; MainView starts the batch when it changes.
     var startRequest = 0
     /// Set while a batch runs, so menu commands can disable themselves.
@@ -134,6 +136,15 @@ final class AppModel {
     /// Puts the files into a virtual output folder (nil takes them out again).
     func move(_ urls: Set<URL>, toFolder name: String?) {
         inputs = inputs.map { urls.contains($0.url) ? $0.inFolder(name) : $0 }
+    }
+
+    /// Points the list (and selection) at renamed files.
+    func replace(_ mapping: [URL: URL]) {
+        inputs = inputs.map { item in
+            guard let moved = mapping[item.url] else { return item }
+            return InputItem(url: moved, relativeDirectory: item.relativeDirectory, virtualFolder: item.virtualFolder)
+        }
+        selection = Set(selection.map { mapping[$0] ?? $0 })
     }
 
     func setSort(_ sort: InputSort) {
