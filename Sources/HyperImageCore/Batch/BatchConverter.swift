@@ -44,10 +44,12 @@ public struct BatchConverter: Sendable {
             : settings.parallel ? max(1, min(ProcessInfo.processInfo.activeProcessorCount, 6)) : 1
     }
 
-    /// CPU cap (maxConcurrency) narrowed by the memory the sources will need once decoded.
+    /// CPU cap (maxConcurrency) narrowed by the memory each file will need: decoded source, or the
+    /// resized / enlarged output when the Advanced Options make it bigger.
     func workerLimit(for records: [ConversionRecord]) -> Int {
         guard maxConcurrency > 1 else { return 1 }
-        return ConcurrencyBudget.workers(pixelCounts: records.map { ConcurrencyBudget.pixelCount(of: $0.input) },
+        let options = settings.effectiveAdvancedOptions
+        return ConcurrencyBudget.workers(pixelCounts: records.map { ConcurrencyBudget.peakPixelCount(of: $0.input, options: options) },
                                          base: maxConcurrency, physicalMemory: physicalMemory)
     }
 
