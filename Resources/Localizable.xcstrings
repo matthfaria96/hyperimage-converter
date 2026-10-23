@@ -77,6 +77,22 @@
         }
       }
     },
+    "%@ · faltam %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ · %2$@ left"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ · faltam %2$@"
+          }
+        }
+      }
+    },
     "%@ × %@": {
       "localizations": {
         "en": {
@@ -89,6 +105,22 @@
           "stringUnit": {
             "state": "new",
             "value": "%1$@ × %2$@"
+          }
+        }
+      }
+    },
+    "%@ → %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ → %2$@"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ → %2$@"
           }
         }
       }
@@ -1657,16 +1689,6 @@
         }
       }
     },
-    "Decorrido": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Elapsed"
-          }
-        }
-      }
-    },
     "Definir coordenada X-Y (canto superior esquerdo)": {
       "localizations": {
         "en": {
@@ -2787,6 +2809,16 @@
         }
       }
     },
+    "Levou %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Took %@"
+          }
+        }
+      }
+    },
     "Licenças de código aberto": {
       "localizations": {
         "en": {
@@ -3727,6 +3759,16 @@
         }
       }
     },
+    "Opções": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Options"
+          }
+        }
+      }
+    },
     "Opções avançadas": {
       "localizations": {
         "en": {
@@ -3847,16 +3889,6 @@
           "stringUnit": {
             "state": "new",
             "value": "Original %1$@ · economia estimada de %2$lld %%"
-          }
-        }
-      }
-    },
-    "Original → novo": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Original → new"
           }
         }
       }
@@ -4549,16 +4581,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Resolution"
-          }
-        }
-      }
-    },
-    "Restante": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Remaining"
           }
         }
       }

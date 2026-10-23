@@ -1,7 +1,7 @@
 import HyperImageCore
 import SwiftUI
 
-/// Floating glass summary: estimated (or actual) result, progress, the main action and a status line.
+/// Bottom bar of the options panel: estimated (or actual) result, progress, the main action and a status line.
 struct SummaryBox: View {
     @Environment(AppModel.self) private var app
     let runner: ConversionRunner
@@ -12,76 +12,79 @@ struct SummaryBox: View {
 
     var body: some View {
         let mode = app.state.convert.mode
-        VStack(alignment: .leading, spacing: 12) {
-            if !app.inputs.isEmpty {
-                VStack(alignment: .leading, spacing: 3) {
-                    HStack {
-                        Text(finished ? "Resultado" : "Estimativa").font(.subheadline.weight(.semibold)).foregroundStyle(.secondary)
-                        Spacer()
-                        Text(countText).font(.subheadline).foregroundStyle(.secondary)
-                            .contentTransition(.numericText())
-                    }
-                    Text(headline).font(.title.weight(.semibold)).monospacedDigit()
-                        .contentTransition(.numericText())
-                        .animation(.snappy, value: headline)
-                        .redacted(reason: estimate == nil && !finished ? .placeholder : [])
+        // Every row is always present (empty rows keep their height), so the bar never changes size.
+        VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: 2) {
+                HStack {
+                    Text(finished ? "Resultado" : "Estimativa")
+                    Spacer()
+                    Text(countText).contentTransition(.numericText())
+                }
+                .font(.subheadline).foregroundStyle(.secondary)
+                Text(headline).font(.title2.weight(.semibold)).monospacedDigit()
+                    .lineLimit(1)
+                    .contentTransition(.numericText())
+                    .animation(.snappy, value: headline)
+                    .redacted(reason: !app.inputs.isEmpty && estimate == nil && !finished ? .placeholder : [])
+            }
+            .accessibilityElement(children: .combine)
+
+            // One fixed-height slot: the explanation while idle, the progress once a batch starts.
+            ZStack(alignment: .topLeading) {
+                if runner.isRunning || runner.hasResults {
+                    ProgressStats(runner: runner).transition(.blurReplace)
+                } else {
                     Text(detail).font(.callout).foregroundStyle(.secondary).lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
                         .contentTransition(.opacity)
                         .animation(.snappy, value: detail)
+                        .transition(.blurReplace)
                 }
-                .accessibilityElement(children: .combine)
-                .transition(.blurReplace)
             }
+            .frame(maxWidth: .infinity, minHeight: 36, maxHeight: 36, alignment: .topLeading)
 
-            if runner.isRunning || runner.hasResults {
-                ProgressStats(runner: runner)
-                    .transition(.blurReplace)
+            Group {
+                if runner.isRunning {
+                    Button(role: .cancel) { runner.cancel() } label: {
+                        Label("Cancelar", systemImage: "stop.fill").frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.glass)
+                    .keyboardShortcut(.cancelAction)
+                } else {
+                    Button(action: start) {
+                        Label(mode.actionTitle, systemImage: mode.symbol)
+                            .font(.body.weight(.semibold))
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.glassProminent)
+                    .keyboardShortcut(.return, modifiers: .command)
+                    .disabled(app.inputs.isEmpty)
+                    .help("⌘↩")
+                }
             }
+            .controlSize(.large)
+            .transition(.blurReplace)
 
-            if runner.isRunning {
-                Button(role: .cancel) { runner.cancel() } label: {
-                    Label("Cancelar", systemImage: "stop.fill").frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.glass)
-                .controlSize(.large)
-                .keyboardShortcut(.cancelAction)
-                .transition(.blurReplace)
-            } else {
-                Button(action: start) {
-                    Label(mode.actionTitle, systemImage: mode.symbol)
-                        .font(.body.weight(.semibold))
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.glassProminent)
-                .controlSize(.large)
-                .keyboardShortcut(.return, modifiers: .command)
-                .disabled(app.inputs.isEmpty)
-                .help("⌘↩")
-                .transition(.blurReplace)
+            HStack(spacing: 8) {
+                StatusLine(runner: runner, hasInputs: !app.inputs.isEmpty)
+                Spacer(minLength: 4)
                 if finished && !runner.wasCancelled {
-                    HStack(spacing: 16) {
-                        if runner.doneCount > 0 {
-                            Button("Mostrar no Finder", systemImage: "folder") {
-                                FilePanels.reveal(runner.records.filter { $0.status == .done }.map(\.output))
-                            }
-                        }
-                        if !runner.failures.isEmpty {
-                            Button("Ver erros (\(runner.failures.count))", systemImage: "exclamationmark.triangle") {
-                                app.route = .errors
-                            }
+                    if !runner.failures.isEmpty {
+                        Button("Ver erros (\(runner.failures.count))") { app.route = .errors }
                             .foregroundStyle(.orange)
+                    } else if runner.doneCount > 0 {
+                        Button("Mostrar no Finder") {
+                            FilePanels.reveal(runner.records.filter { $0.status == .done }.map(\.output))
                         }
                     }
-                    .buttonStyle(.borderless)
-                    .frame(maxWidth: .infinity)
-                    .transition(.blurReplace)
                 }
             }
-            StatusLine(runner: runner, hasInputs: !app.inputs.isEmpty)
+            .buttonStyle(.link)
+            .font(.callout)
+            .frame(height: 18)
         }
         .animation(.snappy, value: runner.isRunning)
         .animation(.snappy, value: runner.hasResults)
-        .animation(.snappy, value: app.inputs.isEmpty)
         .sensoryFeedback(.success, trigger: runner.completionID) { _, _ in finished && runner.failures.isEmpty && !runner.wasCancelled }
         .onChange(of: app.inputsRevision) { runner.clearResults() }
     }
@@ -98,7 +101,8 @@ struct SummaryBox: View {
 
     private var headline: String {
         if finished && runner.newTotal > 0 { return formatBytes(runner.newTotal) }
-        guard !app.inputs.isEmpty, let estimate else { return "≈ 000 KB" }
+        guard !app.inputs.isEmpty else { return "—" }
+        guard let estimate else { return "≈ 000 KB" }
         if let size = estimate.upscaledSize { return "\(String(size.width)) × \(String(size.height))" }
         return estimate.bytes.map { "≈ " + formatBytes($0) } ?? "—"
     }
@@ -149,9 +153,8 @@ private struct StatusLine: View {
                     .contentTransition(.symbolEffect(.replace))
                     .symbolEffect(.bounce, value: symbol)
             }
-            .font(.callout)
             .foregroundStyle(color)
-            .frame(maxWidth: .infinity)
+            .lineLimit(1)
             .animation(.snappy, value: text)
         }
     }

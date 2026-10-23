@@ -38,13 +38,14 @@ struct SettingsPanel: View {
         .animation(.snappy, value: app.selectedItem?.url)
         .disabled(runner.isRunning)
         .scrollEdgeEffectHidden(true, for: .bottom)
-        // Floating, so the form scrolls underneath instead of being covered.
+        // Docked, opaque bar: same size in every mode and nothing from the form shows through or below it.
         .safeAreaInset(edge: .bottom, spacing: 0) {
-            // Same layout in every mode, so the floating summary keeps one size while switching tabs.
-            SummaryBox(runner: runner, start: start, estimate: estimator.estimate)
-            .padding(14)
-            .glassEffect(.regular, in: .rect(cornerRadius: 20))
-            .padding(.horizontal, 14).padding(.bottom, 12).padding(.top, 4)
+            VStack(spacing: 0) {
+                Divider()
+                SummaryBox(runner: runner, start: start, estimate: estimator.estimate)
+                    .padding(.horizontal, 20).padding(.top, 14).padding(.bottom, 16)
+            }
+            .background(Color(nsColor: .windowBackgroundColor))
         }
         .frame(width: 360)
         .task(id: EstimateKey(app.state.convert, revision: app.inputsRevision)) {

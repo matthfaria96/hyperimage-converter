@@ -55,8 +55,6 @@ struct MainView: View {
         .onChange(of: app.startRequest) { startConversion() }
         .onChange(of: runner.openFolderWhenDone) { _, value in app.state.convert.openFolderWhenDone = value }
         .onAppear {
-            // AppKit focuses the first text field at launch; start with nothing focused.
-            DispatchQueue.main.async { NSApp.keyWindow?.makeFirstResponder(nil) }
             #if DEBUG
             if let route = DebugLaunch.apply(to: app) { app.route = route }
             if DebugLaunch.env["HYPERIMAGE_SHEET"] == "progress", !app.inputs.isEmpty { startConversion() }

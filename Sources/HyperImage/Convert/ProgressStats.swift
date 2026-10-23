@@ -14,28 +14,26 @@ struct ProgressStats: View {
     var body: some View {
         TimelineView(.periodic(from: .now, by: 1)) { context in
             let n = BatchNumbers(old: runner.oldTotal, new: runner.newTotal)
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: 5) {
                 ProgressView(value: runner.progress)
                     .tint(runner.failures.isEmpty ? Color.accentColor : .orange)
                     .animation(.easeInOut(duration: 0.3), value: runner.progress)
-                HStack(spacing: 0) {
-                    stat("Original → novo", "\(formatBytes(n.old)) → \(formatBytes(n.new))")
+                HStack {
+                    Text("\(formatBytes(n.old)) → \(formatBytes(n.new))")
                     Spacer(minLength: 8)
-                    stat("Decorrido", SummaryBox.duration((runner.endDate ?? context.date).timeIntervalSince(runner.startDate)))
-                    if runner.isRunning {
-                        Spacer(minLength: 8)
-                        stat("Restante", runner.remaining(now: context.date).map(SummaryBox.duration) ?? "—")
-                    }
+                    Text(timeText(now: context.date))
                 }
-                .font(.callout).monospacedDigit()
+                .font(.caption).foregroundStyle(.secondary).monospacedDigit()
+                .lineLimit(1)
+                .contentTransition(.numericText())
             }
         }
     }
 
-    private func stat(_ label: LocalizedStringKey, _ value: String) -> some View {
-        VStack(alignment: .leading, spacing: 1) {
-            Text(label).font(.caption).foregroundStyle(.secondary)
-            Text(value).contentTransition(.numericText())
-        }
+    private func timeText(now: Date) -> String {
+        let elapsed = SummaryBox.duration((runner.endDate ?? now).timeIntervalSince(runner.startDate))
+        guard runner.isRunning else { return String(localized: "Levou \(elapsed)") }
+        guard let left = runner.remaining(now: now) else { return elapsed }
+        return String(localized: "\(elapsed) · faltam \(SummaryBox.duration(left))")
     }
 }

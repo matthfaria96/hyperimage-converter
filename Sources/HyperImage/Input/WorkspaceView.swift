@@ -9,6 +9,8 @@ struct WorkspaceView: View {
     let runner: ConversionRunner
     let canPreview: Bool
     @State private var dropTargeted = false
+    /// The file list takes focus at launch, so AppKit does not pick (and scroll to) a text field in the options panel.
+    @FocusState private var listFocused: Bool
 
     var body: some View {
         @Bindable var app = app
@@ -16,6 +18,9 @@ struct WorkspaceView: View {
             Group {
                 if app.inputs.isEmpty {
                     EmptyDropZone(targeted: dropTargeted, addFiles: { FilePanels.addFiles(to: app) })
+                        .focusable()
+                        .focusEffectDisabled()
+                        .focused($listFocused)
                         .transition(.blurReplace)
                 } else {
                     fileList
@@ -38,6 +43,8 @@ struct WorkspaceView: View {
         }
         .animation(.easeOut(duration: 0.2), value: dropTargeted)
         .onDeleteCommand { remove(app.selection) }
+        .onAppear { listFocused = true }
+        .defaultFocus($listFocused, true)
         #if DEBUG
         .onAppear { if DebugLaunch.env["HYPERIMAGE_DROP"] != nil { dropTargeted = true } }
         #endif
@@ -63,6 +70,7 @@ struct WorkspaceView: View {
                 }
             }
             .listStyle(.inset)
+            .focused($listFocused)
             .scrollEdgeEffectStyle(.soft, for: .top)
             .animation(.snappy, value: app.inputsRevision)
             .contextMenu(forSelectionType: URL.self) { urls in
