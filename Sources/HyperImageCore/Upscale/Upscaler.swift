@@ -194,8 +194,11 @@ public struct Upscaler: Sendable {
                     continuation.resume()
                 }
                 do {
+                    // Quitting already began (terminateAll ran): launching now would orphan the backend.
+                    guard registry.isAcceptingLaunches else { throw CancellationError() }
                     try process.run()
                     // Tracked so quitting the app stops it (applicationWillTerminate → terminateAll).
+                    // If quit began between the check and here, register kills it instead.
                     registry.register(process)
                     // It may have exited before registration; never leave a stale entry behind.
                     if !process.isRunning { registry.unregister(process) }

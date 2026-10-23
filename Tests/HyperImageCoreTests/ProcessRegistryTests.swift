@@ -69,6 +69,39 @@ final class ProcessRegistryTests: XCTestCase {
         registry.terminateAll(timeout: 1)
     }
 
+    func testRegistrationAfterTerminateAllIsRefusedAndKilled() throws {
+        let registry = ProcessRegistry()
+        XCTAssertTrue(registry.isAcceptingLaunches)
+        registry.terminateAll(timeout: 1)
+        XCTAssertFalse(registry.isAcceptingLaunches)
+
+        let late = try sleeper()
+        XCTAssertFalse(registry.register(late))
+        XCTAssertEqual(registry.count, 0)
+        let deadline = Date().addingTimeInterval(5)
+        while late.isRunning, Date() < deadline { Thread.sleep(forTimeInterval: 0.02) }
+        XCTAssertFalse(late.isRunning, "a backend launched after quit began must not survive")
+    }
+
+    func testUpscalerRefusesToLaunchAfterShutdownBegan() async throws {
+        let scratch = try TemporaryDirectory()
+        let registry = ProcessRegistry()
+        registry.terminateAll(timeout: 1)
+        let marker = scratch.url.appendingPathComponent("launched")
+        let script = scratch.url.appendingPathComponent("upscayl-bin")
+        try Data("#!/bin/sh\ntouch '\(marker.path)'\nexec /bin/sleep 30\n".utf8).write(to: script)
+        try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: script.path)
+        let upscaler = Upscaler(executable: script, modelsFolder: scratch.url, tempRoot: scratch.url, registry: registry)
+        do {
+            try await upscaler.upscale(Fixtures.url("paisagem"), to: scratch.url.appendingPathComponent("out.png"),
+                                       settings: UpscaleSettings())
+            XCTFail("a closed registry must refuse the launch")
+        } catch is CancellationError {
+        }
+        XCTAssertFalse(FileManager.default.fileExists(atPath: marker.path), "the backend must never start")
+        XCTAssertEqual(registry.count, 0)
+    }
+
     /// A fake backend that just hangs, like a long upscayl-bin run.
     private func hangingBackend(in dir: URL) throws -> URL {
         let script = dir.appendingPathComponent("upscayl-bin")
