@@ -12,6 +12,7 @@ struct SettingsPanel: View {
         let settings = $app.state.convert
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
+                if app.state.showPreview, let item = app.selectedItem { PreviewCard(item: item) }
                 switch app.state.convert.mode {
                 case .convert, .compress:
                     OutputSection(settings: settings)

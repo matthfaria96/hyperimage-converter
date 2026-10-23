@@ -28,6 +28,7 @@ struct SummaryBox: View {
                         .animation(.easeInOut(duration: 0.3), value: runner.progress)
                         .padding(.top, 4)
                         .transition(.opacity)
+                    ProgressStats(runner: runner).transition(.opacity).padding(.top, 2)
                 }
             }
             .padding(12)

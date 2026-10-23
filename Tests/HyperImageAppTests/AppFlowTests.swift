@@ -248,3 +248,31 @@ struct BackgroundAddTests {
         #expect(app.inputs == before)
     }
 }
+
+struct PreviewInfoTests {
+    @Test func readsFixtureMetadata() throws {
+        let ws = try Workspace()
+        let info = PreviewInfo.load(ws.images[0])
+        #expect(info.size != nil)
+        #expect(info.size == ImageLoader.pixelSize(ws.images[0]))
+        #expect(info.bytes == BatchConverter.fileSize(ws.images[0]))
+        #expect(info.bytes > 0)
+    }
+
+    @Test func missingFile() {
+        let info = PreviewInfo.load(URL(fileURLWithPath: "/nonexistent/x.jpg"))
+        #expect(info.size == nil)
+        #expect(info.bytes == 0)
+    }
+}
+
+struct BatchNumbersTests {
+    @Test func ratioAndSavings() {
+        #expect(BatchNumbers(old: 1000, new: 400).ratioPercent == 40)
+        #expect(BatchNumbers(old: 1000, new: 400).saved == 600)
+        #expect(BatchNumbers(old: 1000, new: 1500).ratioPercent == 150)
+        #expect(BatchNumbers(old: 1000, new: 1500).saved == 0)
+        #expect(BatchNumbers(old: 0, new: 0).ratioPercent == 0)
+        #expect(BatchNumbers(old: 0, new: 0).saved == 0)
+    }
+}

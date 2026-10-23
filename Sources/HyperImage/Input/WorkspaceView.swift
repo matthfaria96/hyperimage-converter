@@ -154,6 +154,7 @@ struct WorkspaceView: View {
                 Button("Agrupar em subpasta de saída…") { startGrouping(app.selection) }
                     .disabled(app.selection.isEmpty)
                 Button("Selecionar tudo") { app.selectAll() }
+                Toggle("Mostrar pré-visualização", isOn: Binding(get: { app.state.showPreview }, set: { app.state.showPreview = $0 }))
                 Divider()
                 Button("Mostrar na pasta") { FilePanels.reveal(Array(app.selection)) }
                     .disabled(app.selection.isEmpty)
