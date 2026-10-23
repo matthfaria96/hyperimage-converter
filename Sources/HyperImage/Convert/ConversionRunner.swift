@@ -45,8 +45,8 @@ final class ConversionRunner {
         partial = 0
         generation += 1
         let run = generation
-        let converter = BatchConverter(settings: settings, fileProgress: { _, fraction in
-            Task { @MainActor in self.report(fraction, run: run) }
+        let converter = BatchConverter(settings: settings, fileProgress: { [weak self] _, fraction in
+            Task { @MainActor in self?.report(fraction, run: run) }
         })
         self.settings = settings
         openFolderWhenDone = settings.openFolderWhenDone
