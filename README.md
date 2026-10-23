@@ -1,6 +1,6 @@
 # HyperImage Converter
 
-Conversor de imagens em lote para macOS 26+, em Swift/SwiftUI. Recria as funções de conversão do
+Conversor e renomeador de imagens em lote para macOS 26+, em Swift/SwiftUI. Recria as funções (conversão e renomeação) do
 FastStone Photo Resizer (spec em `../Clones/FSResizer-spec/SPEC.md`) com a interface nativa do Mac.
 
 ## Build e testes
@@ -36,7 +36,7 @@ atualizar o catálogo e traduza as entradas novas (no Xcode ou editando o JSON).
 ## Estrutura
 - `Sources/HyperImageCore`: motor sem UI. Modelos de opções, geometria (resize/crop/canvas), reamostrador
   separável com os 12 filtros, ajustes via Core Image, texto/marca d'água/bordas, quantizador median-cut,
-  encoders (ImageIO, WebP via libwebp, PDF), e lote concorrente.
+  encoders (ImageIO, WebP via libwebp, PDF), lote concorrente e renomeação.
 - `Sources/HyperImage`: app SwiftUI (navegador lateral, lista de entrada, inspetor, folhas).
 - `Sources/CWebP`: libwebp 1.6.0 (BSD), só o encoder. O ImageIO lê WebP, mas não grava.
 - `Sources/CJPEG`: IJG libjpeg 9f (licença IJG, ver `README-libjpeg.txt`) com uma ponte em C (`shim/hij.c`) para gravar
