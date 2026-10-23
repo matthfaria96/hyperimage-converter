@@ -159,12 +159,12 @@
         }
       }
     },
-    "%lld arquivo(s) não voltaram ao nome anterior porque o nome já está em uso." : {
+    "%lld arquivo(s) não voltaram ao nome anterior: o nome está em uso ou o arquivo não existe mais." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%lld file(s) could not go back to their previous name because the name is already in use."
+            "value" : "%lld file(s) could not go back to their previous name: the name is in use or the file no longer exists."
           }
         }
       }

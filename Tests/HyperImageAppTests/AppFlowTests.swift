@@ -216,6 +216,32 @@ struct RenameFlowTests {
         #expect(Set(app.inputs.map(\.url)) == Set(ws.images))
         #expect(app.lastRename.isEmpty)
     }
+
+    @Test func partialUndoKeepsTheRestOfTheHistory() throws {
+        let ws = try Workspace()
+        let app = AppModel()
+        app.add(ws.images)
+        app.state.rename.template = "Praia_#"
+        app.applyRename(BatchRename.plan(app.inputs.map(\.url), settings: app.state.rename, dates: BatchConverter.fileDate))
+        #expect(app.lastRename.count == 2)
+
+        // A rename that changes nothing keeps the previous undo.
+        app.applyRename(BatchRename.plan(app.inputs.map(\.url), settings: app.state.rename, dates: BatchConverter.fileDate))
+        #expect(app.lastRename.count == 2)
+
+        try Data("blocker".utf8).write(to: ws.images[0])
+        app.undoLastRename()
+        #expect(app.alert != nil)
+        #expect(app.lastRename.map(\.from) == [ws.images[0]])
+        #expect(FileManager.default.fileExists(atPath: ws.images[1].path))
+
+        app.alert = nil
+        try FileManager.default.removeItem(at: ws.images[0])
+        app.undoLastRename()
+        #expect(app.alert == nil)
+        #expect(app.lastRename.isEmpty)
+        #expect(Set(app.inputs.map(\.url)) == Set(ws.images))
+    }
 }
 
 
