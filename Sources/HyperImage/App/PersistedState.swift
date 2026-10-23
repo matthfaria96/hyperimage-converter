@@ -31,7 +31,15 @@ struct PersistedState: Codable, Equatable {
     }
 
     static func decode(_ data: Data) -> PersistedState {
-        (try? TolerantJSON.decode(PersistedState.self, from: data, defaults: PersistedState())) ?? PersistedState()
+        let decoded = (try? TolerantJSON.decode(PersistedState.self, from: data, defaults: PersistedState())) ?? PersistedState()
+        return decoded.normalized()
+    }
+
+    /// Stored arrays replace the defaults wholesale, so fix up the ones views index directly.
+    func normalized() -> PersistedState {
+        var copy = self
+        copy.rename.searchReplace = rename.searchReplace.normalized()
+        return copy
     }
 
     func save() {

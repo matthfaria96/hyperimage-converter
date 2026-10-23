@@ -83,11 +83,23 @@ public struct SearchReplaceRule: Codable, Equatable, Sendable {
         }
     }
 
-    public var pairs = [Pair(), Pair(), Pair()]
+    /// The panel shows exactly this many name pairs.
+    public static let pairCount = 3
+
+    public var pairs = Array(repeating: Pair(), count: SearchReplaceRule.pairCount)
     public var extensionPair = Pair()
     public var caseSensitive = false
 
     public init() {}
+
+    /// Exactly `pairCount` pairs, whatever a stored state held (the panel indexes them directly,
+    /// and extra pairs would apply without being shown).
+    public func normalized() -> SearchReplaceRule {
+        var copy = self
+        let kept = Array(pairs.prefix(Self.pairCount))
+        copy.pairs = kept + Array(repeating: Pair(), count: Self.pairCount - kept.count)
+        return copy
+    }
 
     public func apply(name: String, ext: String) -> (name: String, ext: String) {
         let options: String.CompareOptions = caseSensitive ? [] : [.caseInsensitive]

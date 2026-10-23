@@ -174,6 +174,15 @@ struct PersistenceTests {
         #expect(restored.sort == InputSort())
     }
 
+    @Test(arguments: [0, 1, 5])
+    func searchReplacePairsAreNormalized(count: Int) throws {
+        var state = PersistedState()
+        state.rename.searchReplace.pairs = (0..<count).map { SearchReplaceRule.Pair(search: "s\($0)") }
+        let restored = PersistedState.decode(try JSONEncoder().encode(state))
+        #expect(restored.rename.searchReplace.pairs.count == SearchReplaceRule.pairCount)
+        #expect(restored.rename.searchReplace.pairs.prefix(min(count, 3)).map(\.search) == (0..<min(count, 3)).map { "s\($0)" })
+    }
+
     @Test func renameSettingsSurviveMissingKeys() throws {
         var state = PersistedState()
         state.rename.template = "X###"
