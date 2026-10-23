@@ -22,7 +22,7 @@
 ### Correção (CORR)
 
 - [ ] **CORR-01**: "Limitar tamanho do arquivo" é respeitado ou o usuário é avisado quando não dá (formatos sem perdas, crop sem perdas, qualidade mínima)
-- [ ] **CORR-02**: Modo Comprimir não troca o formato silenciosamente; o texto da UI corresponde ao comportamento
+- [x] **CORR-02**: Modo Comprimir não troca o formato silenciosamente; o texto da UI corresponde ao comportamento — feito em 2026-10-23 (PSD/RAW etc. são recusados com motivo; Comprimir nunca troca o formato)
 - [ ] **CORR-03**: Mensagens de erro específicas (crop, WebP, backend do upscale ausente uma vez só)
 - [x] **CORR-04**: Variável de ambiente `HYPERIMAGE_UPSCAYL` só vale em build de debug
 
@@ -79,7 +79,7 @@
 | ROB-05 | Phase 2 | Complete |
 | CORR-04 | Phase 2 | Complete |
 | CORR-01 | Phase 3 | Pending |
-| CORR-02 | Phase 3 | Pending |
+| CORR-02 | Phase 3 | Complete |
 | CORR-03 | Phase 3 | Pending |
 | UX-01 | Phase 4 | Pending |
 | UX-02 | Phase 4 | Pending |
