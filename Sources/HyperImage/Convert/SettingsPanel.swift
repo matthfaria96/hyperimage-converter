@@ -19,8 +19,10 @@ struct SettingsPanel: View {
                     AdvancedEditSection(settings: settings)
                 case .upscale:
                     UpscaleSection(settings: settings.upscale)
+                case .rename:
+                    RenamePanel(settings: $app.state.rename)
                 }
-                SaveSection(settings: settings)
+                if app.state.convert.mode != .rename { SaveSection(settings: settings) }
             }
             .padding(.horizontal, 16).padding(.vertical, 18)
             .animation(.snappy, value: app.state.convert.mode)
@@ -32,7 +34,9 @@ struct SettingsPanel: View {
             // A Divider inside .overlay draws vertically, so the rule is a real stack member.
             VStack(spacing: 0) {
                 Divider()
-                SummaryBox(runner: runner, start: start).padding(14)
+                Group {
+                    if app.state.convert.mode == .rename { RenameSummary(start: start) } else { SummaryBox(runner: runner, start: start) }
+                }.padding(14)
             }
             .background(.bar)
         }
@@ -346,6 +350,8 @@ private struct SaveSection: View {
             }
             if settings.mode != .upscale {
                 Toggle("Adicionar sufixo ao nome (\(settings.mode == .compress ? "-comprimido" : "-convertido"))", isOn: $settings.addSuffix)
+                    .disabled(settings.rename)
+                OutputRenameRows(settings: $settings)
             }
             Picker("Se o arquivo já existir", selection: Binding(get: { ExistingFilePolicy(settings) }, set: { $0.apply(to: &settings) })) {
                 Text("Perguntar").tag(ExistingFilePolicy.ask)

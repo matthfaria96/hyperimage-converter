@@ -33,6 +33,8 @@ for STEP in resize rotate crop canvas colorDepth adjustments dpi text watermark 
 done
 EXPECT=2 shot preview HYPERIMAGE_SHEET=preview
 EXPECT=2 shot progress HYPERIMAGE_SHEET=progress HYPERIMAGE_SNAPSHOT_DELAY=4
+EXPECT=1 shot rename-tab HYPERIMAGE_MODE=rename
+EXPECT=2 shot rename HYPERIMAGE_SHEET=rename HYPERIMAGE_MODE=rename
 
 rm -rf "$TMP_OUT"
 echo "Capturas em $OUT"

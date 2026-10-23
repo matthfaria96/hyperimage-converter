@@ -2,7 +2,7 @@ import HyperImageCore
 import SwiftUI
 
 enum SheetRoute: Identifiable {
-    case formatSettings, advanced, conversionPreview(URL), errors
+    case formatSettings, advanced, conversionPreview(URL), errors, renamePreview
 
     var id: String {
         switch self {
@@ -10,6 +10,7 @@ enum SheetRoute: Identifiable {
         case .advanced: "advanced"
         case let .conversionPreview(url): "preview-\(url.path)"
         case .errors: "errors"
+        case .renamePreview: "renamePreview"
         }
     }
 }
@@ -83,11 +84,13 @@ struct MainView: View {
         case .advanced: AdvancedOptionsSheet()
         case let .conversionPreview(url): ConversionPreviewSheet(initial: url)
         case .errors: ErrorListSheet(failures: runner.failures)
+        case .renamePreview: RenamePreviewSheet()
         }
     }
 
     private func startConversion() {
         guard !runner.isRunning, !app.inputs.isEmpty else { return }
+        if app.state.convert.mode == .rename { app.route = .renamePreview; return }
         let settings = app.state.convert
         if settings.mode != .upscale, settings.useAdvancedOptions, let message = settings.advanced.validationError() {
             app.alert = AppAlert(title: String(localized: "Opções avançadas"), message: message)

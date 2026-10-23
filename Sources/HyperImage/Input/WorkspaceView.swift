@@ -17,7 +17,7 @@ struct WorkspaceView: View {
     @State private var anchor: URL?
     @FocusState private var listFocused: Bool
 
-    private var canPreview: Bool { app.state.convert.mode != .upscale && !runner.isRunning }
+    private var canPreview: Bool { ![.upscale, .rename].contains(app.state.convert.mode) && !runner.isRunning }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -71,16 +71,23 @@ struct WorkspaceView: View {
         .labelsHidden()
         .fixedSize()
         .disabled(runner.isRunning)
-        .help("⌘1 Converter · ⌘2 Comprimir · ⌘3 AI Upscale")
+        .help("⌘1 Converter · ⌘2 Comprimir · ⌘3 AI Upscale · ⌘4 Renomear")
 
-        return HStack(alignment: .center, spacing: 12) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(app.state.convert.mode.title).font(.title2.weight(.bold))
-                Text(app.state.convert.mode.subtitle).font(.callout).foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
+        let titleBlock = VStack(alignment: .leading, spacing: 2) {
+            Text(app.state.convert.mode.title).font(.title2.weight(.bold))
+            Text(app.state.convert.mode.subtitle).font(.callout).foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        return ViewThatFits(in: .horizontal) {
+            HStack(alignment: .center, spacing: 12) {
+                titleBlock
+                Spacer(minLength: 12)
+                picker
             }
-            Spacer(minLength: 12)
-            picker
+            VStack(alignment: .leading, spacing: 10) {
+                titleBlock
+                picker
+            }
         }
         .padding(.horizontal, 24).padding(.vertical, 14)
     }
@@ -96,7 +103,7 @@ struct WorkspaceView: View {
                     ForEach(app.inputs) { item in
                         FileCard(item: item, record: runner.record(for: item.url), isRunning: runner.isRunning,
                                  isSelected: app.selection.contains(item.url),
-                                 showsRatio: app.state.convert.mode != .upscale,
+                                 showsRatio: app.state.convert.mode == .convert || app.state.convert.mode == .compress,
                                  canPreview: canPreview,
                                  working: runner.currentUpscale == item.url ? runner.partial : nil,
                                  preview: { app.route = .conversionPreview(item.url) }) {
@@ -142,7 +149,7 @@ struct WorkspaceView: View {
                 if let url = app.previewTarget { app.route = .conversionPreview(url) }
             }
             .disabled(!canPreview)
-            .help(app.state.convert.mode == .upscale ? "Indisponível no AI Upscale" : "Comparar antes e depois (barra de espaço, ⌘Y)")
+            .help([.upscale, .rename].contains(app.state.convert.mode) ? "Indisponível neste modo" : "Comparar antes e depois (barra de espaço, ⌘Y)")
             Menu {
                 Button("Agrupar em subpasta de saída…") { startGrouping(app.selection) }
                     .disabled(app.selection.isEmpty)
@@ -281,6 +288,7 @@ extension ConvertMode {
         case .convert: "Converter"
         case .compress: "Comprimir"
         case .upscale: "AI Upscale"
+        case .rename: "Renomear"
         }
     }
 
@@ -289,6 +297,7 @@ extension ConvertMode {
         case .convert: "arrow.triangle.2.circlepath"
         case .compress: "arrow.down.right.and.arrow.up.left"
         case .upscale: "sparkles"
+        case .rename: "character.cursor.ibeam"
         }
     }
 
@@ -297,6 +306,7 @@ extension ConvertMode {
         case .convert: "Converter imagens"
         case .compress: "Reduza o tamanho das imagens"
         case .upscale: "Amplie com inteligência artificial"
+        case .rename: "Renomeie arquivos em lote"
         }
     }
 
@@ -305,6 +315,7 @@ extension ConvertMode {
         case .convert: "Converta formatos ou reduza o tamanho em poucos cliques."
         case .compress: "Comprima arquivos mantendo o formato e a melhor qualidade possível."
         case .upscale: "Aumente a resolução em até 4× recriando detalhes com IA, direto no seu Mac."
+        case .rename: "Use modelos, numeração ou buscar e substituir. Os originais são renomeados."
         }
     }
 
@@ -313,6 +324,7 @@ extension ConvertMode {
         case .convert: "Converter imagens"
         case .compress: "Comprimir imagens"
         case .upscale: "Ampliar imagens"
+        case .rename: "Renomear arquivos"
         }
     }
 }

@@ -1,7 +1,7 @@
 import Foundation
 
 public enum ConvertMode: String, Codable, CaseIterable, Sendable {
-    case convert, compress, upscale
+    case convert, compress, upscale, rename
 }
 
 extension OutputFormat {
@@ -63,6 +63,7 @@ extension ConvertSettings {
         case .convert: format
         case .compress: OutputFormat.matching(url) ?? .jpeg
         case .upscale: upscale.format.outputFormat
+        case .rename: format
         }
     }
 
