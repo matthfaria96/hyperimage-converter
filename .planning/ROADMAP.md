@@ -49,15 +49,15 @@ Milestone v1.0 "Polir e caçar bugs": tornar o app confiável em lote, sem perda
   5. As 10 etapas da edição avançada aparecem no painel com chave individual, e o botão abre a etapa clicada
   6. Textos novos em pt e en, testes do motor de renomeação e do fluxo passam, smoke de UI passa
 **Depends on:** Phase 2
-**Plans:** 6 plans
+**Plans:** 6/6 plans complete
 
 Plans:
-- [ ] 02.1-01-PLAN.md — Restore rename engine (D-03), undo record, rename-on-convert in OutputPlanner with SAFE-01 tests
-- [ ] 02.1-02-PLAN.md — Persisted rename state, apply/undo actions, TemplateField/RenamePanel/RenamePreviewSheet/RenameSummary
-- [ ] 02.1-03-PLAN.md — ConvertMode.rename tab (⌘4) wired to the mandatory preview, "Renomear a saída" in Save card, UI smoke
-- [ ] 02.1-04-PLAN.md — Selected-file preview card (FS-03) and batch statistics in the summary (FS-04)
-- [ ] 02.1-05-PLAN.md — Edição avançada card with the 10 steps, switches, and open-on-step (FS-05)
-- [ ] 02.1-06-PLAN.md — pt + en strings, About/README, full verification (tests, 0 warnings, smoke pt/en)
+- [x] 02.1-01-PLAN.md — Restore rename engine (D-03), undo record, rename-on-convert in OutputPlanner with SAFE-01 tests
+- [x] 02.1-02-PLAN.md — Persisted rename state, apply/undo actions, TemplateField/RenamePanel/RenamePreviewSheet/RenameSummary
+- [x] 02.1-03-PLAN.md — ConvertMode.rename tab (⌘4) wired to the mandatory preview, "Renomear a saída" in Save card, UI smoke
+- [x] 02.1-04-PLAN.md — Selected-file preview card (FS-03) and batch statistics in the summary (FS-04)
+- [x] 02.1-05-PLAN.md — Edição avançada card with the 10 steps, switches, and open-on-step (FS-05)
+- [x] 02.1-06-PLAN.md — pt + en strings, About/README, full verification (tests, 0 warnings, smoke pt/en)
 
 ### Phase 3: Correção dos resultados
 **Goal**: O arquivo gerado corresponde ao que a interface prometeu, e falhas dizem o motivo real

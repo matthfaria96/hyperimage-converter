@@ -36,11 +36,11 @@
 
 ### Funções do FastStone (FS)
 
-- [ ] **FS-01**: Aba Renomear em lote (template, nº inicial, caixa da extensão, buscar e substituir com 3 pares + extensão + diferenciar maiúsculas, pré-visualização)
-- [ ] **FS-02**: Renomear a saída ao converter/comprimir com template e nº inicial
-- [ ] **FS-03**: Pré-visualização do arquivo selecionado (miniatura, L×A, KB, data)
-- [ ] **FS-04**: Detalhes do progresso (antigo/novo, proporção, economia, decorrido/restante)
-- [ ] **FS-05**: Etapas da edição avançada visíveis e ativáveis direto no painel
+- [x] **FS-01**: Aba Renomear em lote (template, nº inicial, caixa da extensão, buscar e substituir com 3 pares + extensão + diferenciar maiúsculas, pré-visualização)
+- [x] **FS-02**: Renomear a saída ao converter/comprimir com template e nº inicial
+- [x] **FS-03**: Pré-visualização do arquivo selecionado (miniatura, L×A, KB, data)
+- [x] **FS-04**: Detalhes do progresso (antigo/novo, proporção, economia, decorrido/restante)
+- [x] **FS-05**: Etapas da edição avançada visíveis e ativáveis direto no painel
 
 ### Testes (TEST)
 
@@ -81,11 +81,11 @@
 | UX-04 | Phase 4 | Pending |
 | UX-05 | Phase 4 | Pending |
 | TEST-01 | Phase 4 | Pending |
-| FS-01 | Phase 02.1 | Pending |
-| FS-02 | Phase 02.1 | Pending |
-| FS-03 | Phase 02.1 | Pending |
-| FS-04 | Phase 02.1 | Pending |
-| FS-05 | Phase 02.1 | Pending |
+| FS-01 | Phase 02.1 | Complete |
+| FS-02 | Phase 02.1 | Complete |
+| FS-03 | Phase 02.1 | Complete |
+| FS-04 | Phase 02.1 | Complete |
+| FS-05 | Phase 02.1 | Complete |
 
 **Coverage:**
 - v1 requirements: 23 total
