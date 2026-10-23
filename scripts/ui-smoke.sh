@@ -15,7 +15,8 @@ FAILED=0
 shot() {
   NAME=$1; shift
   rm -rf "$OUT/$NAME"
-  env HYPERIMAGE_FILES="$FILES" HYPERIMAGE_OUT="$TMP_OUT" HYPERIMAGE_SNAPSHOT="$OUT/$NAME" "$@" \
+  # Mode is persisted between launches: start every shot in Converter unless the shot overrides it.
+  env HYPERIMAGE_FILES="$FILES" HYPERIMAGE_OUT="$TMP_OUT" HYPERIMAGE_SNAPSHOT="$OUT/$NAME" HYPERIMAGE_MODE=convert "$@" \
     .build/debug/HyperImage ${LANG_ARGS:-} >/dev/null 2>&1 &
   PID=$!
   sleep "${WAIT:-7}"
@@ -32,9 +33,14 @@ for STEP in resize rotate crop canvas colorDepth adjustments dpi text watermark 
   EXPECT=2 shot "advanced-$STEP" HYPERIMAGE_SHEET=advanced HYPERIMAGE_STEP=$STEP
 done
 EXPECT=2 shot preview HYPERIMAGE_SHEET=preview
-EXPECT=2 shot progress HYPERIMAGE_SHEET=progress HYPERIMAGE_SNAPSHOT_DELAY=4
+# Single window since a381703: progress shows inside the summary card, not in a sheet.
+EXPECT=1 shot progress HYPERIMAGE_SHEET=progress HYPERIMAGE_SNAPSHOT_DELAY=4
 EXPECT=1 shot rename-tab HYPERIMAGE_MODE=rename
 EXPECT=2 shot rename HYPERIMAGE_SHEET=rename HYPERIMAGE_MODE=rename
+# Narrowest window (minWidth 1080) with one file selected: header tabs, preview card and cards must not clip.
+for MODE in convert compress rename; do
+  EXPECT=1 shot "narrow-$MODE" HYPERIMAGE_MODE=$MODE HYPERIMAGE_SELECT=1 HYPERIMAGE_WINDOW_SIZE=1080x640
+done
 
 rm -rf "$TMP_OUT"
 echo "Capturas em $OUT"

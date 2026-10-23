@@ -88,6 +88,7 @@ struct WorkspaceView: View {
                 titleBlock
                 picker
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(.horizontal, 24).padding(.vertical, 14)
     }

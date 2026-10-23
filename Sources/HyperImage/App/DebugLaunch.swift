@@ -7,6 +7,7 @@ import HyperImageCore
 /// HYPERIMAGE_FILES=path:path  HYPERIMAGE_SHEET=advanced|format|preview|progress|rename  HYPERIMAGE_STEP=<AdvancedStep>
 /// HYPERIMAGE_OPTIONS=<.hyperoptions file>  HYPERIMAGE_WINDOW=about  HYPERIMAGE_VFOLDER=<name> (first file)
 /// HYPERIMAGE_MODE=convert|compress|upscale|rename  HYPERIMAGE_DROP=1: shows the list as if files were being dragged over it.
+/// HYPERIMAGE_SELECT=1 selects the first file (shows the preview card)  HYPERIMAGE_WINDOW_SIZE=<w>x<h> resizes the main window.
 /// HYPERIMAGE_SNAPSHOT=<dir>: after a few seconds, writes every visible window (sheets included) as PNG and quits.
 /// It draws the views itself, so it needs neither Screen Recording nor Accessibility permission.
 enum DebugLaunch {
@@ -30,11 +31,23 @@ enum DebugLaunch {
         }
     }
 
+    /// Resizes the main window shortly after launch, so narrow layouts can be captured.
+    static func scheduleResize() {
+        let parts = env["HYPERIMAGE_WINDOW_SIZE"]?.split(separator: "x").compactMap { Double($0) } ?? []
+        guard parts.count == 2 else { return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            guard let window = NSApp.windows.first(where: { $0.isVisible && $0.sheetParent == nil }) else { return }
+            window.setContentSize(NSSize(width: parts[0], height: parts[1]))
+        }
+    }
+
     static func apply(to app: AppModel) -> SheetRoute? {
         scheduleSnapshot()
+        scheduleResize()
         if let files = env["HYPERIMAGE_FILES"] {
             app.add(files.split(separator: ":").map { URL(fileURLWithPath: String($0)) })
         }
+        if env["HYPERIMAGE_SELECT"] != nil, let first = app.inputs.first { app.selection = [first.url] }
         if let folder = env["HYPERIMAGE_VFOLDER"], let first = app.inputs.first {
             app.move([first.url], toFolder: folder)
         }

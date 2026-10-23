@@ -10,9 +10,10 @@ struct RenamePanel: View {
             PanelSection(title: "Método") {
                 Picker("Método", selection: $settings.method) {
                     Text("Modelo").tag(RenameMethod.template)
-                    Text("Buscar e substituir").tag(RenameMethod.searchReplace)
+                    Text("Substituir").tag(RenameMethod.searchReplace)
                 }
                 .pickerStyle(.segmented).labelsHidden()
+                .frame(minWidth: 0, maxWidth: .infinity)
             }
             if settings.method == .template {
                 PanelSection(title: "Modelo") {

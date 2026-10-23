@@ -28,7 +28,10 @@ struct AdvancedStepsCard: View {
     private func row(_ step: AdvancedStep) -> some View {
         HStack(spacing: 8) {
             Button { app.route = .advanced(step) } label: {
-                Label(step.title, systemImage: step.symbol)
+                // Fixed icon column so every step name starts at the same x.
+                Label { Text(step.title) } icon: {
+                    Image(systemName: step.symbol).frame(width: 18)
+                }
                     .font(.callout)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .contentShape(.rect)
