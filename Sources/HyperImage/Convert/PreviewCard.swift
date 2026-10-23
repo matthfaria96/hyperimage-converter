@@ -43,7 +43,10 @@ struct PreviewCard: View {
         .task(id: item.url) {
             info = nil
             let url = item.url
-            info = await Task.detached(priority: .utility) { PreviewInfo.load(url) }.value
+            let loaded = await Task.detached(priority: .utility) { PreviewInfo.load(url) }.value
+            // A slower read of the previous selection must not overwrite the new file's details.
+            guard !Task.isCancelled else { return }
+            info = loaded
         }
     }
 }
