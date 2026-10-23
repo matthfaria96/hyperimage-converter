@@ -5,7 +5,7 @@ final class ProcessRegistryTests: XCTestCase {
     private var launched: [Process] = []
 
     override func tearDown() {
-        for process in launched where process.isRunning { process.terminate() }
+        for process in launched where process.isRunning { kill(process.processIdentifier, SIGKILL) }
         launched = []
     }
 
@@ -67,6 +67,25 @@ final class ProcessRegistryTests: XCTestCase {
         registry.register(process)
         XCTAssertEqual(registry.count, 1)
         registry.terminateAll(timeout: 1)
+    }
+
+    func testTerminateAllEscalatesToSIGKILLForChildrenIgnoringSIGTERM() throws {
+        let registry = ProcessRegistry()
+        let stubborn = Process()
+        stubborn.executableURL = URL(fileURLWithPath: "/bin/sh")
+        // SIG_IGN survives exec, so the sleep itself ignores SIGTERM.
+        stubborn.arguments = ["-c", "trap '' TERM; exec /bin/sleep 30"]
+        try stubborn.run()
+        launched.append(stubborn)
+        Thread.sleep(forTimeInterval: 0.2) // let the trap install before signalling
+        registry.register(stubborn)
+
+        registry.terminateAll(timeout: 0.3)
+        let deadline = Date().addingTimeInterval(5)
+        while stubborn.isRunning, Date() < deadline { Thread.sleep(forTimeInterval: 0.02) }
+        XCTAssertFalse(stubborn.isRunning, "a child that ignores SIGTERM must be killed after the timeout")
+        XCTAssertEqual(stubborn.terminationReason, .uncaughtSignal)
+        XCTAssertEqual(stubborn.terminationStatus, SIGKILL)
     }
 
     func testRegistrationAfterTerminateAllIsRefusedAndKilled() throws {

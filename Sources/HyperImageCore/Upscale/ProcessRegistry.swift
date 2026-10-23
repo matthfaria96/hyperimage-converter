@@ -45,7 +45,8 @@ public final class ProcessRegistry: @unchecked Sendable {
         return processes.count
     }
 
-    /// Closes the registry, sends SIGTERM to every registered process and waits up to `timeout` seconds for them to exit.
+    /// Closes the registry, sends SIGTERM to every registered process and waits up to `timeout` seconds for them to exit;
+    /// anything still running then gets SIGKILL.
     public func terminateAll(timeout: TimeInterval = 1.0) {
         let snapshot: [Process] = {
             lock.lock(); defer { lock.unlock() }
@@ -57,8 +58,19 @@ public final class ProcessRegistry: @unchecked Sendable {
         let running = snapshot.filter(\.isRunning)
         guard !running.isEmpty else { return }
         running.forEach { $0.terminate() }
-        let deadline = Date().addingTimeInterval(max(0, timeout))
-        while running.contains(where: \.isRunning), Date() < deadline {
+        wait(for: running, until: Date().addingTimeInterval(max(0, timeout)))
+        // A backend stuck in a GPU call, or one that ignores SIGTERM, would otherwise outlive the app.
+        let stubborn = running.filter(\.isRunning)
+        guard !stubborn.isEmpty else { return }
+        stubborn.forEach { kill($0.processIdentifier, SIGKILL) }
+        wait(for: stubborn, until: Date().addingTimeInterval(Self.killGrace))
+    }
+
+    /// How long to wait for SIGKILL to be reaped; it cannot be caught, so this is only bookkeeping.
+    static let killGrace: TimeInterval = 0.5
+
+    private func wait(for processes: [Process], until deadline: Date) {
+        while processes.contains(where: \.isRunning), Date() < deadline {
             Thread.sleep(forTimeInterval: 0.02)
         }
     }
