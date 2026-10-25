@@ -1869,6 +1869,16 @@
         }
       }
     },
+    "Economia estimada": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estimated savings"
+          }
+        }
+      }
+    },
     "Editar Lista de Modelos…": {
       "localizations": {
         "en": {
@@ -2139,12 +2149,12 @@
         }
       }
     },
-    "Estimativa a partir de até 3 imagens da lista.": {
+    "Estimativa a partir de uma imagem de cada tipo de arquivo da lista.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Estimated from up to 3 images in the list."
+            "value": "Estimated from one image of each file type in the list."
           }
         }
       }

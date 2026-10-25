@@ -19,7 +19,8 @@ struct ProgressStats: View {
                     .tint(runner.failures.isEmpty ? Color.accentColor : .orange)
                     .animation(.easeInOut(duration: 0.3), value: runner.progress)
                 HStack {
-                    Text("\(formatBytes(n.old)) → \(formatBytes(n.new))")
+                    // Nothing written yet: a dash instead of "0 bytes → 0 bytes".
+                    if n.old > 0 { Text("\(formatBytes(n.old)) → \(formatBytes(n.new))") } else { Text(verbatim: "—") }
                     Spacer(minLength: 8)
                     Text(timeText(now: context.date))
                 }

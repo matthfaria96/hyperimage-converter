@@ -27,6 +27,8 @@ struct SettingsPanel: View {
             }
         }
         .formStyle(.grouped)
+        // One background for the form and the docked summary, so no seam shows between them in dark mode.
+        .scrollContentBackground(.hidden)
         // The panel runs up under the toolbar (like Finder's inspector), so its background fills the whole column;
         // no toolbar items sit above it, so the first section starts at the top.
         .contentMargins(.top, 6, for: .scrollContent)
@@ -42,11 +44,13 @@ struct SettingsPanel: View {
         .safeAreaInset(edge: .bottom, spacing: 0) {
             VStack(spacing: 0) {
                 Divider()
+                // Same side inset as the form's cards; the bottom keeps the status line level with the list's footer.
                 SummaryBox(runner: runner, start: start, estimate: estimator.estimate)
-                    .padding(.horizontal, 20).padding(.top, 14).padding(.bottom, 16)
+                    .padding(.horizontal, 20).padding(.top, 14).padding(.bottom, 7)
             }
             .background(Color(nsColor: .windowBackgroundColor))
         }
+        .background(Color(nsColor: .windowBackgroundColor))
         .frame(width: 360)
         .task(id: EstimateKey(app.state.convert, revision: app.inputsRevision)) {
             await estimator.refresh(urls: app.inputs.map(\.url), settings: app.state.convert)

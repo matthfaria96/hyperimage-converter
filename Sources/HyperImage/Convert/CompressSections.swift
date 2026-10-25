@@ -19,8 +19,11 @@ struct CompressSections: View {
                 .help("Ver a imagem selecionada (ou a primeira) comprimida, lado a lado com a original (barra de espaço)")
                 .transition(.blurReplace)
             }
+        } header: {
+            // Same top as the other modes, which all open with a titled section.
+            Text("Economia estimada")
         } footer: {
-            if hasInputs { Text("Estimativa a partir de até 3 imagens da lista.") }
+            if hasInputs { Text("Estimativa a partir de uma imagem de cada tipo de arquivo da lista.") }
         }
         Section {
             Picker("Nível", selection: levelBinding) {
