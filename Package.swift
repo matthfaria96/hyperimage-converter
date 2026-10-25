@@ -7,6 +7,10 @@ let package = Package(
     products: [
         .executable(name: "HyperImage", targets: ["HyperImage"]),
     ],
+    dependencies: [
+        // Atualizações dentro do app (MIT), como nos outros apps do witchmymac.
+        .package(url: "https://github.com/sparkle-project/Sparkle", from: "2.10.0"),
+    ],
     targets: [
         // libwebp 1.6.0 (BSD), encoder side only: ImageIO already decodes WebP but cannot write it.
         .target(
@@ -39,7 +43,7 @@ let package = Package(
         ),
         .executableTarget(
             name: "HyperImage",
-            dependencies: ["HyperImageCore"],
+            dependencies: ["HyperImageCore", .product(name: "Sparkle", package: "Sparkle")],
             swiftSettings: [.defaultIsolation(MainActor.self)]
         ),
         // App-level flows (input list, conversion runner) driven through the app's own models.

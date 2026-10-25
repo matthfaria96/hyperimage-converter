@@ -43,6 +43,10 @@ struct AboutView: View {
                     .font(.system(size: 12))
             }
             .padding(.top, 10)
+
+            CheckForUpdatesButton()
+                .controlSize(.small)
+                .padding(.top, 14)
         }
         .frame(width: 560)
         .padding(.top, 36)
@@ -114,6 +118,13 @@ struct OpenSourceLicensesView: View {
             Source code: https://github.com/upscayl/upscayl-ncnn
             """,
             files: ["upscayl-LICENSE-AGPL-3.0.txt"]
+        ),
+        Entry(
+            id: "sparkle",
+            name: "Sparkle 2",
+            license: "MIT License",
+            header: "In-app updates (Verificar Atualizações…). https://sparkle-project.org",
+            files: ["Sparkle-LICENSE.txt"]
         ),
     ]
 

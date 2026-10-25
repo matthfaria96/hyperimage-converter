@@ -5,7 +5,7 @@ milestone_name: milestone
 status: released
 stopped_at: 1.0.0 pronta para publicar (tag local v1.0.0)
 last_updated: "2026-10-24T23:45:00.000Z"
-last_activity: 2026-10-24
+last_activity: 2026-10-25
 progress:
   total_phases: 6
   completed_phases: 3
@@ -70,6 +70,16 @@ None yet.
 - Hook de debug `HYPERIMAGE_FAKE_KEY=1`: janelas desenhadas como ativas sem tirar o foco (capturas com
   `screencapture -l`). Não falsificar `NSApplication.isActive` (o app abortou em `_NSMenuBarBackingView hitTest:`).
 - Testes: 191 passando (139 + 22 Swift Testing, 30 XCTest), build sem warnings.
+
+## Release 1.0.1 (2026-10-25)
+
+- Atualizações dentro do app com Sparkle 2.10 (SwiftPM): `Sources/HyperImage/Updates/AppUpdater.swift`, item
+  "Verificar Atualizações…" no menu do app e botão no Sobre; feed `https://witchmymac.com/appcast/hyperimage.xml`,
+  chaves SU* em `Resources/Info.plist`. Cópias de teste (outro bundle id) só verificam com `HYPERIMAGE_UPDATES=1`.
+- `build-app.sh` embute `Sparkle.framework` em Contents/Frameworks (+ rpath, assinatura ad hoc com runtime) e a
+  licença MIT, listada em Sobre → Licenças de código aberto.
+- 1.0.1 (build 3) publicada como v1.0.1 (DMG `HyperImage-1.0.1.dmg`, assinado com sign-app.sh); release 1.0.0
+  apagada. Quem está na 1.0.0 instala a 1.0.1 à mão uma vez.
 
 ## Session Continuity
 

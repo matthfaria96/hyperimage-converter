@@ -21,6 +21,11 @@ CONTENTS="$APP/Contents"
 rm -rf "$APP"
 mkdir -p "$CONTENTS/MacOS" "$CONTENTS/Resources/Licenses"
 cp "$BIN" "$CONTENTS/MacOS/HyperImage"
+# Sparkle (atualizações dentro do app, MIT): o SwiftPM gera o framework ao lado do executável.
+mkdir -p "$CONTENTS/Frameworks"
+cp -R "$(dirname "$BIN")/Sparkle.framework" "$CONTENTS/Frameworks/"
+otool -l "$CONTENTS/MacOS/HyperImage" | grep -q "@executable_path/../Frameworks" \
+  || install_name_tool -add_rpath "@executable_path/../Frameworks" "$CONTENTS/MacOS/HyperImage"
 cp Resources/Info.plist "$CONTENTS/Info.plist"
 printf 'APPL????' > "$CONTENTS/PkgInfo"
 
@@ -40,6 +45,7 @@ mkdir -p "$CONTENTS/Resources/pt-BR.lproj"
 cp Sources/CWebP/COPYING "$CONTENTS/Resources/Licenses/libwebp-COPYING.txt"
 cp Sources/CWebP/PATENTS "$CONTENTS/Resources/Licenses/libwebp-PATENTS.txt"
 cp Sources/CJPEG/README-libjpeg.txt "$CONTENTS/Resources/Licenses/libjpeg-README.txt"
+cp .build/checkouts/Sparkle/LICENSE "$CONTENTS/Resources/Licenses/Sparkle-LICENSE.txt"
 
 # AI Upscale backend (Upscayl, AGPL-3.0): a separate executable plus its models.
 [ -x Vendor/Upscayl/upscayl-bin ] || ./scripts/fetch-upscayl.sh
@@ -48,6 +54,8 @@ mkdir -p "$CONTENTS/Resources/Upscayl"
 cp -R Vendor/Upscayl/models "$CONTENTS/Resources/Upscayl/models"
 cp Vendor/Upscayl/LICENSE-AGPL-3.0.txt "$CONTENTS/Resources/Licenses/upscayl-LICENSE-AGPL-3.0.txt"
 codesign --force --options runtime --sign - "$CONTENTS/MacOS/upscayl-bin"
+# Same (ad hoc) signer as the app, so the hardened runtime's library validation lets it load Sparkle.
+codesign --force --deep --options runtime --sign - "$CONTENTS/Frameworks/Sparkle.framework"
 
 strip -x "$CONTENTS/MacOS/HyperImage" 2>/dev/null || true
 codesign --force --options runtime --sign - "$APP"

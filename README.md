@@ -100,5 +100,5 @@ update the catalog and translate the new entries (in Xcode or by editing the JSO
 
 HyperImage Converter is free software under the [GNU General Public License v3.0](LICENSE). Copyright (C) 2026 Matheus Faria.
 Third-party components: IJG libjpeg (IJG license; "This software is based in part on the work of the Independent JPEG Group."),
-libwebp (BSD 3-Clause) and the Upscayl engine (AGPL-3.0, runs as a separate program). The texts ship in
+libwebp (BSD 3-Clause), Sparkle (MIT, in-app updates) and the Upscayl engine (AGPL-3.0, runs as a separate program). The texts ship in
 `Contents/Resources/Licenses/` and appear in About → Open-source licenses.

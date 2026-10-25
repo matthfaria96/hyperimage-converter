@@ -43,6 +43,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.servicesProvider = self
         NSUpdateDynamicServices()
+        // Atualizações (Sparkle): verificação diária e o item Verificar Atualizações….
+        AppUpdater.shared.start()
     }
 
     /// Finder's "Converter com HyperImage" service (Info.plist NSServices): queues the chosen images and folders.
@@ -72,6 +74,7 @@ struct AppCommands: Commands {
     var body: some Commands {
         CommandGroup(replacing: .appInfo) {
             Button("Sobre o HyperImage Converter") { openWindow(id: "about") }
+            CheckForUpdatesButton()
         }
         CommandGroup(after: .newItem) {
             Button("Adicionar imagens…") { FilePanels.addFiles(to: model) }
