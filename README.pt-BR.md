@@ -3,7 +3,44 @@
 [English](README.md) · **Português**
 
 Conversor de imagens em lote para macOS 26+, em Swift/SwiftUI. Recria as funções de conversão do
-FastStone Photo Resizer (spec em `../Clones/FSResizer-spec/SPEC.md`) com a interface nativa do Mac.
+FastStone Photo Resizer com a interface nativa do Mac e tem três modos com focos diferentes:
+
+- **Converter**: JPEG, HEIC, PNG, WebP, AVIF, GIF, TIFF, BMP, JPEG 2000 e PDF, com redimensionamento, nomes por
+  modelo e as 10 etapas da edição avançada (redimensionar, girar, recortar, tela, cores, ajustes, DPI, texto,
+  marca d'água e bordas).
+- **Comprimir**: cada arquivo mantém o formato e fica menor, nunca maior, com estimativa antes de começar,
+  comparação antes e depois, limite de tamanho por arquivo e remoção da localização e dos dados da câmera.
+- **AI Upscale**: amplia imagens em 2×, 3× ou 4× na GPU do Mac com o motor do Upscayl (Real-ESRGAN).
+
+Mais apps em [witchmymac.com](https://witchmymac.com).
+
+## Instalação
+
+**1. Terminal, uma linha (recomendado)**
+
+```sh
+curl -fsSL https://witchmymac.com/install.sh | bash -s hyperimage
+```
+
+Baixa a versão mais recente do GitHub, confere o SHA-256, instala o app em Aplicativos e abre. Não aparece o aviso
+do Gatekeeper, porque arquivos baixados pelo `curl` não ficam em quarentena. Rode de novo para atualizar.
+
+**2. DMG + Terminal**
+
+Baixe o DMG em [Releases](https://github.com/matthfaria96/hyperimage-converter/releases) ou em
+[witchmymac.com](https://witchmymac.com) e arraste o app para Aplicativos. O app não é notarizado, então o macOS
+bloqueia na primeira vez. Para liberar, cole isto no Terminal (só tira a marca de "baixado da internet"):
+
+```sh
+xattr -dr com.apple.quarantine "/Applications/HyperImage Converter.app"
+```
+
+**3. DMG + Ajustes do Sistema**
+
+Baixe o DMG e arraste o app para Aplicativos como acima. Abra o app e clique em OK no aviso, depois vá em
+Ajustes do Sistema → Privacidade e Segurança e clique em **Abrir Mesmo Assim**.
+
+Requer macOS 26 Tahoe ou mais novo, em Apple Silicon ou Intel.
 
 ## Build e testes
 ```sh
@@ -13,12 +50,22 @@ DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer swift test
 scripts/ui-smoke.sh         # abre cada folha/janela do app e salva uma imagem de cada uma
 ```
 Os testes cobrem o motor (`HyperImageCoreTests`) e os fluxos do app (`HyperImageAppTests`: lista de entrada,
-conversão com pergunta de sobrescrever, cancelamento, pastas virtuais e recorte sem perdas de ponta a ponta).
-Depois de instalado, o Finder ganha "Converter com HyperImage" no menu de contexto (Ações Rápidas/Serviços), que
-manda as imagens e pastas selecionadas para a lista de entrada. Se não aparecer, ative em Ajustes do Sistema →
-Teclado → Atalhos de Teclado → Serviços.
+conversão com pergunta de sobrescrever, cancelamento, pastas virtuais, recorte sem perdas de ponta a ponta e a
+estimativa de tamanho). Depois de instalado, o Finder ganha "Converter com HyperImage" no menu de contexto (Ações
+Rápidas/Serviços), que manda as imagens e pastas selecionadas para a lista de entrada. Se não aparecer, ative em
+Ajustes do Sistema → Teclado → Atalhos de Teclado → Serviços.
 
 O Xcode é necessário (as Command Line Tools não trazem os plugins de macro do SwiftUI).
+
+## AI Upscale
+
+O modo **AI Upscale** amplia imagens em 2×, 3× ou 4× com o motor do [Upscayl](https://github.com/upscayl/upscayl)
+(Real-ESRGAN na GPU). O executável `upscayl-bin` e os modelos não ficam no repositório:
+`./scripts/fetch-upscayl.sh` baixa versões fixas, confere o SHA-256 e grava em `Vendor/Upscayl/`
+(o `build-app.sh` roda o script sozinho quando falta algo). O motor é AGPL-3.0 e roda como programa separado;
+a licença vai em `Contents/Resources/Licenses/`. Só entram os modelos que podem ser redistribuídos
+(Padrão, Lite, Alta fidelidade/HFA2k e Arte digital); Remacri, UltraSharp e Ultramix ficam de fora por terem
+licença não comercial. Os testes de upscale usam `Vendor/Upscayl` e são pulados se ele não tiver sido baixado.
 
 ## Idiomas
 A interface está em português (idioma de origem) e inglês. As traduções ficam em `Resources/Localizable.xcstrings`,
@@ -28,8 +75,8 @@ atualizar o catálogo e traduza as entradas novas (no Xcode ou editando o JSON).
 ## Estrutura
 - `Sources/HyperImageCore`: motor sem UI. Modelos de opções, geometria (resize/crop/canvas), reamostrador
   separável com os 12 filtros, ajustes via Core Image, texto/marca d'água/bordas, quantizador median-cut,
-  encoders (ImageIO, WebP via libwebp, PDF), e lote concorrente.
-- `Sources/HyperImage`: app SwiftUI (navegador lateral, lista de entrada, inspetor, folhas).
+  encoders (ImageIO, WebP via libwebp, PDF), lote concorrente e modelos de nome para a saída.
+- `Sources/HyperImage`: app SwiftUI (lista de entrada, painel de opções fixo à direita, folhas).
 - `Sources/CWebP`: libwebp 1.6.0 (BSD), só o encoder. O ImageIO lê WebP, mas não grava.
 - `Sources/CJPEG`: IJG libjpeg 9f (licença IJG, ver `README-libjpeg.txt`) com uma ponte em C (`shim/hij.c`) para gravar
   JPEG e fazer o recorte sem perdas (`transupp`).
@@ -49,3 +96,10 @@ atualizar o catálogo e traduza as entradas novas (no Xcode ou editando o JSON).
   exposto pelo ImageIO. BMP sem RLE e sem 65536 cores, e GIF sem entrelaçamento, pelo mesmo motivo.
 - As opções são salvas como JSON (`.hyperoptions`). Arquivos `.ccf` do original podem ser carregados (só leitura);
   o `.ccf` não guarda o caminho da marca d'água, então ele precisa ser escolhido de novo.
+
+## Licença
+
+O HyperImage Converter é software livre sob a [GNU General Public License v3.0](LICENSE). Copyright (C) 2026 Matheus Faria.
+Componentes de terceiros: IJG libjpeg (licença IJG; "This software is based in part on the work of the Independent JPEG Group."),
+libwebp (BSD 3-Clause) e o motor do Upscayl (AGPL-3.0, roda como programa separado). Os textos vão em
+`Contents/Resources/Licenses/` e aparecem em Sobre → Licenças de código aberto.
