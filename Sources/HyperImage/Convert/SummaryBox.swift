@@ -9,6 +9,8 @@ struct SummaryBox: View {
     let estimate: Estimate?
 
     private var finished: Bool { runner.hasResults && !runner.isRunning }
+    /// Text starts where the text inside the form's cards does; the button spans the full card width.
+    private static let textInset: CGFloat = 10
 
     var body: some View {
         let mode = app.state.convert.mode
@@ -27,6 +29,7 @@ struct SummaryBox: View {
                     .animation(.snappy, value: headline)
                     .redacted(reason: !app.inputs.isEmpty && estimate == nil && !finished ? .placeholder : [])
             }
+            .padding(.horizontal, Self.textInset)
             .accessibilityElement(children: .combine)
 
             // One fixed-height slot: the explanation while idle, the progress once a batch starts.
@@ -42,6 +45,7 @@ struct SummaryBox: View {
                 }
             }
             .frame(maxWidth: .infinity, minHeight: 36, maxHeight: 36, alignment: .topLeading)
+            .padding(.horizontal, Self.textInset)
 
             Group {
                 if runner.isRunning {
@@ -82,6 +86,7 @@ struct SummaryBox: View {
             .buttonStyle(.link)
             .font(.callout)
             .frame(height: 18)
+            .padding(.horizontal, Self.textInset)
         }
         .animation(.snappy, value: runner.isRunning)
         .animation(.snappy, value: runner.hasResults)
@@ -224,31 +229,55 @@ final class EstimateStore {
     }
 }
 
-/// Converts a few sample files in memory and scales the result to the whole batch.
+/// Converts one sample per file type in memory and scales each result to the files of that type.
 struct Estimate: Sendable {
     var bytes: Int64?
     var originalBytes: Int64 = 0
     var originalSize: PixelSize?
     var upscaledSize: PixelSize?
 
+    /// File types sampled at most; the rest follow the overall ratio of the samples.
+    nonisolated static let maxSamples = 4
+
     nonisolated static func make(urls: [URL], settings: ConvertSettings) -> Estimate {
         guard !urls.isEmpty else { return Estimate() }
-        let total = urls.reduce(Int64(0)) { $0 + BatchConverter.fileSize($1) }
+        let sizes = urls.map { ($0, BatchConverter.fileSize($0)) }
+        let total = sizes.reduce(Int64(0)) { $0 + $1.1 }
         if settings.mode == .upscale {
             let size = ImageLoader.pixelSize(urls[0])
             return Estimate(originalBytes: total, originalSize: size,
                             upscaledSize: size.map { PixelSize(width: $0.width * settings.upscale.scale, height: $0.height * settings.upscale.scale) })
         }
         guard let pipeline = try? ImagePipeline(options: settings.effectiveAdvancedOptions) else { return Estimate(originalBytes: total) }
-        var sampleIn: Int64 = 0, sampleOut: Int64 = 0
-        for url in urls.prefix(3) {
+        var estimated = 0.0, covered: Int64 = 0, sampleIn: Int64 = 0, sampleOut: Int64 = 0
+        for group in sampleGroups(sizes) {
             if Task.isCancelled { return Estimate(originalBytes: total) }
-            guard let loaded = try? ImageLoader.load(url),
+            guard group.sampleBytes > 0, let loaded = try? ImageLoader.load(group.sample),
                   let output = try? OutputEncoder.encode(loaded, pipeline: pipeline, settings: settings) else { continue }
-            sampleIn += BatchConverter.fileSize(url)
-            sampleOut += Int64(output.data.count)
+            let written = Int64(output.data.count)
+            estimated += Double(group.totalBytes) * Double(written) / Double(group.sampleBytes)
+            covered += group.totalBytes
+            sampleIn += group.sampleBytes
+            sampleOut += written
         }
         guard sampleIn > 0 else { return Estimate(originalBytes: total) }
-        return Estimate(bytes: Int64(Double(total) * Double(sampleOut) / Double(sampleIn)), originalBytes: total)
+        estimated += Double(total - covered) * Double(sampleOut) / Double(sampleIn)
+        return Estimate(bytes: Int64(estimated.rounded()), originalBytes: total)
+    }
+
+    /// Files grouped by type (JPEG, HEIC, TIFF…), heaviest groups first; each is represented by its largest file,
+    /// which weighs the most in the total. A list that starts with small JPEGs and ends in big TIFFs is still right.
+    nonisolated static func sampleGroups(_ sizes: [(URL, Int64)]) -> [(sample: URL, sampleBytes: Int64, totalBytes: Int64)] {
+        let groups = Dictionary(grouping: sizes) { entry in
+            OutputFormat.matching(entry.0)?.rawValue ?? entry.0.pathExtension.lowercased()
+        }
+        return groups.values
+            .compactMap { files -> (sample: URL, sampleBytes: Int64, totalBytes: Int64)? in
+                guard let largest = files.max(by: { $0.1 < $1.1 }) else { return nil }
+                return (largest.0, largest.1, files.reduce(Int64(0)) { $0 + $1.1 })
+            }
+            .sorted { $0.totalBytes > $1.totalBytes }
+            .prefix(maxSamples)
+            .map { $0 }
     }
 }
