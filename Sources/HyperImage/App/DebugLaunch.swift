@@ -53,7 +53,7 @@ enum DebugLaunch {
         }
     }
 
-    /// HYPERIMAGE_FAKE_KEY=1: every window draws as key and the app as active, without activating anything.
+    /// HYPERIMAGE_FAKE_KEY=1: every window draws as key, without activating the app or taking the focus.
     /// Lets `screencapture -l` record undimmed controls while another app keeps the keyboard focus.
     static func scheduleFakeKey() {
         guard env["HYPERIMAGE_FAKE_KEY"] != nil else { return }
@@ -64,7 +64,8 @@ enum DebugLaunch {
             (NSWindow.self, "isKeyWindow"), (NSWindow.self, "isMainWindow"), (NSWindow.self, "hasKeyAppearance"),
             (NSWindow.self, "_hasKeyAppearance"), (NSWindow.self, "_hasActiveAppearance"),
             (NSWindow.self, "_hasActiveAppearanceIgnoringKeyFocus"),
-            (NSApplication.self, "isActive"), (NSApplication.self, "_isActiveApp"),
+            // Never NSApplication.isActive/_isActiveApp: the app then acts as the menu-bar owner and AppKit
+            // aborted in -[_NSMenuBarBackingView hitTest:] while the pointer moved over the screen.
         ]
         for target in getters {
             if let method = class_getInstanceMethod(target.cls, NSSelectorFromString(target.name)) {
@@ -82,7 +83,6 @@ enum DebugLaunch {
         }
         for delay in [0.3, 1.5, 3.0] {
             DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
-                NotificationCenter.default.post(name: NSApplication.didBecomeActiveNotification, object: NSApp)
                 for window in NSApp.windows where window.isVisible {
                     NotificationCenter.default.post(name: NSWindow.didBecomeMainNotification, object: window)
                     NotificationCenter.default.post(name: NSWindow.didBecomeKeyNotification, object: window)
