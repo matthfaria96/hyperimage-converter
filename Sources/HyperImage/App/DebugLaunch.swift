@@ -1,6 +1,7 @@
 #if DEBUG
 import AppKit
 import Foundation
+import ObjectiveC
 import HyperImageCore
 
 /// Debug-only hooks used to screenshot sheets without UI scripting:
@@ -37,7 +38,9 @@ enum DebugLaunch {
         guard parts.count == 2 else { return }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             guard let window = NSApp.windows.first(where: { $0.isVisible && $0.sheetParent == nil }) else { return }
-            window.setContentSize(NSSize(width: parts[0], height: parts[1]))
+            // Larger than the screen sends AppKit and SwiftUI into a resize loop that aborts the app.
+            let limit = window.screen?.visibleFrame.size ?? NSSize(width: parts[0], height: parts[1])
+            window.setContentSize(NSSize(width: min(parts[0], limit.width), height: min(parts[1], limit.height)))
         }
     }
 
@@ -50,9 +53,55 @@ enum DebugLaunch {
         }
     }
 
+    /// HYPERIMAGE_FAKE_KEY=1: every window draws as key and the app as active, without activating anything.
+    /// Lets `screencapture -l` record undimmed controls while another app keeps the keyboard focus.
+    static func scheduleFakeKey() {
+        guard env["HYPERIMAGE_FAKE_KEY"] != nil else { return }
+        let yes: @convention(block) (AnyObject) -> Bool = { _ in true }
+        let yesWithArgument: @convention(block) (AnyObject, Int) -> Bool = { _, _ in true }
+        // Public getters plus the private ones AppKit and SwiftUI consult when they pick the active look.
+        let getters: [(cls: AnyClass, name: String)] = [
+            (NSWindow.self, "isKeyWindow"), (NSWindow.self, "isMainWindow"), (NSWindow.self, "hasKeyAppearance"),
+            (NSWindow.self, "_hasKeyAppearance"), (NSWindow.self, "_hasActiveAppearance"),
+            (NSWindow.self, "_hasActiveAppearanceIgnoringKeyFocus"),
+            (NSApplication.self, "isActive"), (NSApplication.self, "_isActiveApp"),
+        ]
+        for target in getters {
+            if let method = class_getInstanceMethod(target.cls, NSSelectorFromString(target.name)) {
+                method_setImplementation(method, imp_implementationWithBlock(yes))
+            }
+        }
+        let withArgument: [(cls: AnyClass?, name: String)] = [
+            (NSWindow.self, "_hasActiveAppearanceForStandardWindowButton:"),
+            (NSClassFromString("_NSThemeWidgetCell"), "_hasKeyAppearanceInView:"), // traffic lights
+        ]
+        for target in withArgument {
+            if let cls = target.cls, let method = class_getInstanceMethod(cls, NSSelectorFromString(target.name)) {
+                method_setImplementation(method, imp_implementationWithBlock(yesWithArgument))
+            }
+        }
+        for delay in [0.3, 1.5, 3.0] {
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+                NotificationCenter.default.post(name: NSApplication.didBecomeActiveNotification, object: NSApp)
+                for window in NSApp.windows where window.isVisible {
+                    NotificationCenter.default.post(name: NSWindow.didBecomeMainNotification, object: window)
+                    NotificationCenter.default.post(name: NSWindow.didBecomeKeyNotification, object: window)
+                    window.contentView?.superview?.needsDisplay = true
+                    for kind in [NSWindow.ButtonType.closeButton, .miniaturizeButton, .zoomButton] {
+                        guard let button = window.standardWindowButton(kind) else { continue }
+                        let refresh = NSSelectorFromString("_windowChangedKeyState")
+                        if button.responds(to: refresh) { button.perform(refresh) }
+                        button.needsDisplay = true
+                    }
+                }
+            }
+        }
+    }
+
     static func apply(to app: AppModel) -> SheetRoute? {
         scheduleSnapshot()
         scheduleResize()
+        scheduleFakeKey()
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { applyAppearance() }
         // Real screenshots need the window key, or every control is drawn dimmed; a second try covers a slow launch.
         if env["HYPERIMAGE_ACTIVATE"] != nil {
